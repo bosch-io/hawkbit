@@ -23,6 +23,7 @@ import org.eclipse.hawkbit.repository.model.SoftwareModule;
 import org.eclipse.hawkbit.repository.model.SoftwareModuleType;
 import org.eclipse.hawkbit.repository.model.Tag;
 import org.eclipse.hawkbit.repository.model.Target;
+import org.eclipse.hawkbit.repository.model.TargetType;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -442,6 +443,30 @@ public abstract class JsonBuilder {
         builder.append("]");
 
         return builder.toString();
+    }
+    
+    public static String targetTypes(final List<TargetType> types) throws JSONException {
+        final JSONArray result = new JSONArray();
+
+        for (final TargetType type : types) {
+
+            final JSONArray dsTypes = new JSONArray();
+            type.getCompatibleDistributionSetTypes().forEach(dsType -> {
+                try {
+                    dsTypes.put(new JSONObject().put("id", dsType.getId()));
+                } catch (final JSONException e1) {
+                    e1.printStackTrace();
+                }
+            });
+
+            result.put(new JSONObject().put("name", type.getName()).put("description", type.getDescription())
+                    .put("id", Long.MAX_VALUE).put("key", type.getKey()).put("createdAt", "0").put("updatedAt", "0")
+                    .put("createdBy", "fghdfkjghdfkjh").put("updatedBy", "fghdfkjghdfkjh")
+                    .put("distributionsets", dsTypes));
+
+        }
+
+        return result.toString();
     }
 
     public static String rollout(final String name, final String description, final int groupSize,

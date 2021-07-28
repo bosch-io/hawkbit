@@ -11,7 +11,10 @@ package org.eclipse.hawkbit.repository.jpa.builder;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.repository.builder.AbstractTargetUpdateCreate;
 import org.eclipse.hawkbit.repository.builder.TargetCreate;
+import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
+import org.eclipse.hawkbit.repository.exception.TargetTypeUndefinedException;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTarget;
+import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.TargetType;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.springframework.util.StringUtils;
@@ -22,9 +25,9 @@ import org.springframework.util.StringUtils;
  */
 public class JpaTargetCreate extends AbstractTargetUpdateCreate<TargetCreate> implements TargetCreate {
 
-    private long typeId;
+    private Long typeId;
 
-    final private TargetTypeManagement targetTypeManagement;
+    private final TargetTypeManagement targetTypeManagement;
 
     JpaTargetCreate(TargetTypeManagement targetTypeManagement) {
         super(null);
@@ -32,12 +35,12 @@ public class JpaTargetCreate extends AbstractTargetUpdateCreate<TargetCreate> im
     }
 
     @Override
-    public TargetCreate type(long targetTypeId) {
+    public TargetCreate type(Long targetTypeId) {
         this.typeId = targetTypeId;
         return this;
     }
 
-    public long getTypeId() {
+    public Long getTypeId() {
         return typeId;
     }
 
@@ -54,8 +57,11 @@ public class JpaTargetCreate extends AbstractTargetUpdateCreate<TargetCreate> im
         if (!StringUtils.isEmpty(name)) {
             target.setName(name);
         }
-        //TODO: Add Handler for default target type
-        TargetType targetType = targetTypeManagement.get(typeId).get();
+
+        TargetType targetType = !StringUtils.isEmpty(typeId)
+                ? findTargetTypeWithExceptionIfNotFound(typeId)
+                : setDefaultTargetType();
+
         target.setType(targetType);
         target.setDescription(description);
         target.setAddress(address);
@@ -65,4 +71,16 @@ public class JpaTargetCreate extends AbstractTargetUpdateCreate<TargetCreate> im
         return target;
     }
 
+    private TargetType findTargetTypeWithExceptionIfNotFound(final Long targetTypeId) {
+        return targetTypeManagement.get(targetTypeId)
+                .orElseThrow(() -> new EntityNotFoundException(TargetType.class, targetTypeId));
+    }
+
+    private TargetType setDefaultTargetType() {
+        // Todo : To be discussed
+        //  Use constant for default name or read from system configs if we decide to have them
+        //  Exception returns status 500
+        return targetTypeManagement.getByName("default")
+                .orElseThrow(() -> new TargetTypeUndefinedException("Cannot find default target type"));
+    }
 }

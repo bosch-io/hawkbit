@@ -15,9 +15,11 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Size;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "sp_target_type", indexes = {
@@ -85,7 +87,12 @@ public class JpaTargetType extends AbstractJpaNamedEntity implements TargetType,
 
     @Override
     public Set<DistributionSetType> getCompatibleDistributionSetTypes() {
-        return null;
+        if (elements == null) {
+            return Collections.emptySet();
+        }
+
+        return elements.stream()
+                .map(TargetTypeElement::getDsType).collect(Collectors.toSet());
     }
 
     @Override
@@ -105,7 +112,11 @@ public class JpaTargetType extends AbstractJpaNamedEntity implements TargetType,
 
     @Override
     public String getColour() {
-        return null;
+        return colour;
+    }
+
+    public void setColour(final String colour) {
+        this.colour = colour;
     }
 
     @Override

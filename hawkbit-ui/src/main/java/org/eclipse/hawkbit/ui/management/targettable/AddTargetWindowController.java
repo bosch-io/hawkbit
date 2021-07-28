@@ -76,7 +76,7 @@ public class AddTargetWindowController
     protected Target persistEntityInRepository(final ProxyTarget entity) {
         //TODO: set default target type if type is not provided
         return targetManagement.create(getEntityFactory().target().create().controllerId(entity.getControllerId())
-                .name(entity.getName()).description(entity.getDescription()).type(1));
+                .name(entity.getName()).description(entity.getDescription()).type(entity.getTypeId()));
     }
 
     @Override

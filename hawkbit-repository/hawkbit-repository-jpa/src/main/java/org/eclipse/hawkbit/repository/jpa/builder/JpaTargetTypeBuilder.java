@@ -8,11 +8,9 @@ import org.eclipse.hawkbit.repository.builder.TargetTypeCreate;
 import org.eclipse.hawkbit.repository.builder.TargetTypeUpdate;
 
 public class JpaTargetTypeBuilder implements TargetTypeBuilder {
-    private final TargetTypeManagement targetTypeManagement;
     private final DistributionSetTypeManagement distributionSetTypeManagement;
 
-    public JpaTargetTypeBuilder(TargetTypeManagement targetTypeManagement, DistributionSetTypeManagement distributionSetTypeManagement) {
-        this.targetTypeManagement = targetTypeManagement;
+    public JpaTargetTypeBuilder(DistributionSetTypeManagement distributionSetTypeManagement) {
         this.distributionSetTypeManagement = distributionSetTypeManagement;
     }
 

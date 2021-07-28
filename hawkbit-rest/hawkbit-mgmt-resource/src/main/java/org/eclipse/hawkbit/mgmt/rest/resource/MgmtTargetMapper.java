@@ -8,9 +8,6 @@
  */
 package org.eclipse.hawkbit.mgmt.rest.resource;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
 import java.net.URI;
 import java.time.ZoneId;
 import java.util.Collection;
@@ -47,6 +44,9 @@ import org.eclipse.hawkbit.rest.data.ResponseList;
 import org.eclipse.hawkbit.rest.data.SortDirection;
 import org.eclipse.hawkbit.util.IpUtil;
 import org.springframework.data.domain.PageRequest;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * A mapper which maps repository model to RESTful model representation and
@@ -125,6 +125,7 @@ public final class MgmtTargetMapper {
         targetRest.setDescription(target.getDescription());
         targetRest.setName(target.getName());
         targetRest.setUpdateStatus(target.getUpdateStatus().name().toLowerCase());
+        targetRest.setTypeId(target.getType().getId());
 
         final URI address = target.getAddress();
         if (address != null) {
@@ -171,10 +172,11 @@ public final class MgmtTargetMapper {
     }
 
     private static TargetCreate fromRequest(final EntityFactory entityFactory, final MgmtTargetRequestBody targetRest) {
-        //TODO: check target type, add default type if not provided
+        // TODO: check target type, add default type if not provided
+        // the check is added to JpaTargetCreate. Can be discussed if it is sufficient
         return entityFactory.target().create().controllerId(targetRest.getControllerId()).name(targetRest.getName())
                 .description(targetRest.getDescription()).securityToken(targetRest.getSecurityToken())
-                .address(targetRest.getAddress()).type(1);
+                .address(targetRest.getAddress()).type(targetRest.getTypeId());
     }
 
     static List<MetaData> fromRequestTargetMetadata(final List<MgmtMetadata> metadata,

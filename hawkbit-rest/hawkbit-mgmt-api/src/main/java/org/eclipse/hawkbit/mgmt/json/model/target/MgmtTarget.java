@@ -60,6 +60,9 @@ public class MgmtTarget extends MgmtNamedEntity {
         this.targetTypeId = targetTypeId;
     }
 
+    @JsonProperty
+    private Long typeId;
+
     /**
      * @return the controllerId
      */
@@ -189,5 +192,13 @@ public class MgmtTarget extends MgmtNamedEntity {
     @JsonIgnore
     public void setRequestAttributes(final boolean requestAttributes) {
         this.requestAttributes = requestAttributes;
+    }
+
+    public Long getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(Long typeId) {
+        this.typeId = typeId;
     }
 }

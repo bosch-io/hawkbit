@@ -11,8 +11,11 @@ package org.eclipse.hawkbit.repository.jpa;
 import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSetType;
 import org.eclipse.hawkbit.repository.jpa.model.JpaSoftwareModuleType;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetType;
+import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
+import org.eclipse.hawkbit.repository.model.SoftwareModule;
 import org.eclipse.hawkbit.repository.model.SoftwareModuleType;
+import org.eclipse.hawkbit.repository.model.TargetType;
 import org.eclipse.hawkbit.repository.model.TenantAwareBaseEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * {@link PagingAndSortingRepository} for {@link JpaTargetType}.
@@ -52,4 +56,12 @@ public interface TargetTypeRepository
     @Query("SELECT COUNT (e.dsType) FROM TargetTypeElement e WHERE e.targetType.id = :id")
     long countDsSetTypesById(@Param("id") Long id);
 
+    /**
+     *
+     * @param name
+     *            to search for
+     * @return all {@link TargetType}s in the repository with given
+     *         {@link TargetType#getName()}
+     */
+    Optional<TargetType> findByName(String name);
 }

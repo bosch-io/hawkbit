@@ -7,6 +7,7 @@ import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.TargetType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import javax.validation.Valid;
@@ -29,12 +30,12 @@ public interface TargetTypeManagement {
     
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_CREATE_TARGET)
     List<TargetType> create(@NotNull @Valid Collection<TargetTypeCreate> creates);
-    
+
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_DELETE_TARGET)
-    void delete(@NotEmpty String targetTypeName);
-    
+    void delete(@NotEmpty long id);
+
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_READ_TARGET)
-    Page<TargetType> findAll(@NotNull Pageable pageable);
+    Slice<TargetType> findAll(@NotNull Pageable pageable);
 
     
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_READ_TARGET)
