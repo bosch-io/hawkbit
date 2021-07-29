@@ -14,15 +14,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.eclipse.hawkbit.repository.QuotaManagement;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.repository.builder.GenericTargetTypeUpdate;
 import org.eclipse.hawkbit.repository.builder.TargetTypeCreate;
 import org.eclipse.hawkbit.repository.builder.TargetTypeUpdate;
+import org.eclipse.hawkbit.repository.exception.AssignmentQuotaExceededException;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaTargetTypeCreate;
 import org.eclipse.hawkbit.repository.jpa.configuration.Constants;
+import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSetType;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetType;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetType_;
+import org.eclipse.hawkbit.repository.jpa.utils.QuotaHelper;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.TargetType;
 import org.eclipse.hawkbit.repository.rsql.VirtualPropertyReplacer;
@@ -54,19 +58,19 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
     private final NoCountPagingRepository criteriaNoCountDao;
 
     private final Database database;
+    private final QuotaManagement quotaManagement;
 
     public JpaTargetTypeManagement(final TargetTypeRepository targetTypeRepository,
-                                   final TargetRepository targetRepository,
-                                   final DistributionSetTypeRepository distributionSetTypeRepository,
-                                   final VirtualPropertyReplacer virtualPropertyReplacer,
-                                   final NoCountPagingRepository criteriaNoCountDao,
-                                   final Database database) {
+            final TargetRepository targetRepository, final DistributionSetTypeRepository distributionSetTypeRepository,
+            final VirtualPropertyReplacer virtualPropertyReplacer, final NoCountPagingRepository criteriaNoCountDao,
+            final Database database, final QuotaManagement quotaManagement) {
         this.targetTypeRepository = targetTypeRepository;
         this.targetRepository = targetRepository;
         this.distributionSetTypeRepository = distributionSetTypeRepository;
         this.virtualPropertyReplacer = virtualPropertyReplacer;
         this.criteriaNoCountDao = criteriaNoCountDao;
         this.database = database;
+        this.quotaManagement = quotaManagement;
     }
 
     @Override
@@ -102,8 +106,8 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
     @Override
     public Slice<TargetType> findAll(Pageable pageable) {
         return convertPage(criteriaNoCountDao.findAll(
-                (targetRoot, query, cb) -> cb.equal(targetRoot.<Boolean> get(JpaTargetType_.deleted), false),
-                pageable, JpaTargetType.class), pageable);
+                (targetRoot, query, cb) -> cb.equal(targetRoot.<Boolean> get(JpaTargetType_.deleted), false), pageable,
+                JpaTargetType.class), pageable);
     }
 
     @Override
@@ -119,13 +123,12 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
     @Override
     public Optional<TargetType> get(long id) {
         // TODO: Add error handler
-        Optional<TargetType> type = targetTypeRepository.findById(id).map(targetType -> targetType);
-        return type;
+        return targetTypeRepository.findById(id).map(targetType -> targetType);
     }
 
     @Override
     public List<TargetType> get(Collection<Long> ids) {
-        return null;
+        return Collections.unmodifiableList(targetTypeRepository.findAllById(ids));
     }
 
     @Override
@@ -143,26 +146,41 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
             final Collection<Long> currentTargetTypeIds = type.getCompatibleDistributionSetTypes().stream()
                     .map(DistributionSetType::getId).collect(Collectors.toSet());
 
-            typeUpdate.getCompatible().ifPresent(
-                    mand -> distributionSetTypeRepository.findAllById(mand).forEach(type::addCompatibleDistributionSetType));
+            typeUpdate.getCompatible().ifPresent(mand -> distributionSetTypeRepository.findAllById(mand)
+                    .forEach(type::addCompatibleDistributionSetType));
         }
 
         return targetTypeRepository.save(type);
     }
 
     @Override
-    public DistributionSetType assignOptionalDistributionSetTypes(long targetTypeId, Collection<Long> distributionSetTypeIds) {
-        return null;
+    public TargetType assignOptionalDistributionSetTypes(long targetTypeId, Collection<Long> distributionSetTypeIds) {
+        final Collection<JpaDistributionSetType> dsTypes = distributionSetTypeRepository
+                .findAllById(distributionSetTypeIds);
+
+        if (dsTypes.size() < distributionSetTypeIds.size()) {
+            throw new EntityNotFoundException(DistributionSetType.class, dsTypes,
+                    dsTypes.stream().map(DistributionSetType::getId).collect(Collectors.toList()));
+        }
+
+        final JpaTargetType type = findTargetTypeAndThrowExceptionIfNotFound(targetTypeId);
+        assertDistributionSetTypeQuota(targetTypeId, distributionSetTypeIds.size());
+
+        dsTypes.forEach(type::addCompatibleDistributionSetType);
+
+        return targetTypeRepository.save(type);
     }
 
     @Override
-    public DistributionSetType unassignDistributionSetType(long targetTypeId, long distributionSetTypeIds) {
-        return null;
+    public TargetType unassignDistributionSetType(long targetTypeId, long distributionSetTypeId) {
+        final JpaTargetType type = findTargetTypeAndThrowExceptionIfNotFound(targetTypeId);
+        type.removeDistributionSetType(distributionSetTypeId);
+
+        return targetTypeRepository.save(type);
     }
 
     private JpaTargetType findTargetTypeAndThrowExceptionIfNotFound(final Long typeId) {
-        return (JpaTargetType) get(typeId)
-                .orElseThrow(() -> new EntityNotFoundException(TargetType.class, typeId));
+        return (JpaTargetType) get(typeId).orElseThrow(() -> new EntityNotFoundException(TargetType.class, typeId));
     }
 
     private void throwExceptionIfTargetTypeDoesNotExist(final Long typeId) {
@@ -171,13 +189,28 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
         }
     }
 
-    private static Page<TargetType> convertPage(final Page<JpaTargetType> findAll,
-                                                         final Pageable pageable) {
+    /**
+     * Enforces the quota specifying the maximum number of
+     * {@link DistributionSetType}s per {@link TargetType}.
+     *
+     * @param id
+     *            of the target type
+     * @param requested
+     *            number of distribution set types to check
+     *
+     * @throws AssignmentQuotaExceededException
+     *             if the software module type quota is exceeded
+     */
+    private void assertDistributionSetTypeQuota(final long id, final int requested) {
+        QuotaHelper.assertAssignmentQuota(id, requested, quotaManagement.getMaxDistributionSetTypesPerTargetType(),
+                DistributionSetType.class, TargetType.class, targetTypeRepository::countDsSetTypesById);
+    }
+
+    private static Page<TargetType> convertPage(final Page<JpaTargetType> findAll, final Pageable pageable) {
         return new PageImpl<>(Collections.unmodifiableList(findAll.getContent()), pageable, findAll.getTotalElements());
     }
 
-    private static Slice<TargetType> convertPage(final Slice<JpaTargetType> findAll,
-                                                          final Pageable pageable) {
+    private static Slice<TargetType> convertPage(final Slice<JpaTargetType> findAll, final Pageable pageable) {
         return new PageImpl<>(Collections.unmodifiableList(findAll.getContent()), pageable, 0);
     }
 

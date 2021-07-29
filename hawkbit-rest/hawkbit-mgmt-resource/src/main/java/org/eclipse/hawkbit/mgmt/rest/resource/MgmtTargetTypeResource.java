@@ -8,12 +8,12 @@
  */
 package org.eclipse.hawkbit.mgmt.rest.resource;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.eclipse.hawkbit.mgmt.json.model.MgmtId;
 import org.eclipse.hawkbit.mgmt.json.model.PagedList;
 import org.eclipse.hawkbit.mgmt.json.model.distributionsettype.MgmtDistributionSetType;
+import org.eclipse.hawkbit.mgmt.json.model.distributionsettype.MgmtDistributionSetTypeAssignment;
 import org.eclipse.hawkbit.mgmt.json.model.targettype.MgmtTargetType;
 import org.eclipse.hawkbit.mgmt.json.model.targettype.MgmtTargetTypeRequestBodyPost;
 import org.eclipse.hawkbit.mgmt.json.model.targettype.MgmtTargetTypeRequestBodyPut;
@@ -92,7 +92,6 @@ public class MgmtTargetTypeResource implements MgmtTargetTypeRestApi {
 
     @Override
     public ResponseEntity<Void> deleteTargetType(@PathVariable("targetTypeId") final Long targetTypeId) {
-        // todo - delete target type
         LOG.debug("Delete {} target type", targetTypeId);
         targetTypeManagement.delete(targetTypeId);
         return ResponseEntity.ok().build();
@@ -137,11 +136,11 @@ public class MgmtTargetTypeResource implements MgmtTargetTypeRestApi {
     }
 
     @Override
-    public ResponseEntity<Void> addCompatibleDistributionSet(@PathVariable("targetTypeId") final Long targetTypeId,
-            @RequestBody final MgmtId distributionSetTypeId) {
+    public ResponseEntity<Void> addCompatibleDistributionSets(@PathVariable("targetTypeId") final Long targetTypeId,
+            @RequestBody final List<MgmtDistributionSetTypeAssignment> distributionSetTypeIds) {
 
         targetTypeManagement.assignOptionalDistributionSetTypes(targetTypeId,
-                Collections.singletonList(distributionSetTypeId.getId()));
+                distributionSetTypeIds.stream().map(MgmtDistributionSetTypeAssignment::getId).collect(Collectors.toList()));
         return ResponseEntity.ok().build();
     }
 

@@ -123,7 +123,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.orm.jpa.vendor.AbstractJpaVendorAdapter;
-import org.springframework.orm.jpa.vendor.Database;
 import org.springframework.orm.jpa.vendor.EclipseLinkJpaDialect;
 import org.springframework.orm.jpa.vendor.EclipseLinkJpaVendorAdapter;
 import org.springframework.retry.annotation.EnableRetry;
@@ -489,10 +488,11 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
             final DistributionSetTypeRepository distributionSetTypeRepository,
             final SoftwareModuleTypeRepository softwareModuleTypeRepository,
             final DistributionSetRepository distributionSetRepository,
+            final TargetTypeRepository targetTypeRepository,
             final VirtualPropertyReplacer virtualPropertyReplacer, final NoCountPagingRepository criteriaNoCountDao,
             final JpaProperties properties, final QuotaManagement quotaManagement) {
         return new JpaDistributionSetTypeManagement(distributionSetTypeRepository, softwareModuleTypeRepository,
-                distributionSetRepository, virtualPropertyReplacer, criteriaNoCountDao, properties.getDatabase(),
+                distributionSetRepository, targetTypeRepository, virtualPropertyReplacer, criteriaNoCountDao, properties.getDatabase(),
                 quotaManagement);
     }
 
@@ -501,9 +501,9 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
     TargetTypeManagement targetTypeManagement(final TargetTypeRepository targetTypeRepository,
             final TargetRepository targetRepository, final DistributionSetTypeRepository distributionSetTypeRepository,
             final VirtualPropertyReplacer virtualPropertyReplacer, final NoCountPagingRepository criteriaNoCountDao,
-            final JpaProperties properties) {
+            final JpaProperties properties, final QuotaManagement quotaManagement) {
         return new JpaTargetTypeManagement(targetTypeRepository, targetRepository, distributionSetTypeRepository,
-                virtualPropertyReplacer, criteriaNoCountDao, properties.getDatabase());
+                virtualPropertyReplacer, criteriaNoCountDao, properties.getDatabase(), quotaManagement);
     }
 
     /**

@@ -39,8 +39,6 @@ public class ProxyTarget extends ProxyNamedEntity {
 
     private boolean isRequestAttributes;
 
-    private Long typeId;
-
     /**
      * Gets the controllerId
      *
@@ -208,20 +206,4 @@ public class ProxyTarget extends ProxyNamedEntity {
     public void setRequestAttributes(final boolean isRequestAttributes) {
         this.isRequestAttributes = isRequestAttributes;
     }
-
-    /**
-     * @return target type id
-     */
-    public Long getTypeId() {
-        return typeId;
-    }
-
-    /**
-     * Sets the target type
-     * @param typeId of the target type
-     */
-    public void setTypeId(Long typeId) {
-        this.typeId = typeId;
-    }
-
 }

@@ -14,7 +14,6 @@ import org.eclipse.hawkbit.repository.builder.TargetCreate;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
 import org.eclipse.hawkbit.repository.exception.TargetTypeUndefinedException;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTarget;
-import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.TargetType;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.springframework.util.StringUtils;
@@ -58,6 +57,7 @@ public class JpaTargetCreate extends AbstractTargetUpdateCreate<TargetCreate> im
             target.setName(name);
         }
 
+        // Todo Target Type - to be decided if we really need a default type
         TargetType targetType = !StringUtils.isEmpty(typeId)
                 ? findTargetTypeWithExceptionIfNotFound(typeId)
                 : setDefaultTargetType();

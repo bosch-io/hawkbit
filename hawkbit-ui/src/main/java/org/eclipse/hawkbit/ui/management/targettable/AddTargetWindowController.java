@@ -74,9 +74,10 @@ public class AddTargetWindowController
 
     @Override
     protected Target persistEntityInRepository(final ProxyTarget entity) {
-        //TODO: set default target type if type is not provided
+        //TODO Target Type: set default target type if type is not provided
+        //  - jpaTargetCreate handles setting the default type, so we do not have to touch the UI
         return targetManagement.create(getEntityFactory().target().create().controllerId(entity.getControllerId())
-                .name(entity.getName()).description(entity.getDescription()).type(entity.getTypeId()));
+                .name(entity.getName()).description(entity.getDescription()));
     }
 
     @Override

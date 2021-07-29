@@ -10,9 +10,9 @@ package org.eclipse.hawkbit.mgmt.rest.api;
 
 import java.util.List;
 
-import org.eclipse.hawkbit.mgmt.json.model.MgmtId;
 import org.eclipse.hawkbit.mgmt.json.model.PagedList;
 import org.eclipse.hawkbit.mgmt.json.model.distributionsettype.MgmtDistributionSetType;
+import org.eclipse.hawkbit.mgmt.json.model.distributionsettype.MgmtDistributionSetTypeAssignment;
 import org.eclipse.hawkbit.mgmt.json.model.targettype.MgmtTargetType;
 import org.eclipse.hawkbit.mgmt.json.model.targettype.MgmtTargetTypeRequestBodyPost;
 import org.eclipse.hawkbit.mgmt.json.model.targettype.MgmtTargetTypeRequestBodyPut;
@@ -147,14 +147,13 @@ public interface MgmtTargetTypeRestApi {
      *
      * @param targetTypeId
      *            of the TargetType.
-     * @param distributionSetTypeId
-     *            of the DistributionSetType.
+     * @param distributionSetTypeIds
+     *            of the DistributionSetTypes as a List.
      *
      * @return OK if the request was successful
      */
     @PostMapping(value = "/{targetTypeId}/" + MgmtRestConstants.TARGETTYPE_V1_DS_TYPES, consumes = {
             MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE })
-    ResponseEntity<Void> addCompatibleDistributionSet(@PathVariable("targetTypeId") Long targetTypeId,
-            MgmtId distributionSetTypeId);
-
+    ResponseEntity<Void> addCompatibleDistributionSets(@PathVariable("targetTypeId") final Long targetTypeId,
+            final List<MgmtDistributionSetTypeAssignment> distributionSetTypeIds);
 }

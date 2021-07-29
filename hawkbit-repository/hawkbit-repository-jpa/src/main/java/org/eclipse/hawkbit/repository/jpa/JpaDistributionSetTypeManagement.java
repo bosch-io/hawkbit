@@ -66,6 +66,8 @@ public class JpaDistributionSetTypeManagement implements DistributionSetTypeMana
 
     private final DistributionSetRepository distributionSetRepository;
 
+    private final TargetTypeRepository targetTypeRepository;
+
     private final VirtualPropertyReplacer virtualPropertyReplacer;
 
     private final NoCountPagingRepository criteriaNoCountDao;
@@ -76,11 +78,13 @@ public class JpaDistributionSetTypeManagement implements DistributionSetTypeMana
     JpaDistributionSetTypeManagement(final DistributionSetTypeRepository distributionSetTypeRepository,
             final SoftwareModuleTypeRepository softwareModuleTypeRepository,
             final DistributionSetRepository distributionSetRepository,
+            final TargetTypeRepository targetTypeRepository,
             final VirtualPropertyReplacer virtualPropertyReplacer, final NoCountPagingRepository criteriaNoCountDao,
             final Database database, final QuotaManagement quotaManagement) {
         this.distributionSetTypeRepository = distributionSetTypeRepository;
         this.softwareModuleTypeRepository = softwareModuleTypeRepository;
         this.distributionSetRepository = distributionSetRepository;
+        this.targetTypeRepository = targetTypeRepository;
         this.virtualPropertyReplacer = virtualPropertyReplacer;
         this.criteriaNoCountDao = criteriaNoCountDao;
         this.database = database;
@@ -273,11 +277,14 @@ public class JpaDistributionSetTypeManagement implements DistributionSetTypeMana
 
         final JpaDistributionSetType toDelete = distributionSetTypeRepository.findById(typeId)
                 .orElseThrow(() -> new EntityNotFoundException(DistributionSetType.class, typeId));
-
+        if (targetTypeRepository.countDsSetTypesById(typeId) > 0) {
+            // todo target type - unassign from targettype
+        }
         if (distributionSetRepository.countByTypeId(typeId) > 0) {
             toDelete.setDeleted(true);
             distributionSetTypeRepository.save(toDelete);
-        } else {
+        }
+        else {
             distributionSetTypeRepository.deleteById(typeId);
         }
     }
