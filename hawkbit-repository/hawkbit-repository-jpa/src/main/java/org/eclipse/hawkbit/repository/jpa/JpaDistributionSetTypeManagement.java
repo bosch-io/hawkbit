@@ -32,6 +32,7 @@ import org.eclipse.hawkbit.repository.jpa.builder.JpaDistributionSetTypeCreate;
 import org.eclipse.hawkbit.repository.jpa.configuration.Constants;
 import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSetType;
 import org.eclipse.hawkbit.repository.jpa.model.JpaSoftwareModuleType;
+import org.eclipse.hawkbit.repository.jpa.model.JpaTargetType;
 import org.eclipse.hawkbit.repository.jpa.rsql.RSQLUtility;
 import org.eclipse.hawkbit.repository.jpa.specifications.DistributionSetTypeSpecification;
 import org.eclipse.hawkbit.repository.jpa.specifications.SpecificationsBuilder;
@@ -196,7 +197,7 @@ public class JpaDistributionSetTypeManagement implements DistributionSetTypeMana
     }
 
     /**
-     * Enforces the quota specifiying the maximum number of
+     * Enforces the quota specifying the maximum number of
      * {@link SoftwareModuleType}s per {@link DistributionSetType}.
      * 
      * @param id
@@ -274,12 +275,11 @@ public class JpaDistributionSetTypeManagement implements DistributionSetTypeMana
     @Retryable(include = {
             ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))
     public void delete(final long typeId) {
-
         final JpaDistributionSetType toDelete = distributionSetTypeRepository.findById(typeId)
                 .orElseThrow(() -> new EntityNotFoundException(DistributionSetType.class, typeId));
-        if (targetTypeRepository.countDsSetTypesById(typeId) > 0) {
-            // todo target type - unassign from targettype
-        }
+
+        unassignDsTypeFromTargetTypes(typeId);
+
         if (distributionSetRepository.countByTypeId(typeId) > 0) {
             toDelete.setDeleted(true);
             distributionSetTypeRepository.save(toDelete);
@@ -287,6 +287,14 @@ public class JpaDistributionSetTypeManagement implements DistributionSetTypeMana
         else {
             distributionSetTypeRepository.deleteById(typeId);
         }
+    }
+
+    private void unassignDsTypeFromTargetTypes(long typeId) {
+        List<JpaTargetType> targetTypesByDsType = targetTypeRepository.findByDsType(typeId);
+        targetTypesByDsType.forEach(targetType -> {
+            targetType.removeDistributionSetType(typeId);
+            targetTypeRepository.save(targetType);
+        });
     }
 
     @Override

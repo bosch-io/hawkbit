@@ -48,10 +48,9 @@ public interface TargetType extends Type{
     }
 
     /**
-     * @param target
-     *            to check for completeness
-     * @return <code>true</code> if the all mandatory target types are
-     *         in the system.
+     * Unassigns a distribution set type from target types
+     * @param dsTypeId
+     * @return the resulting target type
      */
-    boolean checkComplete(Target target);
+    TargetType removeDistributionSetType(final Long dsTypeId);
 }

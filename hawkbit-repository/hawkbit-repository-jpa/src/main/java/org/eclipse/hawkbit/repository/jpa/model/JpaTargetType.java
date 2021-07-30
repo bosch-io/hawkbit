@@ -1,7 +1,6 @@
 package org.eclipse.hawkbit.repository.jpa.model;
 
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
-import org.eclipse.hawkbit.repository.model.Target;
 import org.eclipse.hawkbit.repository.model.TargetType;
 import org.eclipse.persistence.annotations.CascadeOnDelete;
 import org.eclipse.persistence.descriptors.DescriptorEvent;
@@ -73,6 +72,7 @@ public class JpaTargetType extends AbstractJpaNamedEntity implements TargetType,
         return this;
     }
 
+    @Override
     public JpaTargetType removeDistributionSetType(final Long dsTypeId) {
         if (elements == null) {
             return this;
@@ -93,11 +93,6 @@ public class JpaTargetType extends AbstractJpaNamedEntity implements TargetType,
 
         return elements.stream()
                 .map(TargetTypeElement::getDsType).collect(Collectors.toSet());
-    }
-
-    @Override
-    public boolean checkComplete(Target target) {
-        return false;
     }
 
     @Override

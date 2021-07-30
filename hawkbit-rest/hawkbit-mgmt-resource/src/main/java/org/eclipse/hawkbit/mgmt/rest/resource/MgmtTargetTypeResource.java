@@ -139,7 +139,7 @@ public class MgmtTargetTypeResource implements MgmtTargetTypeRestApi {
     public ResponseEntity<Void> addCompatibleDistributionSets(@PathVariable("targetTypeId") final Long targetTypeId,
             @RequestBody final List<MgmtDistributionSetTypeAssignment> distributionSetTypeIds) {
 
-        targetTypeManagement.assignOptionalDistributionSetTypes(targetTypeId,
+        targetTypeManagement.assignCompatibleDistributionSetTypes(targetTypeId,
                 distributionSetTypeIds.stream().map(MgmtDistributionSetTypeAssignment::getId).collect(Collectors.toList()));
         return ResponseEntity.ok().build();
     }

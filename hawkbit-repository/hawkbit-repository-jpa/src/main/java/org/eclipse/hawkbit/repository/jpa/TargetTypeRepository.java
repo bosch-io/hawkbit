@@ -55,6 +55,15 @@ public interface TargetTypeRepository
 
     @Query("SELECT COUNT (e.dsType) FROM TargetTypeElement e WHERE e.targetType.id = :id")
     long countDsSetTypesById(@Param("id") Long id);
+    /**
+     *
+     * @param dsTypeId
+     *            to search for
+     * @return all {@link TargetType}s in the repository with given
+     *         {@link TargetType#getName()}
+     */
+    @Query("SELECT e.targetType FROM TargetTypeElement e WHERE e.dsType.id = :id")
+    List<JpaTargetType> findByDsType(@Param("id") Long dsTypeId);
 
     /**
      *

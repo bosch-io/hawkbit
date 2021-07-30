@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.hawkbit.repository.QuotaManagement;
+import org.eclipse.hawkbit.repository.TargetTypeFields;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.repository.builder.GenericTargetTypeUpdate;
 import org.eclipse.hawkbit.repository.builder.TargetTypeCreate;
@@ -26,6 +27,7 @@ import org.eclipse.hawkbit.repository.jpa.configuration.Constants;
 import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSetType;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetType;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetType_;
+import org.eclipse.hawkbit.repository.jpa.rsql.RSQLUtility;
 import org.eclipse.hawkbit.repository.jpa.utils.QuotaHelper;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.TargetType;
@@ -35,6 +37,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.jpa.vendor.Database;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -117,7 +120,10 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
 
     @Override
     public Page<TargetType> findByRsql(Pageable pageable, String rsqlParam) {
-        return null;
+        final Specification<JpaTargetType> spec = RSQLUtility.parse(rsqlParam, TargetTypeFields.class,
+                virtualPropertyReplacer, database);
+
+        return convertPage(targetTypeRepository.findAll(spec, pageable), pageable);
     }
 
     @Override
@@ -141,20 +147,11 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
         typeUpdate.getDescription().ifPresent(type::setDescription);
         typeUpdate.getColour().ifPresent(type::setColour);
 
-        // todo test this & check if we really need this
-        if (typeUpdate.getCompatible().isPresent()) {
-            final Collection<Long> currentTargetTypeIds = type.getCompatibleDistributionSetTypes().stream()
-                    .map(DistributionSetType::getId).collect(Collectors.toSet());
-
-            typeUpdate.getCompatible().ifPresent(mand -> distributionSetTypeRepository.findAllById(mand)
-                    .forEach(type::addCompatibleDistributionSetType));
-        }
-
         return targetTypeRepository.save(type);
     }
 
     @Override
-    public TargetType assignOptionalDistributionSetTypes(long targetTypeId, Collection<Long> distributionSetTypeIds) {
+    public TargetType assignCompatibleDistributionSetTypes(long targetTypeId, Collection<Long> distributionSetTypeIds) {
         final Collection<JpaDistributionSetType> dsTypes = distributionSetTypeRepository
                 .findAllById(distributionSetTypeIds);
 

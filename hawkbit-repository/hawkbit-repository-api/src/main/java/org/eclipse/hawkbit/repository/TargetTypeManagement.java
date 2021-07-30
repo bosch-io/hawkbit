@@ -36,11 +36,11 @@ public interface TargetTypeManagement {
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_READ_TARGET)
     Slice<TargetType> findAll(@NotNull Pageable pageable);
 
-    
+
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_READ_TARGET)
     Page<TargetType> findByTarget(@NotNull Pageable pageable, @NotEmpty String controllerId);
 
-    
+
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_READ_TARGET)
     Page<TargetType> findByRsql(@NotNull Pageable pageable, @NotNull String rsqlParam);
 
@@ -57,8 +57,8 @@ public interface TargetTypeManagement {
     TargetType update(@NotNull @Valid TargetTypeUpdate update);
 
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_READ_REPOSITORY_AND_UPDATE_TARGET)
-    TargetType assignOptionalDistributionSetTypes(long targetTypeId,
-                                                           @NotEmpty Collection<Long> distributionSetTypeIds);
+    TargetType assignCompatibleDistributionSetTypes(long targetTypeId,
+                                                    @NotEmpty Collection<Long> distributionSetTypeIds);
 
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_READ_REPOSITORY_AND_UPDATE_TARGET)
     TargetType unassignDistributionSetType(long targetTypeId, long distributionSetTypeIds);
