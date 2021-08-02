@@ -9,7 +9,6 @@
 package org.eclipse.hawkbit.repository.jpa;
 
 import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSetType;
-import org.eclipse.hawkbit.repository.jpa.model.JpaSoftwareModuleType;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetType;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
@@ -26,7 +25,6 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,15 +36,11 @@ import java.util.Optional;
 public interface TargetTypeRepository
         extends BaseEntityRepository<JpaTargetType, Long>, JpaSpecificationExecutor<JpaTargetType> {
 
-    Page<JpaTargetType> findByDeleted(Pageable pageable, boolean isDeleted);
-
-    long countByDeleted(boolean isDeleted);
-
     long countByElementsDsType(JpaDistributionSetType distributionSetType);
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM JpaDistributionSetType t WHERE t.tenant = :tenant")
+    @Query("DELETE FROM JpaTargetType t WHERE t.tenant = :tenant")
     void deleteByTenant(@Param("tenant") String tenant);
 
     @Override

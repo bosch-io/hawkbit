@@ -38,9 +38,6 @@ public class JpaTargetType extends AbstractJpaNamedEntity implements TargetType,
     @Size(max = TargetType.COLOUR_MAX_SIZE)
     private String colour;
 
-    @Column(name = "deleted")
-    private boolean deleted;
-
     public JpaTargetType() {
         // default public constructor for JPA
     }
@@ -78,7 +75,7 @@ public class JpaTargetType extends AbstractJpaNamedEntity implements TargetType,
             return this;
         }
 
-        // we search by id (standard equals compares also revison)
+        // we search by id (standard equals compares also revision)
         elements.stream().filter(element -> element.getDsType().getId().equals(dsTypeId)).findAny()
                 .ifPresent(elements::remove);
 
