@@ -55,8 +55,6 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
     private final TargetTypeRepository targetTypeRepository;
     private final DistributionSetTypeRepository distributionSetTypeRepository;
 
-    private final TargetRepository targetRepository;
-
     private final VirtualPropertyReplacer virtualPropertyReplacer;
     private final NoCountPagingRepository criteriaNoCountDao;
 
@@ -64,11 +62,10 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
     private final QuotaManagement quotaManagement;
 
     public JpaTargetTypeManagement(final TargetTypeRepository targetTypeRepository,
-            final TargetRepository targetRepository, final DistributionSetTypeRepository distributionSetTypeRepository,
+            final DistributionSetTypeRepository distributionSetTypeRepository,
             final VirtualPropertyReplacer virtualPropertyReplacer, final NoCountPagingRepository criteriaNoCountDao,
             final Database database, final QuotaManagement quotaManagement) {
         this.targetTypeRepository = targetTypeRepository;
-        this.targetRepository = targetRepository;
         this.distributionSetTypeRepository = distributionSetTypeRepository;
         this.virtualPropertyReplacer = virtualPropertyReplacer;
         this.criteriaNoCountDao = criteriaNoCountDao;
@@ -120,7 +117,7 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
 
     @Override
     public Page<TargetType> findByRsql(Pageable pageable, String rsqlParam) {
-        final Specification<JpaTargetType> spec = RSQLUtility.parse(rsqlParam, TargetTypeFields.class,
+        final Specification<JpaTargetType> spec = RSQLUtility.buildRsqlSpecification(rsqlParam, TargetTypeFields.class,
                 virtualPropertyReplacer, database);
 
         return convertPage(targetTypeRepository.findAll(spec, pageable), pageable);
@@ -128,7 +125,6 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
 
     @Override
     public Optional<TargetType> get(long id) {
-        // TODO: Add error handler
         return targetTypeRepository.findById(id).map(targetType -> targetType);
     }
 
