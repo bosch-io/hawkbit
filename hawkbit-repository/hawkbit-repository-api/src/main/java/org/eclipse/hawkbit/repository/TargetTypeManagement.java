@@ -31,7 +31,7 @@ public interface TargetTypeManagement {
     List<TargetType> create(@NotNull @Valid Collection<TargetTypeCreate> creates);
 
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_DELETE_TARGET)
-    void delete(@NotNull long id);
+    void delete(@NotNull Long id);
 
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_READ_TARGET)
     Slice<TargetType> findAll(@NotNull Pageable pageable);

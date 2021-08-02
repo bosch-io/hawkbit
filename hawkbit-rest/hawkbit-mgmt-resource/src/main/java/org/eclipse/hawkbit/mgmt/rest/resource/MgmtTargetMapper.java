@@ -8,12 +8,16 @@
  */
 package org.eclipse.hawkbit.mgmt.rest.resource;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 import java.net.URI;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.eclipse.hawkbit.mgmt.json.model.MgmtMaintenanceWindow;
@@ -44,9 +48,6 @@ import org.eclipse.hawkbit.rest.data.ResponseList;
 import org.eclipse.hawkbit.rest.data.SortDirection;
 import org.eclipse.hawkbit.util.IpUtil;
 import org.springframework.data.domain.PageRequest;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * A mapper which maps repository model to RESTful model representation and
@@ -154,7 +155,9 @@ public final class MgmtTargetMapper {
         if (installationDate != null) {
             targetRest.setInstalledAt(installationDate);
         }
-        targetRest.setTargetTypeId(target.getType().getId());
+        if (Objects.nonNull(target.getType())){
+            targetRest.setTargetTypeId(target.getType().getId());
+        }
 
         targetRest.add(linkTo(methodOn(MgmtTargetRestApi.class).getTarget(target.getControllerId())).withSelfRel());
 
@@ -172,11 +175,9 @@ public final class MgmtTargetMapper {
     }
 
     private static TargetCreate fromRequest(final EntityFactory entityFactory, final MgmtTargetRequestBody targetRest) {
-        // TODO: check target type, add default type if not provided
-        // the check is added to JpaTargetCreate. Can be discussed if it is sufficient
         return entityFactory.target().create().controllerId(targetRest.getControllerId()).name(targetRest.getName())
                 .description(targetRest.getDescription()).securityToken(targetRest.getSecurityToken())
-                .address(targetRest.getAddress()).type(targetRest.getTypeId());
+                .address(targetRest.getAddress()).type(targetRest.getTargetTypeId());
     }
 
     static List<MetaData> fromRequestTargetMetadata(final List<MgmtMetadata> metadata,

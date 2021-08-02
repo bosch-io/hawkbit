@@ -8,12 +8,6 @@
  */
 package org.eclipse.hawkbit.repository.jpa;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import org.eclipse.hawkbit.repository.QuotaManagement;
 import org.eclipse.hawkbit.repository.TargetTypeFields;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
@@ -43,6 +37,12 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * JPA implementation of {@link TargetTypeManagement}.
@@ -101,7 +101,7 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
     @Transactional
     @Retryable(include = {
             ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))
-    public void delete(final long targetTypeId) {
+    public void delete(final Long targetTypeId) {
         throwExceptionIfTargetTypeDoesNotExist(targetTypeId);
         targetTypeRepository.deleteById(targetTypeId);
     }

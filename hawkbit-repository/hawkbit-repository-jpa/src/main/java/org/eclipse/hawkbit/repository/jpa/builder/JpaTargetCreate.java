@@ -12,11 +12,12 @@ import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.repository.builder.AbstractTargetUpdateCreate;
 import org.eclipse.hawkbit.repository.builder.TargetCreate;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
-import org.eclipse.hawkbit.repository.exception.TargetTypeUndefinedException;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTarget;
 import org.eclipse.hawkbit.repository.model.TargetType;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.springframework.util.StringUtils;
+
+import java.util.Objects;
 
 /**
  * Create/build implementation.
@@ -24,7 +25,7 @@ import org.springframework.util.StringUtils;
  */
 public class JpaTargetCreate extends AbstractTargetUpdateCreate<TargetCreate> implements TargetCreate {
 
-    private Long typeId;
+    private Long targetTypeId;
 
     private final TargetTypeManagement targetTypeManagement;
 
@@ -35,12 +36,12 @@ public class JpaTargetCreate extends AbstractTargetUpdateCreate<TargetCreate> im
 
     @Override
     public TargetCreate type(Long targetTypeId) {
-        this.typeId = targetTypeId;
+        this.targetTypeId = targetTypeId;
         return this;
     }
 
-    public Long getTypeId() {
-        return typeId;
+    public Long getTargetTypeId() {
+        return targetTypeId;
     }
 
     @Override
@@ -57,12 +58,10 @@ public class JpaTargetCreate extends AbstractTargetUpdateCreate<TargetCreate> im
             target.setName(name);
         }
 
-        // Todo Target Type - to be decided if we really need a default type
-        TargetType targetType = !StringUtils.isEmpty(typeId)
-                ? findTargetTypeWithExceptionIfNotFound(typeId)
-                : setDefaultTargetType();
+        if (Objects.nonNull(targetTypeId)){
+            target.setType(findTargetTypeWithExceptionIfNotFound(targetTypeId));
+        }
 
-        target.setType(targetType);
         target.setDescription(description);
         target.setAddress(address);
         target.setUpdateStatus(getStatus().orElse(TargetUpdateStatus.UNKNOWN));
@@ -76,11 +75,4 @@ public class JpaTargetCreate extends AbstractTargetUpdateCreate<TargetCreate> im
                 .orElseThrow(() -> new EntityNotFoundException(TargetType.class, targetTypeId));
     }
 
-    private TargetType setDefaultTargetType() {
-        // Todo : To be discussed
-        //  Use constant for default name or read from system configs if we decide to have them
-        //  Exception returns status 500
-        return targetTypeManagement.getByName("default")
-                .orElseThrow(() -> new TargetTypeUndefinedException("Cannot find default target type"));
-    }
 }
