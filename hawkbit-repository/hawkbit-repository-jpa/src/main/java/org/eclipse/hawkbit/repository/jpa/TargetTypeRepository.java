@@ -37,6 +37,9 @@ public interface TargetTypeRepository
     @Query("SELECT d FROM JpaTargetType d WHERE d.id IN ?1")
     List<JpaTargetType> findAllById(Iterable<Long> ids);
 
+    @Query("SELECT COUNT (e.dsType) FROM TargetTypeElement e WHERE e.targetType.id = :id")
+    long countDsSetTypesById(@Param("id") Long id);
+
     /**
      *
      * @param dsTypeId

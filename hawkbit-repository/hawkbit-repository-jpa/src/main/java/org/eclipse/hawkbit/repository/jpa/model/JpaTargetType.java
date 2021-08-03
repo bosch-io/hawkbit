@@ -79,11 +79,6 @@ public class JpaTargetType extends AbstractJpaNamedEntity implements TargetType,
     }
 
     @Override
-    public boolean checkComplete(Target target) {
-        return false;
-    }
-
-    @Override
     public String getKey() {
         return null;
     }
