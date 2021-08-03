@@ -500,13 +500,19 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
                 quotaManagement);
     }
 
+    /**
+     * {@link JpaTargetTypeManagement} bean.
+     *
+     * @return a new {@link TargetTypeManagement}
+     */
     @Bean
     @ConditionalOnMissingBean
     TargetTypeManagement targetTypeManagement(final TargetTypeRepository targetTypeRepository,
+            final TargetRepository targetRepository,
             final DistributionSetTypeRepository distributionSetTypeRepository,
             final VirtualPropertyReplacer virtualPropertyReplacer, final NoCountPagingRepository criteriaNoCountDao,
             final JpaProperties properties, final QuotaManagement quotaManagement) {
-        return new JpaTargetTypeManagement(targetTypeRepository, distributionSetTypeRepository, virtualPropertyReplacer,
+        return new JpaTargetTypeManagement(targetTypeRepository, targetRepository, distributionSetTypeRepository, virtualPropertyReplacer,
                 criteriaNoCountDao, properties.getDatabase(), quotaManagement);
     }
 

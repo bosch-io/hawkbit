@@ -191,12 +191,4 @@ public class MgmtTarget extends MgmtNamedEntity {
         this.requestAttributes = requestAttributes;
     }
 
-    public Long getTypeId() {
-        return targetTypeId;
-    }
-
-    public void setTypeId(Long targetTypeId) {
-        this.targetTypeId = targetTypeId;
-    }
-
 }

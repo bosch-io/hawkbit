@@ -19,9 +19,6 @@ public class MgmtTargetRequestBody {
     private String controllerId;
 
     @JsonProperty
-    private Long typeId;
-
-    @JsonProperty
     private String address;
 
     @JsonProperty
@@ -95,14 +92,6 @@ public class MgmtTargetRequestBody {
     public MgmtTargetRequestBody setControllerId(final String controllerId) {
         this.controllerId = controllerId;
         return this;
-    }
-
-    public Long getTypeId() {
-        return typeId;
-    }
-
-    public void setType(Long typeId) {
-        this.typeId = typeId;
     }
 
     public String getAddress() {

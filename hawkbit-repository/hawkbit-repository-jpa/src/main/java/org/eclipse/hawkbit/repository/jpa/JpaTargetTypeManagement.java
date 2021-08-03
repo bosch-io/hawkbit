@@ -16,6 +16,7 @@ import org.eclipse.hawkbit.repository.builder.TargetTypeCreate;
 import org.eclipse.hawkbit.repository.builder.TargetTypeUpdate;
 import org.eclipse.hawkbit.repository.exception.AssignmentQuotaExceededException;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
+import org.eclipse.hawkbit.repository.exception.TargetTypeInUseException;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaTargetTypeCreate;
 import org.eclipse.hawkbit.repository.jpa.configuration.Constants;
 import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSetType;
@@ -53,6 +54,7 @@ import java.util.stream.Collectors;
 public class JpaTargetTypeManagement implements TargetTypeManagement {
 
     private final TargetTypeRepository targetTypeRepository;
+    private final TargetRepository targetRepository;
     private final DistributionSetTypeRepository distributionSetTypeRepository;
 
     private final VirtualPropertyReplacer virtualPropertyReplacer;
@@ -62,10 +64,12 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
     private final QuotaManagement quotaManagement;
 
     public JpaTargetTypeManagement(final TargetTypeRepository targetTypeRepository,
+            final TargetRepository targetRepository,
             final DistributionSetTypeRepository distributionSetTypeRepository,
             final VirtualPropertyReplacer virtualPropertyReplacer, final NoCountPagingRepository criteriaNoCountDao,
             final Database database, final QuotaManagement quotaManagement) {
         this.targetTypeRepository = targetTypeRepository;
+        this.targetRepository = targetRepository;
         this.distributionSetTypeRepository = distributionSetTypeRepository;
         this.virtualPropertyReplacer = virtualPropertyReplacer;
         this.criteriaNoCountDao = criteriaNoCountDao;
@@ -100,14 +104,17 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
             ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))
     public void delete(final Long targetTypeId) {
         throwExceptionIfTargetTypeDoesNotExist(targetTypeId);
+
+        if (targetRepository.countByTypeId(targetTypeId) > 0) {
+            throw new TargetTypeInUseException("Cannot delete target type that is in use");
+        }
+
         targetTypeRepository.deleteById(targetTypeId);
     }
 
     @Override
     public Slice<TargetType> findAll(Pageable pageable) {
-        return convertPage(criteriaNoCountDao.findAll(
-                (targetRoot, query, cb) -> cb.equal(targetRoot.<Boolean> get(JpaTargetType_.deleted), false), pageable,
-                JpaTargetType.class), pageable);
+        return convertPage(criteriaNoCountDao.findAll(pageable, JpaTargetType.class), pageable);
     }
 
     @Override
@@ -167,6 +174,7 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
     @Override
     public TargetType unassignDistributionSetType(long targetTypeId, long distributionSetTypeId) {
         final JpaTargetType type = findTargetTypeAndThrowExceptionIfNotFound(targetTypeId);
+        findDsTypeAndThrowExceptionIfNotFound(distributionSetTypeId);
         type.removeDistributionSetType(distributionSetTypeId);
 
         return targetTypeRepository.save(type);
@@ -174,6 +182,10 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
 
     private JpaTargetType findTargetTypeAndThrowExceptionIfNotFound(final Long typeId) {
         return (JpaTargetType) get(typeId).orElseThrow(() -> new EntityNotFoundException(TargetType.class, typeId));
+    }
+
+    private JpaDistributionSetType findDsTypeAndThrowExceptionIfNotFound(final Long typeId) {
+        return (JpaDistributionSetType) get(typeId).orElseThrow(() -> new EntityNotFoundException(DistributionSetType.class, typeId));
     }
 
     private void throwExceptionIfTargetTypeDoesNotExist(final Long typeId) {
