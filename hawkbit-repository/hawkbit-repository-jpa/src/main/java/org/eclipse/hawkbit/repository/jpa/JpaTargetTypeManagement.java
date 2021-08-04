@@ -185,7 +185,12 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
     }
 
     private JpaDistributionSetType findDsTypeAndThrowExceptionIfNotFound(final Long typeId) {
-        return (JpaDistributionSetType) get(typeId).orElseThrow(() -> new EntityNotFoundException(DistributionSetType.class, typeId));
+        List<JpaDistributionSetType> dsTypes = distributionSetTypeRepository
+                .findAllById(Collections.singleton(typeId));
+        if (dsTypes.isEmpty()) {
+            throw new EntityNotFoundException(DistributionSetType.class, typeId);
+        }
+        return dsTypes.get(0);
     }
 
     private void throwExceptionIfTargetTypeDoesNotExist(final Long typeId) {

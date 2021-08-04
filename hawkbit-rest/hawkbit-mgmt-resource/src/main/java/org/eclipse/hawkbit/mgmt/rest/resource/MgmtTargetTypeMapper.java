@@ -69,7 +69,6 @@ public class MgmtTargetTypeMapper {
         final MgmtTargetType result = new MgmtTargetType();
         MgmtRestModelMapper.mapNamedToNamed(result, type);
         result.setTypeId(type.getId());
-        result.setDeleted(type.isDeleted());
         result.setColour(type.getColour());
         result.add(linkTo(methodOn(MgmtTargetTypeRestApi.class).getTargetType(result.getTypeId())).withSelfRel());
         return result;

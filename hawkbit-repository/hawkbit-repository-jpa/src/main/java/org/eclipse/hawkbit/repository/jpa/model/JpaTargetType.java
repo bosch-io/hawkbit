@@ -64,7 +64,8 @@ public class JpaTargetType extends AbstractJpaNamedEntity implements TargetType,
         if (distributionSetTypes == null) {
             return this;
         }
-        distributionSetTypes.remove(dsTypeId);
+        distributionSetTypes.stream().filter(element -> element.getId().equals(dsTypeId)).findAny()
+                .ifPresent(distributionSetTypes::remove);
         return this;
     }
 
@@ -76,16 +77,6 @@ public class JpaTargetType extends AbstractJpaNamedEntity implements TargetType,
         }
 
         return Collections.unmodifiableSet(distributionSetTypes);
-    }
-
-    @Override
-    public String getKey() {
-        return null;
-    }
-
-    @Override
-    public boolean isDeleted() {
-        return false;
     }
 
     @Override

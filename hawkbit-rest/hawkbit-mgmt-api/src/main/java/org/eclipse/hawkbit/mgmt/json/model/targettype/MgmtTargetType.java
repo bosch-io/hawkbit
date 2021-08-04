@@ -26,18 +26,7 @@ public class MgmtTargetType extends MgmtNamedEntity {
     private Long typeId;
 
     @JsonProperty
-    private boolean deleted;
-
-    @JsonProperty
     private String colour;
-
-    public boolean isDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(final boolean deleted) {
-        this.deleted = deleted;
-    }
 
     public Long getTypeId() {
         return typeId;
