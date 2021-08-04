@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import com.jayway.jsonpath.JsonPath;
 import io.qameta.allure.Description;
@@ -55,7 +54,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @Feature("Component Tests - Management API")
 @Story("Target Type Resource")
-public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegrationTest {
+class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegrationTest {
 
     private final static String TARGETTYPES_ENDPOINT = MgmtRestConstants.TARGETTYPE_V1_REQUEST_MAPPING;
     private final static String TARGETTYPE_SINGLE_ENDPOINT = MgmtRestConstants.TARGETTYPE_V1_REQUEST_MAPPING
@@ -65,7 +64,6 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
     private final static String TARGETTYPE_DSTYPE_SINGLE_ENDPOINT = TARGETTYPE_DSTYPES_ENDPOINT + "/{dstypeid}";
 
     private final static String TEST_USER = "targetTypeTester";
-    // todo - run tests & update
 
     @Test
     @WithUser(principal = TEST_USER, allSpPermissions = true)
@@ -87,6 +85,7 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
                 .andExpect(jsonPath("$.lastModifiedAt", equalTo(testType.getLastModifiedAt())))
                 .andExpect(jsonPath("$._links.self.href", equalTo("http://localhost/rest/v1/targettypes/" + typeId)))
                 .andExpect(jsonPath("$.deleted").doesNotExist())
+                .andExpect(jsonPath("$.key").doesNotExist())
                 .andExpect(jsonPath("$._links.compatibledistributionsettypes.href",
                         equalTo("http://localhost/rest/v1/targettypes/" + typeId + "/compatibledistributionsettypes")));
     }
@@ -116,6 +115,8 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
                     .andExpect(jsonPath("$.content.[?(@.id=='" + typeId + "')].lastModifiedBy", contains(TEST_USER)))
                     .andExpect(jsonPath("$.content.[?(@.id=='" + typeId + "')].lastModifiedAt",
                             contains(testTypes.get(index).getLastModifiedAt())))
+                    .andExpect(jsonPath("$.content.[?(@.id=='" + typeId + "')].deleted").doesNotExist())
+                    .andExpect(jsonPath("$.content.[?(@.id=='" + typeId + "')].key").doesNotExist())
                     .andExpect(jsonPath("$.content.[?(@.id=='" + typeId + "')]._links.self.href",
                             contains("http://localhost/rest/v1/targettypes/" + typeId)))
                     .andExpect(
@@ -142,7 +143,6 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
     @WithUser(principal = TEST_USER, allSpPermissions = true)
     @Description("Checks the correct behaviour of /rest/v1/targettypes GET requests with sorting by name.")
     void getTargetTypesSortedByName() throws Exception {
-        //todo
         String typeNameA = "ATestTypeGETsorted";
         String typeNameB = "BTestTypeGETsorted";
         String typeNameC = "CTestTypeGETsorted";
@@ -165,6 +165,8 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
                 .andExpect(jsonPath("$.content.[0].createdAt", equalTo(testTypeC.getCreatedAt())))
                 .andExpect(jsonPath("$.content.[0].lastModifiedBy", equalTo(TEST_USER)))
                 .andExpect(jsonPath("$.content.[0].lastModifiedAt", equalTo(testTypeC.getLastModifiedAt())))
+                .andExpect(jsonPath("$.content.[0].deleted").doesNotExist())
+                .andExpect(jsonPath("$.content.[0].key").doesNotExist())
                 .andExpect(jsonPath("$.content.[0]._links.self.href",
                         equalTo("http://localhost/rest/v1/targettypes/" + testTypeC.getId())))
                 .andExpect(jsonPath("$.content.[0]._links.compatibledistributionsettypes.href").doesNotExist())
@@ -184,6 +186,8 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
                 .andExpect(jsonPath("$.content.[0].createdAt", equalTo(testTypeA.getCreatedAt())))
                 .andExpect(jsonPath("$.content.[0].lastModifiedBy", equalTo(TEST_USER)))
                 .andExpect(jsonPath("$.content.[0].lastModifiedAt", equalTo(testTypeA.getLastModifiedAt())))
+                .andExpect(jsonPath("$.content.[0].deleted").doesNotExist())
+                .andExpect(jsonPath("$.content.[0].key").doesNotExist())
                 .andExpect(jsonPath("$.content.[0]._links.self.href",
                         equalTo("http://localhost/rest/v1/targettypes/" + testTypeA.getId())))
                 .andExpect(jsonPath("$.content.[0]._links.compatibledistributionsettypes.href").doesNotExist())
@@ -265,7 +269,8 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
                 .andExpect(jsonPath("$.createdAt", equalTo(testType.getCreatedAt())))
                 .andExpect(jsonPath("$.lastModifiedBy", equalTo(TEST_USER)))
                 .andExpect(jsonPath("$.lastModifiedAt", equalTo(testType.getLastModifiedAt())))
-                .andExpect(jsonPath("$.deleted").doesNotExist());
+                .andExpect(jsonPath("$.deleted").doesNotExist())
+                .andExpect(jsonPath("$.key").doesNotExist());
     }
 
     @Test
@@ -308,7 +313,9 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$[0].name", equalTo(standardDsType.getName())))
                 .andExpect(jsonPath("$[0].description", equalTo(standardDsType.getDescription())))
-                .andExpect(jsonPath("$[0].key", equalTo("test_default_ds_type")));
+                .andExpect(jsonPath("$[0].key", equalTo("test_default_ds_type")))
+                .andExpect(jsonPath("$[0]._links.self.href",
+                        equalTo("http://localhost/rest/v1/distributionsettypes/" + standardDsType.getId())));
     }
 
     @Test
@@ -327,7 +334,7 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
     @Test
     @WithUser(principal = TEST_USER, allSpPermissions = true)
     @Description("Checks the correct behaviour of /rest/v1/targettypes/{ID}/compatibledistributionsettypes/{ID} DELETE requests.")
-    void removeDsTypeToTargetType() throws Exception {
+    void removeDsTypeFromTargetType() throws Exception {
         String typeName = "TestTypeRemoveDs";
         TargetType testType = createTestTargetTypeInDB(typeName, Collections.singletonList(standardDsType));
 
@@ -339,6 +346,26 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
         assertThat(testType.getLastModifiedBy()).isEqualTo(TEST_USER);
         assertThat(testType.getOptLockRevision()).isEqualTo(2);
         assertThat(testType.getCompatibleDistributionSetTypes()).isEmpty();
+    }
+
+    @Test
+    @WithUser(principal = TEST_USER, allSpPermissions = true)
+    @Description("Checks the correct behaviour of /rest/v1/distributionsettypes/{ID} DELETE requests.")
+    void deletingDsTypeRemovesAssignmentFromTargetType() throws Exception {
+        String typeName = "TestTypeRemoveDs";
+        //DistributionSetType dsType = testdataFactory.findOrCreateDistributionSetType("dsTypeDeleteKey", "dsTypeDeleteName");
+        TargetType testType = createTestTargetTypeInDB(typeName, Collections.singletonList(standardDsType));
+        assertThat(testType.getCompatibleDistributionSetTypes()).hasSize(1);
+        assertThat(distributionSetTypeManagement.getByKey(standardDsType.getKey())).isNotEmpty();
+
+        mvc.perform(delete(MgmtRestConstants.DISTRIBUTIONSETTYPE_V1_REQUEST_MAPPING + "/" + standardDsType.getId()))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk());
+
+        testType = targetTypeManagement.get(testType.getId()).get();
+        assertThat(testType.getLastModifiedBy()).isEqualTo(TEST_USER);
+        assertThat(testType.getOptLockRevision()).isEqualTo(2);
+        assertThat(testType.getCompatibleDistributionSetTypes()).isEmpty();
+        assertThat(distributionSetTypeManagement.getByKey(standardDsType.getKey())).isEmpty();
     }
 
     @Test
@@ -397,7 +424,7 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
                 put(TARGETTYPE_SINGLE_ENDPOINT, testType.getId()).content(body).contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", equalTo(testType.getId().intValue())))
-                .andExpect(jsonPath("$.deleted", equalTo(false)));
+                .andExpect(jsonPath("$.deleted").doesNotExist());
     }
 
     @Test
@@ -500,14 +527,9 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
         return prepareTestTargetType(name, null).build();
     }
 
-    @Step
-    private TargetType buildTestTargetTypeBody(String name, Collection<DistributionSetType> dsTypes) {
-        return prepareTestTargetType(name, dsTypes).build();
-    }
-
     private TargetTypeCreate prepareTestTargetType(String name, Collection<DistributionSetType> dsTypes) {
         TargetTypeCreate create = entityFactory.targetType().create().name(name)
-                .description("Description of the test type").colour("#f3ff48");
+                .description("Description of the test type").colour("#aaaaaa");
         if (dsTypes != null && !dsTypes.isEmpty()) {
             create.compatible(Collections.singletonList(standardDsType.getId()));
         }
@@ -534,7 +556,9 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
     @Step
     private List<TargetType> buildTestTargetTypesWithoutDsTypes(String namePrefix, int count) {
         final List<TargetType> types = new ArrayList<>();
-        IntStream.range(0, count).parallel().forEach(step -> types.add(buildTestTargetTypeBody(namePrefix + step)));
+        for (int index = 0; index < count; index++) {
+            types.add(buildTestTargetTypeBody(namePrefix + index));
+        }
         return types;
     }
 
@@ -550,13 +574,15 @@ public class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegration
             resultActions.andExpect(status().isCreated()).andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                     .andExpect(jsonPath("$[" + index + "].id").exists())
                     .andExpect(jsonPath("$[" + index + "].name", startsWith("TestTypePOST")))
-                    .andExpect(jsonPath("$[" + index + "].colour", hasToString("#000000")))
+                    .andExpect(jsonPath("$[" + index + "].colour", hasToString("#aaaaaa")))
                     .andExpect(jsonPath("$[" + index + "].description",
                             equalTo("Description of the test type")))
                     .andExpect(jsonPath("$[" + index + "].createdBy", equalTo(TEST_USER)))
                     .andExpect(jsonPath("$[" + index + "].createdAt").exists())
                     .andExpect(jsonPath("$[" + index + "].lastModifiedBy", equalTo(TEST_USER)))
                     .andExpect(jsonPath("$[" + index + "].lastModifiedAt").exists())
+                    .andExpect(jsonPath("$[" + index + "].key").doesNotExist())
+                    .andExpect(jsonPath("$[" + index + "].deleted").doesNotExist())
                     .andExpect(jsonPath("$[" + index + "]._links.self.href",
                             startsWith("http://localhost/rest/v1/targettypes/")))
                     .andExpect(

@@ -427,13 +427,13 @@ public abstract class JsonBuilder {
         int i = 0;
         for (final Target target : targets) {
             final String address = target.getAddress() != null ? target.getAddress().toString() : null;
-
+            final String type = target.getType() != null ? target.getType().getId().toString() : null;
             final String token = withToken ? target.getSecurityToken() : null;
 
             builder.append(new JSONObject().put("controllerId", target.getControllerId())
                     .put("description", target.getDescription()).put("name", target.getName()).put("createdAt", "0")
                     .put("updatedAt", "0").put("createdBy", "fghdfkjghdfkjh").put("updatedBy", "fghdfkjghdfkjh")
-                    .put("address", address).put("securityToken", token).toString());
+                    .put("address", address).put("securityToken", token).put("targetTypeId", type).toString());
 
             if (++i < targets.size()) {
                 builder.append(",");
@@ -460,7 +460,7 @@ public abstract class JsonBuilder {
             });
 
             result.put(new JSONObject().put("name", type.getName()).put("description", type.getDescription())
-                    .put("id", Long.MAX_VALUE).put("key", type.getKey()).put("createdAt", "0").put("updatedAt", "0")
+                    .put("id", Long.MAX_VALUE).put("colour", type.getColour()).put("createdAt", "0").put("updatedAt", "0")
                     .put("createdBy", "fghdfkjghdfkjh").put("updatedBy", "fghdfkjghdfkjh")
                     .put("distributionsets", dsTypes));
 
