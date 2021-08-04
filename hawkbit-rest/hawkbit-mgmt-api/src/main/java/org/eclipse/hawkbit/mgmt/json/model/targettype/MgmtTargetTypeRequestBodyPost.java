@@ -24,6 +24,11 @@ public class MgmtTargetTypeRequestBodyPost extends MgmtTargetTypeRequestBodyPut{
     @JsonProperty
     private List<MgmtDistributionSetTypeAssignment> compatibledistributionsettypes;
 
+    /**
+     * @param name
+     *          the name to set
+     * @return  post request body
+     */
     public MgmtTargetTypeRequestBodyPost setName(final String name) {
         super.setName(name);
         return this;
