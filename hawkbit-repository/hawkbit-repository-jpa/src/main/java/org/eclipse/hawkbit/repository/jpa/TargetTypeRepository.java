@@ -37,7 +37,7 @@ public interface TargetTypeRepository
     @Query("SELECT d FROM JpaTargetType d WHERE d.id IN ?1")
     List<JpaTargetType> findAllById(Iterable<Long> ids);
 
-    @Query("SELECT COUNT (e.dsType) FROM TargetTypeElement e WHERE e.targetType.id = :id")
+    @Query(value = "SELECT COUNT (t.id) FROM JpaDistributionSetType t JOIN t.compatibleToTargetTypes tt WHERE tt.id = :id")
     long countDsSetTypesById(@Param("id") Long id);
 
     /**
@@ -47,7 +47,7 @@ public interface TargetTypeRepository
      * @return all {@link TargetType}s in the repository with given
      *         {@link TargetType#getName()}
      */
-    @Query("SELECT e.targetType FROM TargetTypeElement e WHERE e.dsType.id = :id")
+    @Query(value = "SELECT DISTINCT t FROM JpaTargetType t JOIN t.distributionSetTypes dst WHERE dst.id = :id")
     List<JpaTargetType> findByDsType(@Param("id") Long dsTypeId);
 
     /**
