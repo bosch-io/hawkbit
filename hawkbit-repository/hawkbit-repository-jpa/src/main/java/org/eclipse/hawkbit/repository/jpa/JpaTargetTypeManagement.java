@@ -58,7 +58,6 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
     private final DistributionSetTypeRepository distributionSetTypeRepository;
 
     private final VirtualPropertyReplacer virtualPropertyReplacer;
-    private final NoCountPagingRepository criteriaNoCountDao;
 
     private final Database database;
     private final QuotaManagement quotaManagement;
@@ -67,24 +66,22 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
      * Constructor
      *
      * @param targetTypeRepository
-     *          Target type repository
+     *            Target type repository
      * @param targetRepository
-     *          Target repository
+     *            Target repository
      * @param virtualPropertyReplacer
-     *          replacer
+     *            replacer
      * @param database
-     *          database
+     *            database
      */
     public JpaTargetTypeManagement(final TargetTypeRepository targetTypeRepository,
-            final TargetRepository targetRepository,
-            final DistributionSetTypeRepository distributionSetTypeRepository,
-            final VirtualPropertyReplacer virtualPropertyReplacer, final NoCountPagingRepository criteriaNoCountDao,
-            final Database database, final QuotaManagement quotaManagement) {
+            final TargetRepository targetRepository, final DistributionSetTypeRepository distributionSetTypeRepository,
+            final VirtualPropertyReplacer virtualPropertyReplacer, final Database database,
+            final QuotaManagement quotaManagement) {
         this.targetTypeRepository = targetTypeRepository;
         this.targetRepository = targetRepository;
         this.distributionSetTypeRepository = distributionSetTypeRepository;
         this.virtualPropertyReplacer = virtualPropertyReplacer;
-        this.criteriaNoCountDao = criteriaNoCountDao;
         this.database = database;
         this.quotaManagement = quotaManagement;
     }
@@ -126,7 +123,7 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
 
     @Override
     public Slice<TargetType> findAll(Pageable pageable) {
-        return convertPage(criteriaNoCountDao.findAll(pageable, JpaTargetType.class), pageable);
+        return convertPage(targetTypeRepository.findAllWithoutCount(pageable), pageable);
     }
 
     @Override
@@ -197,8 +194,7 @@ public class JpaTargetTypeManagement implements TargetTypeManagement {
     }
 
     private JpaDistributionSetType findDsTypeAndThrowExceptionIfNotFound(final Long typeId) {
-        List<JpaDistributionSetType> dsTypes = distributionSetTypeRepository
-                .findAllById(Collections.singleton(typeId));
+        List<JpaDistributionSetType> dsTypes = distributionSetTypeRepository.findAllById(Collections.singleton(typeId));
         if (dsTypes.isEmpty()) {
             throw new EntityNotFoundException(DistributionSetType.class, typeId);
         }

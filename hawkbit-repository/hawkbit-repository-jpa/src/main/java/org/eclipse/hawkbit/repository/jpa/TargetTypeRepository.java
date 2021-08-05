@@ -169,8 +169,9 @@ public interface TargetTypeRepository
      * @return all {@link TargetType}s in the repository with given
      *         {@link TargetType#getName()}
      */
-    @Query(value = "SELECT DISTINCT t FROM JpaTargetType t JOIN t.distributionSetTypes dst WHERE dst.id = :id")
-    List<JpaTargetType> findByDsType(@Param("id") Long dsTypeId);
+    default List<JpaTargetType> findByDsType(@Param("id") Long dsTypeId) {
+        return this.findAll(Specification.where(TargetTypeSpecification.hasDsSetType(dsTypeId)));
+    }
 
     /**
      *

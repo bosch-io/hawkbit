@@ -32,7 +32,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
  * back.
  *
  */
-public class MgmtTargetTypeMapper {
+public final class MgmtTargetTypeMapper {
 
     // private constructor, utility class
     private MgmtTargetTypeMapper() {

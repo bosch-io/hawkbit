@@ -46,13 +46,10 @@ public class MgmtTargetTypeResource implements MgmtTargetTypeRestApi {
     private static final Logger LOG = LoggerFactory.getLogger(MgmtTargetTypeResource.class);
 
     private final TargetTypeManagement targetTypeManagement;
-    private final DistributionSetTypeManagement distributionSetTypeManagement;
     private final EntityFactory entityFactory;
 
-    public MgmtTargetTypeResource(TargetTypeManagement targetTypeManagement,
-            DistributionSetTypeManagement distributionSetTypeManagement, final EntityFactory entityFactory) {
+    public MgmtTargetTypeResource(TargetTypeManagement targetTypeManagement, final EntityFactory entityFactory) {
         this.targetTypeManagement = targetTypeManagement;
-        this.distributionSetTypeManagement = distributionSetTypeManagement;
         this.entityFactory = entityFactory;
     }
 
