@@ -19,6 +19,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Step;
 import io.qameta.allure.Story;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.eclipse.hawkbit.im.authentication.SpPermission;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants;
 import org.eclipse.hawkbit.repository.builder.TargetTypeCreate;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
@@ -64,6 +65,15 @@ class MgmtTargetTypeResourceTest extends AbstractManagementApiIntegrationTest {
     private final static String TARGETTYPE_DSTYPE_SINGLE_ENDPOINT = TARGETTYPE_DSTYPES_ENDPOINT + "/{dstypeid}";
 
     private final static String TEST_USER = "targetTypeTester";
+
+
+    @Test
+    @WithUser(principal = "targetTypeTester", allSpPermissions = true, removeFromAllPermission = { SpPermission.READ_TARGET })
+    @Description("GET targettypes returns Forbidden when permission is missing")
+    void getTargetTypesWithoutPermission() throws Exception {
+        mvc.perform(get(TARGETTYPES_ENDPOINT).accept(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isForbidden());
+    }
 
     @Test
     @WithUser(principal = TEST_USER, allSpPermissions = true)

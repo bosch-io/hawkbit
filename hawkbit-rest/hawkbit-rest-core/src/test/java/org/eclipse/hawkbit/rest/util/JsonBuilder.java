@@ -467,6 +467,34 @@ public abstract class JsonBuilder {
         }
 
         return result.toString();
+    }  
+    
+    public static String targetTypesCreatableFieldsOnly(final List<TargetType> types) throws JSONException {
+        final JSONArray result = new JSONArray();
+
+        for (final TargetType type : types) {
+
+            final JSONArray dsTypes = new JSONArray();
+            type.getCompatibleDistributionSetTypes().forEach(dsType -> {
+                try {
+                    dsTypes.put(new JSONObject().put("id", dsType.getId()));
+                } catch (final JSONException e1) {
+                    e1.printStackTrace();
+                }
+            });
+
+            JSONObject json = new JSONObject().put("name", type.getName()).put("description", type.getDescription())
+                    .put("colour", type.getColour());
+
+            if(dsTypes.length() != 0)
+            {
+                json.put("compatibledistributionsettypes", dsTypes);
+            }
+
+            result.put(json);
+        }
+
+        return result.toString();
     }
 
     public static String rollout(final String name, final String description, final int groupSize,
