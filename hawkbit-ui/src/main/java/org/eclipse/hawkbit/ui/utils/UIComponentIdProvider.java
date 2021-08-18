@@ -572,6 +572,11 @@ public final class UIComponentIdProvider {
     public static final String TARGET_TAG_DROP_AREA_ID = "target.tag.drop.area";
 
     /**
+     * ID-Target type table drop area.
+     */
+    public static final String TARGET_TYPE_DROP_AREA_ID = "target.type.drop.area";
+
+    /**
      * ID-Distibution tag table.
      */
     public static final String DISTRIBUTION_TAG_TABLE_ID = "distriution.tag.tableId";
@@ -914,6 +919,11 @@ public final class UIComponentIdProvider {
      * ID - simple filter- Accordion-Tab
      */
     public static final String SIMPLE_FILTER_ACCORDION_TAB = "simple.filter.accordion.tab";
+
+    /**
+     * ID - target type filter- Accordion-Tab
+     */
+    public static final String TARGET_TYPE_FILTER_ACCORDION_TAB = "target.type.filter.accordion.tab";
 
     /**
      * ID - custom filter- Accordion-Tab
