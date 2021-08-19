@@ -13,7 +13,7 @@ import org.eclipse.hawkbit.ui.common.event.EventLayout;
 import org.eclipse.hawkbit.ui.common.event.EventView;
 import org.eclipse.hawkbit.ui.common.grid.header.AbstractFilterHeader;
 import org.eclipse.hawkbit.ui.management.targettag.TargetTagWindowBuilder;
-import org.eclipse.hawkbit.ui.management.targettag.TargetTypeWindowBuilder;
+import org.eclipse.hawkbit.ui.management.targettag.targettype.TargetTypeWindowBuilder;
 import org.eclipse.hawkbit.ui.utils.UIComponentIdProvider;
 import org.eclipse.hawkbit.ui.utils.UIMessageIdProvider;
 

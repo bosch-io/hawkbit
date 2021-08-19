@@ -24,7 +24,7 @@ import org.eclipse.hawkbit.ui.management.ManagementUIState;
 import org.eclipse.hawkbit.ui.management.targettag.TargetTagWindowBuilder;
 
 import com.vaadin.ui.ComponentContainer;
-import org.eclipse.hawkbit.ui.management.targettag.TargetTypeWindowBuilder;
+import org.eclipse.hawkbit.ui.management.targettag.targettype.TargetTypeWindowBuilder;
 
 /**
  * Target Tag filter layout.
@@ -68,7 +68,7 @@ public class TargetTagFilterLayout extends AbstractFilterLayout {
         this.targetTagFilterHeader = new TargetTagFilterHeader(uiDependencies, targetTagFilterLayoutUiState,
                 targetTagWindowBuilder, targetTypeWindowBuilder);
         this.multipleTargetFilter = new MultipleTargetFilter(uiDependencies, targetFilterQueryManagement,
-                targetTagManagement, targetManagement, targetTagFilterLayoutUiState, targetTagWindowBuilder);
+                targetTagManagement, targetManagement, targetTagFilterLayoutUiState, targetTagWindowBuilder, targetTypeManagement);
 
         this.filterTabChangedListener = new GenericEventListener<>(uiDependencies.getEventBus(),
                 EventTopics.TARGET_FILTER_TAB_CHANGED, this::onTargetFilterTabChanged);

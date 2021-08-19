@@ -14,6 +14,7 @@ import java.util.List;
 import org.eclipse.hawkbit.repository.TargetFilterQueryManagement;
 import org.eclipse.hawkbit.repository.TargetManagement;
 import org.eclipse.hawkbit.repository.TargetTagManagement;
+import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTag;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTarget;
@@ -54,6 +55,7 @@ public class MultipleTargetFilter extends Accordion {
     private final VerticalLayout targetTypeFilterTab;
 
     private final TargetTagFilterButtons filterByButtons;
+    private final TargetTypeFilterButtons targetTypeFilterButtons;
     private final FilterByStatusLayout filterByStatusFooter;
     private final TargetFilterQueryButtons customFilterTab;
 
@@ -62,16 +64,17 @@ public class MultipleTargetFilter extends Accordion {
     private final transient EntityModifiedListener<ProxyTargetFilterQuery> entityFilterQueryModifiedListener;
 
     MultipleTargetFilter(final CommonUiDependencies uiDependencies,
-            final TargetFilterQueryManagement targetFilterQueryManagement,
-            final TargetTagManagement targetTagManagement, final TargetManagement targetManagement,
-            final TargetTagFilterLayoutUiState targetTagFilterLayoutUiState,
-            final TargetTagWindowBuilder targetTagWindowBuilder) {
+                         final TargetFilterQueryManagement targetFilterQueryManagement,
+                         final TargetTagManagement targetTagManagement, final TargetManagement targetManagement,
+                         final TargetTagFilterLayoutUiState targetTagFilterLayoutUiState,
+                         final TargetTagWindowBuilder targetTagWindowBuilder, final TargetTypeManagement targetTypeManagement) {
         this.i18n = uiDependencies.getI18n();
         this.eventBus = uiDependencies.getEventBus();
         this.targetTagFilterLayoutUiState = targetTagFilterLayoutUiState;
 
         this.filterByButtons = new TargetTagFilterButtons(uiDependencies, targetTagManagement, targetManagement,
                 targetTagFilterLayoutUiState, targetTagWindowBuilder);
+        this.targetTypeFilterButtons = new TargetTypeFilterButtons(uiDependencies, targetTypeManagement, targetTagFilterLayoutUiState);
         this.filterByStatusFooter = new FilterByStatusLayout(i18n, eventBus, targetTagFilterLayoutUiState);
         this.simpleFilterTab = buildSimpleFilterTab();
         this.targetTypeFilterTab = buildTargetTypeFilterTab();
@@ -135,8 +138,10 @@ public class MultipleTargetFilter extends Accordion {
         targetTypeGridLayout.setMargin(false);
         targetTypeGridLayout.setSizeFull();
         targetTypeGridLayout.setId(UIComponentIdProvider.TARGET_TYPE_DROP_AREA_ID);
-
-        targetTypeGridLayout.addComponent(filterByButtons.getNoTargetTypeButton());
+        targetTypeGridLayout.addComponent(targetTypeFilterButtons.getNoTargetTypeButton());
+        targetTypeGridLayout.addComponent(targetTypeFilterButtons);
+        targetTypeGridLayout.setComponentAlignment(targetTypeFilterButtons, Alignment.MIDDLE_CENTER);
+        targetTypeGridLayout.setExpandRatio(targetTypeFilterButtons, 1.0F);
 
         targetTypeTab.addComponent(targetTypeGridLayout);
         targetTypeTab.setExpandRatio(targetTypeGridLayout, 1.0F);

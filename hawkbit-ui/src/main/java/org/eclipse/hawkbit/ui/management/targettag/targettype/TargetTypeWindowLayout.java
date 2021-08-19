@@ -6,18 +6,14 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.eclipse.hawkbit.ui.management.targettag.filter.targettype;
+package org.eclipse.hawkbit.ui.management.targettag.targettype;
 
 import com.vaadin.ui.ComponentContainer;
 import com.vaadin.ui.FormLayout;
-import com.vaadin.ui.TextField;
 import org.eclipse.hawkbit.repository.DistributionSetTypeManagement;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
-import org.eclipse.hawkbit.ui.common.builder.FormComponentBuilder;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyType;
 import org.eclipse.hawkbit.ui.management.tag.TagWindowLayout;
-import org.eclipse.hawkbit.ui.management.targettag.filter.targettype.TargetTypeDsTypeSelectLayout;
-import org.eclipse.hawkbit.ui.management.targettag.filter.targettype.TargetTypeWindowLayoutComponentBuilder;
 
 /**
  * Distribution set window layout

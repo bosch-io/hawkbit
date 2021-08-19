@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.eclipse.hawkbit.ui.management.targettag.filter.targettype;
+package org.eclipse.hawkbit.ui.management.targettag.targettype;
 
 import com.vaadin.data.Binder;
 import com.vaadin.data.ValidationResult;

@@ -572,6 +572,11 @@ public final class UIComponentIdProvider {
     public static final String TARGET_TAG_DROP_AREA_ID = "target.tag.drop.area";
 
     /**
+     * ID-Target tag table.
+     */
+    public static final String TARGET_TYPE_TABLE_ID = "target.type.tableId";
+
+    /**
      * ID-Target type table drop area.
      */
     public static final String TARGET_TYPE_DROP_AREA_ID = "target.type.drop.area";
@@ -1495,6 +1500,10 @@ public final class UIComponentIdProvider {
      * Target tag button id prefix.
      */
     public static final String TARGET_TAG_ID_PREFIXS = "target.tag";
+    /**
+     * Target type button id prefix.
+     */
+    public static final String TARGET_TYPE_ID_PREFIXS = "target.type";
     /**
      * Distribution tag button id prefix.
      */

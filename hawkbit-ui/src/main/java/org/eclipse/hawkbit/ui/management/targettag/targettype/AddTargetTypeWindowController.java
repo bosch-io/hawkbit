@@ -6,25 +6,18 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.eclipse.hawkbit.ui.management.targettag.filter.targettype;
+package org.eclipse.hawkbit.ui.management.targettag.targettype;
 
-import org.eclipse.hawkbit.repository.DistributionSetTypeManagement;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
-import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.TargetType;
 import org.eclipse.hawkbit.ui.common.AbstractAddNamedEntityWindowController;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.EntityWindowLayout;
-import org.eclipse.hawkbit.ui.common.data.proxies.ProxyDistributionSet;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyIdentifiableEntity;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTarget;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyType;
 import org.eclipse.hawkbit.ui.common.type.ProxyTypeValidator;
-import org.eclipse.hawkbit.ui.distributions.disttype.DsTypeWindowLayout;
 import org.springframework.util.StringUtils;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Add distribution set type window controller

@@ -6,11 +6,10 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.eclipse.hawkbit.ui.management.targettag.filter.targettype;
+package org.eclipse.hawkbit.ui.management.targettag.targettype;
 
 import org.eclipse.hawkbit.repository.TargetManagement;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
-import org.eclipse.hawkbit.repository.builder.DistributionSetTypeUpdate;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.TargetType;
 import org.eclipse.hawkbit.ui.common.AbstractEntityWindowLayout;
@@ -23,9 +22,7 @@ import org.eclipse.hawkbit.ui.common.data.proxies.ProxyType;
 import org.eclipse.hawkbit.ui.common.type.ProxyTypeValidator;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Controller for update distribution set type window

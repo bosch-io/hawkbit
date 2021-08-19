@@ -6,23 +6,15 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.eclipse.hawkbit.ui.management.targettag;
+package org.eclipse.hawkbit.ui.management.targettag.targettype;
 
 import com.vaadin.ui.Window;
-import org.eclipse.hawkbit.repository.DistributionSetManagement;
 import org.eclipse.hawkbit.repository.DistributionSetTypeManagement;
-import org.eclipse.hawkbit.repository.SoftwareModuleTypeManagement;
 import org.eclipse.hawkbit.repository.TargetManagement;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.ui.common.AbstractEntityWindowBuilder;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyType;
-import org.eclipse.hawkbit.ui.distributions.disttype.AddDsTypeWindowController;
-import org.eclipse.hawkbit.ui.distributions.disttype.DsTypeWindowLayout;
-import org.eclipse.hawkbit.ui.distributions.disttype.UpdateDsTypeWindowController;
-import org.eclipse.hawkbit.ui.management.targettag.filter.targettype.AddTargetTypeWindowController;
-import org.eclipse.hawkbit.ui.management.targettag.filter.targettype.TargetTypeWindowLayout;
-import org.eclipse.hawkbit.ui.management.targettag.filter.targettype.UpdateTargetTypeWindowController;
 import org.eclipse.hawkbit.ui.utils.UIComponentIdProvider;
 
 /**
