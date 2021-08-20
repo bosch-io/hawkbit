@@ -8,15 +8,12 @@
  */
 package org.eclipse.hawkbit.ui.common.data.providers;
 
-import org.eclipse.hawkbit.repository.TargetTagManagement;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.repository.model.TargetTag;
 import org.eclipse.hawkbit.repository.model.TargetType;
-import org.eclipse.hawkbit.ui.common.data.mappers.TagToProxyTagMapper;
 import org.eclipse.hawkbit.ui.common.data.mappers.TargetTypeToProxyTargetTypeMapper;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTag;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetType;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
@@ -49,12 +46,13 @@ public class TargetTypeDataProvider extends AbstractProxyDataProvider<ProxyTarge
 
     @Override
     protected Slice<TargetType> loadBackendEntities(final PageRequest pageRequest, final Void filter) {
-        return targetTypeManagement.findAll(pageRequest);
+        Slice<TargetType> all = targetTypeManagement.findAll(pageRequest);
+        return all;
     }
 
     @Override
     protected long sizeInBackEnd(final PageRequest pageRequest, final Void filter) {
-        return loadBackendEntities(PageRequest.of(0, 1), filter).getSize();
+        return targetTypeManagement.count();
     }
 
 }
