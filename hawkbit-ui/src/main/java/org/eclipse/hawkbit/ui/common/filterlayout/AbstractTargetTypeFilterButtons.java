@@ -96,7 +96,7 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
 
     private void publishFilterChangedEvent(final Map<Long, String> activeTagIdsWithName) {
         eventBus.publish(EventTopics.FILTER_CHANGED, this, new FilterChangedEventPayload<>(getFilterMasterEntityType(),
-                FilterType.TYPE, activeTagIdsWithName.values(), getView()));
+                FilterType.TARGET_TYPE, activeTagIdsWithName.keySet(), getView()));
 
         tagFilterLayoutUiState.setClickedTagIdsWithName(activeTagIdsWithName);
     }

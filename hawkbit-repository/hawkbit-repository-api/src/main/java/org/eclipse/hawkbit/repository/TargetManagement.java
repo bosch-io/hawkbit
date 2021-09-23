@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
@@ -111,7 +112,7 @@ public interface TargetManagement {
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_READ_TARGET)
     long countByFilters(Collection<TargetUpdateStatus> status, Boolean overdueState, String searchText,
-            Long installedOrAssignedDistributionSetId, Boolean selectTargetWithNoTag, String... tagNames);
+                        Long installedOrAssignedDistributionSetId, Boolean selectTargetWithNoTag, Long[] targetTypeIds, String... tagNames);
 
     /**
      * Counts number of targets with given with given distribution set Id

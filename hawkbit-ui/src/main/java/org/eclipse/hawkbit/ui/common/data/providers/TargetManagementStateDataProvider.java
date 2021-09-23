@@ -9,6 +9,7 @@
 package org.eclipse.hawkbit.ui.common.data.providers;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.eclipse.hawkbit.repository.FilterParams;
 import org.eclipse.hawkbit.repository.TargetManagement;
@@ -64,11 +65,12 @@ public class TargetManagementStateDataProvider
         final boolean noTagClicked = filter.isNoTagClicked();
         final String[] targetTags = filter.getTargetTags().toArray(new String[0]);
         final Long targetFilterQueryId = filter.getTargetFilterQueryId();
+        final Long[] targetTypeIds = filter.getTargetTypeIds().toArray(new Long[0]);
 
         if (pinnedDistId != null) {
             return targetManagement.findByFilterOrderByLinkedDistributionSet(pageRequest, pinnedDistId,
                     new FilterParams(targetUpdateStatusList, overdueState, searchText, distributionId, noTagClicked,
-                            targetTags));
+                            null, targetTags));
         }
 
         if (filter.isAnyFilterSelected()) {
@@ -77,7 +79,7 @@ public class TargetManagementStateDataProvider
             }
 
             return targetManagement.findByFilters(pageRequest, new FilterParams(targetUpdateStatusList, overdueState,
-                    searchText, distributionId, noTagClicked, targetTags));
+                    searchText, distributionId, noTagClicked, targetTypeIds, targetTags));
         }
 
         return targetManagement.findAll(pageRequest);
@@ -95,6 +97,7 @@ public class TargetManagementStateDataProvider
         final Long distributionId = filter.getDistributionId();
         final boolean noTagClicked = filter.isNoTagClicked();
         final String[] targetTags = filter.getTargetTags().toArray(new String[0]);
+        final Long[] targetTypeIds = filter.getTargetTypeIds().toArray(new Long[0]);
         final Long targetFilterQueryId = filter.getTargetFilterQueryId();
 
         if (filter.isAnyFilterSelected()) {
@@ -103,7 +106,7 @@ public class TargetManagementStateDataProvider
             }
 
             return targetManagement.countByFilters(targetUpdateStatusList, overdueState, searchText, distributionId,
-                    noTagClicked, targetTags);
+                    noTagClicked, targetTypeIds, targetTags);
         }
 
         return targetManagement.count();

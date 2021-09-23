@@ -30,6 +30,7 @@ import org.eclipse.hawkbit.repository.jpa.model.JpaRolloutGroup_;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTarget;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetTag;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetTag_;
+import org.eclipse.hawkbit.repository.jpa.model.JpaTargetType;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTarget_;
 import org.eclipse.hawkbit.repository.jpa.model.RolloutTargetGroup;
 import org.eclipse.hawkbit.repository.jpa.model.RolloutTargetGroup_;
@@ -470,5 +471,17 @@ public final class TargetSpecifications {
             final SetJoin<JpaTarget, JpaTargetTag> tags = targetRoot.join(JpaTarget_.tags, JoinType.LEFT);
             return cb.equal(tags.get(JpaTargetTag_.id), tagId);
         };
+    }
+
+    /**
+     * {@link Specification} for retrieving {@link Target}s by controllerId
+     *
+     * @param ids
+     *            to search for target type
+     *
+     * @return the {@link Target} {@link Specification}
+     */
+    public static Specification<JpaTarget> hasTargetTypeIn(final Collection<Long> ids) {
+        return (targetRoot, query, cb) -> targetRoot.get(JpaTarget_.targetType).in(ids);
     }
 }

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.eclipse.hawkbit.ui.common.data.providers.TargetManagementStateDataProvider;
@@ -35,12 +36,13 @@ public class TargetManagementFilterParams implements Serializable {
     private boolean noTagClicked;
     private Collection<String> targetTags;
     private Long targetFilterQueryId;
+    private Collection<Long> targetTypeIds;
 
     /**
      * Constructor for TargetManagementFilterParams to initialize
      */
     public TargetManagementFilterParams() {
-        this(null, null, Collections.emptyList(), false, null, false, Collections.emptyList(), null);
+        this(null, null, Collections.emptyList(), false, null, false, Collections.emptyList(), null, Collections.emptyList());
     }
 
     /**
@@ -66,7 +68,7 @@ public class TargetManagementFilterParams implements Serializable {
     public TargetManagementFilterParams(final Long pinnedDistId, final String searchText,
             final Collection<TargetUpdateStatus> targetUpdateStatusList, final boolean overdueState,
             final Long distributionId, final boolean noTagClicked, final Collection<String> targetTags,
-            final Long targetFilterQueryId) {
+            final Long targetFilterQueryId, final Collection<Long> targetTypeIds) {
         this.pinnedDistId = pinnedDistId;
         this.searchText = searchText;
         this.targetUpdateStatusList = targetUpdateStatusList;
@@ -75,6 +77,7 @@ public class TargetManagementFilterParams implements Serializable {
         this.noTagClicked = noTagClicked;
         this.targetTags = targetTags;
         this.targetFilterQueryId = targetFilterQueryId;
+        this.targetTypeIds = targetTypeIds;
     }
 
     /**
@@ -93,6 +96,7 @@ public class TargetManagementFilterParams implements Serializable {
         this.distributionId = filter.getDistributionId();
         this.noTagClicked = filter.isNoTagClicked();
         this.targetTags = filter.getTargetTags() != null ? new ArrayList<>(filter.getTargetTags()) : null;
+        this.targetTypeIds = filter.getTargetTypeIds();
         this.targetFilterQueryId = filter.getTargetFilterQueryId();
     }
 
@@ -103,11 +107,15 @@ public class TargetManagementFilterParams implements Serializable {
      *         <code>false</code>
      */
     public boolean isAnyFilterSelected() {
-        return isAnyTagSelected() || isAnyStatusFilterSelected() || isSearchActive() || isAnyComplexFilterSelected();
+        return isAnyTargetTypeSelected() ||isAnyTagSelected() || isAnyStatusFilterSelected() || isSearchActive() || isAnyComplexFilterSelected();
     }
 
     private boolean isAnyTagSelected() {
         return !CollectionUtils.isEmpty(targetTags) || noTagClicked;
+    }
+
+    private boolean isAnyTargetTypeSelected() {
+        return !CollectionUtils.isEmpty(targetTypeIds);
     }
 
     private boolean isAnyStatusFilterSelected() {
@@ -278,6 +286,14 @@ public class TargetManagementFilterParams implements Serializable {
         this.noTagClicked = noTagClicked;
     }
 
+    public Collection<Long> getTargetTypeIds() {
+        return targetTypeIds;
+    }
+
+    public void setTargetTypeIds(Collection<Long> targetTypeIds) {
+        this.targetTypeIds = targetTypeIds;
+    }
+
     // equals requires all fields in condition
     @SuppressWarnings("squid:S1067")
     @Override
@@ -296,13 +312,14 @@ public class TargetManagementFilterParams implements Serializable {
                 && Objects.equals(this.getDistributionId(), other.getDistributionId())
                 && Objects.equals(this.isNoTagClicked(), other.isNoTagClicked())
                 && Objects.equals(this.getTargetTags(), other.getTargetTags())
-                && Objects.equals(this.getTargetFilterQueryId(), other.getTargetFilterQueryId());
+                && Objects.equals(this.getTargetFilterQueryId(), other.getTargetFilterQueryId())
+                && Objects.equals(this.getTargetTypeIds(), other.getTargetTypeIds());
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(getPinnedDistId(), getSearchText(), getTargetUpdateStatusList(), isOverdueState(),
-                getDistributionId(), isNoTagClicked(), getTargetTags(), getTargetFilterQueryId());
+                getDistributionId(), isNoTagClicked(), getTargetTags(), getTargetFilterQueryId(), getTargetTypeIds());
     }
 
     @Override
@@ -311,6 +328,6 @@ public class TargetManagementFilterParams implements Serializable {
                 .add("searchText", getSearchText()).add("targetUpdateStatusList", getTargetUpdateStatusList())
                 .add("overdueState", isOverdueState()).add("distributionId", getDistributionId())
                 .add("noTagClicked", isNoTagClicked()).add("targetTags", getTargetTags())
-                .add("targetFilterQueryId", getTargetFilterQueryId()).toString();
+                .add("targetFilterQueryId", getTargetFilterQueryId()).add("targetTypeId", getTargetTypeIds()).toString();
     }
 }
