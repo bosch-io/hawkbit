@@ -31,20 +31,20 @@ public abstract class ToTargetTypeAssignmentSupport<T, R extends NamedEntity> ex
 
     @Override
     protected void performAssignment(final List<T> sourceItemsToAssign, final ProxyTargetType targetItem) {
-        final String tagName = targetItem.getName();
+        final Long tagId = targetItem.getId();
 
-        final AbstractAssignmentResult<R> tagsAssignmentResult = toggleTagAssignment(sourceItemsToAssign, tagName);
+        final AbstractAssignmentResult<R> tagsAssignmentResult = toggleTargetTypeAssignment(sourceItemsToAssign, tagId);
 
         final String assignmentMsg = createAssignmentMessage(tagsAssignmentResult,
-                i18n.getMessage(getAssignedEntityTypeMsgKey()), i18n.getMessage("caption.tag"), tagName);
+                i18n.getMessage(getAssignedEntityTypeMsgKey()), i18n.getMessage("caption.type"), targetItem.getName());
         notification.displaySuccess(assignmentMsg);
 
-        publishTagAssignmentEvent(sourceItemsToAssign);
+        publishTypeAssignmentEvent(sourceItemsToAssign);
     }
 
-    protected abstract AbstractAssignmentResult<R> toggleTagAssignment(final List<T> sourceItems, final String tagName);
+    protected abstract AbstractAssignmentResult<R> toggleTargetTypeAssignment(final List<T> sourceItems, final Long typeId);
 
     protected abstract String getAssignedEntityTypeMsgKey();
 
-    protected abstract void publishTagAssignmentEvent(final List<T> sourceItems);
+    protected abstract void publishTypeAssignmentEvent(final List<T> sourceItems);
 }

@@ -12,6 +12,7 @@ import java.net.URI;
 
 import org.eclipse.hawkbit.repository.model.Action.Status;
 import org.eclipse.hawkbit.repository.model.Target;
+import org.eclipse.hawkbit.repository.model.TargetType;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 
 /**
@@ -38,6 +39,8 @@ public class ProxyTarget extends ProxyNamedEntity {
     private String securityToken;
 
     private boolean isRequestAttributes;
+
+    private TargetType targetType;
 
     /**
      * Gets the controllerId
@@ -206,4 +209,13 @@ public class ProxyTarget extends ProxyNamedEntity {
     public void setRequestAttributes(final boolean isRequestAttributes) {
         this.isRequestAttributes = isRequestAttributes;
     }
+
+    public TargetType getTargetType() {
+        return targetType;
+    }
+
+    public void setTargetType(TargetType targetType) {
+        this.targetType = targetType;
+    }
+
 }

@@ -603,7 +603,7 @@ public interface TargetManagement {
      *             if tag with given name does not exist
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_UPDATE_TARGET)
-    TargetTypeAssignmentResult toggleTargetTypeAssignment(@NotEmpty Collection<String> controllerIds, @NotEmpty String tagName);
+    TargetTypeAssignmentResult toggleTargetTypeAssignment(@NotEmpty Collection<String> controllerIds, @NotNull Long typeId);
 
     /**
      * Un-assign a {@link TargetTag} assignment to given {@link Target}.

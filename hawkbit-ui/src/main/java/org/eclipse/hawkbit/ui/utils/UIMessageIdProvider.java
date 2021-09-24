@@ -149,6 +149,8 @@ public final class UIMessageIdProvider {
 
     public static final String CRON_VALIDATION_ERROR = "message.maintenancewindow.schedule.validation.error";
 
+    public static final String MESSAGE_TARGET_TARGETTYPE_ASSIGNED = "message.target.targetype.assign.error";
+
     public static final String TOOLTIP_OVERDUE = "tooltip.overdue";
 
     public static final String TOOLTIP_MAXIMIZE = "tooltip.maximize";

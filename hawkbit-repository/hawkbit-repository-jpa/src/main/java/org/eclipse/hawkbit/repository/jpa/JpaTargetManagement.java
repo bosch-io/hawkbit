@@ -571,9 +571,9 @@ public class JpaTargetManagement implements TargetManagement {
     @Transactional
     @Retryable(include = {
             ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))
-    public TargetTypeAssignmentResult toggleTargetTypeAssignment(final Collection<String> controllerIds, final String tagName) {
-        final TargetType type = targetTypeRepository.findByName(tagName)
-                .orElseThrow(() -> new EntityNotFoundException(TargetType.class, tagName));
+    public TargetTypeAssignmentResult toggleTargetTypeAssignment(final Collection<String> controllerIds, final Long typeId) {
+        final TargetType type = targetTypeRepository.findById(typeId)
+                .orElseThrow(() -> new EntityNotFoundException(TargetType.class, typeId));
         final List<JpaTarget> allTargets = targetRepository
                 .findAll(TargetSpecifications.byControllerIdWithTagsInJoin(controllerIds));
 
@@ -582,19 +582,14 @@ public class JpaTargetManagement implements TargetManagement {
                     allTargets.stream().map(Target::getControllerId).collect(Collectors.toList()));
         }
 
-        final List<JpaTarget> alreadyAssignedTargets = targetRepository.findAll(
-                TargetSpecifications.hasTagName(tagName).and(TargetSpecifications.hasControllerIdIn(controllerIds)));
+        final List<JpaTarget> targetsWithSameType = targetRepository.findAll(
+                TargetSpecifications.hasType(typeId).and(TargetSpecifications.hasControllerIdIn(controllerIds)));
 
-        // all are already assigned -> unassign
-        if (alreadyAssignedTargets.size() == allTargets.size()) {
-            alreadyAssignedTargets.forEach(target -> target.setTargetType(null));
-            return new TargetTypeAssignmentResult(0, Collections.emptyList(),
-                    Collections.unmodifiableList(alreadyAssignedTargets), type);
-        }
+        allTargets.removeAll(targetsWithSameType);
+        // some or none are assigned -> assign
+        allTargets.forEach(target -> target.setTargetType(type));
 
-        allTargets.removeAll(alreadyAssignedTargets);
-
-        final TargetTypeAssignmentResult result = new TargetTypeAssignmentResult(alreadyAssignedTargets.size(),
+        final TargetTypeAssignmentResult result = new TargetTypeAssignmentResult(targetsWithSameType.size(),
                 Collections
                         .unmodifiableList(allTargets.stream().map(targetRepository::save).collect(Collectors.toList())),
                 Collections.emptyList(), type);

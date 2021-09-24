@@ -21,9 +21,11 @@ import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyIdentifiableEntity;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTag;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTarget;
+import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetType;
 import org.eclipse.hawkbit.ui.common.event.EntityModifiedEventPayload;
 import org.eclipse.hawkbit.ui.common.event.EntityModifiedEventPayload.EntityModifiedEventType;
 import org.eclipse.hawkbit.ui.common.event.EventTopics;
+import org.eclipse.hawkbit.ui.utils.UIMessageIdProvider;
 import org.vaadin.spring.events.EventBus.UIEventBus;
 
 /**
@@ -58,12 +60,35 @@ public class TargetsToTargetTypeAssignmentSupport extends ToTargetTypeAssignment
     }
 
     @Override
-    protected AbstractAssignmentResult<Target> toggleTagAssignment(final List<ProxyTarget> sourceItems,
-            final String tagName) {
+    protected List<ProxyTarget> getFilteredSourceItems(List<ProxyTarget> sourceItemsToAssign, ProxyTargetType targetItem) {
+        if (!isAssignmentValid(sourceItemsToAssign, targetItem)) {
+            return Collections.emptyList();
+        }
+
+        return sourceItemsToAssign;
+    }
+
+    private boolean isAssignmentValid(List<ProxyTarget> sourceItemsToAssign, ProxyTargetType targetItem) {
+        if(sourceItemsToAssign.size() > 1) {
+            List<ProxyTarget> targetsWithDifferentType = sourceItemsToAssign.stream().filter(
+                            target -> target.getTargetType() != null && !target.getTargetType().getId().equals(targetItem.getId()))
+                    .collect(Collectors.toList());
+
+            if (!targetsWithDifferentType.isEmpty()) {
+                notification.displayValidationError(i18n.getMessage(UIMessageIdProvider.MESSAGE_TARGET_TARGETTYPE_ASSIGNED));
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    @Override
+    protected AbstractAssignmentResult<Target> toggleTargetTypeAssignment(final List<ProxyTarget> sourceItems,
+                                                                          final Long typeId) {
         final Collection<String> controllerIdsToAssign = sourceItems.stream().map(ProxyTarget::getControllerId)
                 .collect(Collectors.toList());
 
-        return targetManagement.toggleTagAssignment(controllerIdsToAssign, tagName);
+        return targetManagement.toggleTargetTypeAssignment(controllerIdsToAssign, typeId);
     }
 
     @Override
@@ -72,7 +97,7 @@ public class TargetsToTargetTypeAssignmentSupport extends ToTargetTypeAssignment
     }
 
     @Override
-    protected void publishTagAssignmentEvent(final List<ProxyTarget> sourceItemsToAssign) {
+    protected void publishTypeAssignmentEvent(final List<ProxyTarget> sourceItemsToAssign) {
         final List<Long> assignedTargetIds = sourceItemsToAssign.stream().map(ProxyIdentifiableEntity::getId)
                 .collect(Collectors.toList());
         eventBus.publish(EventTopics.ENTITY_MODIFIED, this, new EntityModifiedEventPayload(
