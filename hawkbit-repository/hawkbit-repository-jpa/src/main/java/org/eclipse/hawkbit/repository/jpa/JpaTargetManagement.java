@@ -571,7 +571,7 @@ public class JpaTargetManagement implements TargetManagement {
     @Transactional
     @Retryable(include = {
             ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))
-    public TargetTypeAssignmentResult toggleTargetTypeAssignment(final Collection<String> controllerIds, final Long typeId) {
+    public TargetTypeAssignmentResult assignTargetType(final Collection<String> controllerIds, final Long typeId) {
         final TargetType type = targetTypeRepository.findById(typeId)
                 .orElseThrow(() -> new EntityNotFoundException(TargetType.class, typeId));
         final List<JpaTarget> allTargets = targetRepository
@@ -586,7 +586,7 @@ public class JpaTargetManagement implements TargetManagement {
                 TargetSpecifications.hasType(typeId).and(TargetSpecifications.hasControllerIdIn(controllerIds)));
 
         allTargets.removeAll(targetsWithSameType);
-        // some or none are assigned -> assign
+        // set new target type to all targets without that type
         allTargets.forEach(target -> target.setTargetType(type));
 
         final TargetTypeAssignmentResult result = new TargetTypeAssignmentResult(targetsWithSameType.size(),

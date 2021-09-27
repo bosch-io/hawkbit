@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 Bosch.IO GmbH and others.
+ * Copyright (c) 2021 Bosch.IO GmbH and others.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -19,7 +19,6 @@ import org.eclipse.hawkbit.repository.model.Target;
 import org.eclipse.hawkbit.ui.SpPermissionChecker;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyIdentifiableEntity;
-import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTag;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTarget;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetType;
 import org.eclipse.hawkbit.ui.common.event.EntityModifiedEventPayload;
@@ -29,16 +28,20 @@ import org.eclipse.hawkbit.ui.utils.UIMessageIdProvider;
 import org.vaadin.spring.events.EventBus.UIEventBus;
 
 /**
- * Support for assigning the {@link ProxyTarget} items to {@link ProxyTag}.
+ * Support for assigning the {@link ProxyTarget} items to {@link ProxyTargetType}.
  *
  */
-public class TargetsToTargetTypeAssignmentSupport extends ToTargetTypeAssignmentSupport<ProxyTarget, Target> {
+public class TargetsToTargetTypeAssignmentSupport extends AssignmentSupport<ProxyTarget, ProxyTargetType> {
     private final TargetManagement targetManagement;
     private final UIEventBus eventBus;
     private final SpPermissionChecker permChecker;
 
+    private static final String CAPTION_TYPE = "caption.type";
+    private static final String CAPTION_TARGET = "caption.target";
+    private static final String CAPTION_TARGETS = "caption.targets";
+    
     /**
-     * Constructor for TargetsToTagAssignmentSupport
+     * Constructor for TargetsToTargetTypeAssignmentSupport
      *
      * @param uiDependencies
      *            {@link CommonUiDependencies}
@@ -68,6 +71,12 @@ public class TargetsToTargetTypeAssignmentSupport extends ToTargetTypeAssignment
         return sourceItemsToAssign;
     }
 
+    /**
+     *
+     * @param sourceItemsToAssign
+     * @param targetItem
+     * @return false if some targets already have a type assigned
+     */
     private boolean isAssignmentValid(List<ProxyTarget> sourceItemsToAssign, ProxyTargetType targetItem) {
         if(sourceItemsToAssign.size() > 1) {
             List<ProxyTarget> targetsWithDifferentType = sourceItemsToAssign.stream().filter(
@@ -81,22 +90,30 @@ public class TargetsToTargetTypeAssignmentSupport extends ToTargetTypeAssignment
         }
         return true;
     }
-    
+
     @Override
-    protected AbstractAssignmentResult<Target> toggleTargetTypeAssignment(final List<ProxyTarget> sourceItems,
+    protected void performAssignment(final List<ProxyTarget> sourceItemsToAssign, final ProxyTargetType targetItem) {
+        final Long typeId = targetItem.getId();
+
+        final AbstractAssignmentResult<Target> typesAssignmentResult = initiateTargetTypeAssignment(sourceItemsToAssign,
+                typeId);
+
+        final String assignmentMsg = createAssignmentMessage(typesAssignmentResult,
+                i18n.getMessage(sourceItemsToAssign.size() > 1 ? CAPTION_TARGETS : CAPTION_TARGET),
+                i18n.getMessage(CAPTION_TYPE), targetItem.getName());
+        notification.displaySuccess(assignmentMsg);
+
+        publishTypeAssignmentEvent(sourceItemsToAssign);
+    }
+
+    protected AbstractAssignmentResult<Target> initiateTargetTypeAssignment(final List<ProxyTarget> sourceItems,
                                                                           final Long typeId) {
         final Collection<String> controllerIdsToAssign = sourceItems.stream().map(ProxyTarget::getControllerId)
                 .collect(Collectors.toList());
 
-        return targetManagement.toggleTargetTypeAssignment(controllerIdsToAssign, typeId);
+        return targetManagement.assignTargetType(controllerIdsToAssign, typeId);
     }
 
-    @Override
-    protected String getAssignedEntityTypeMsgKey() {
-        return "caption.target";
-    }
-
-    @Override
     protected void publishTypeAssignmentEvent(final List<ProxyTarget> sourceItemsToAssign) {
         final List<Long> assignedTargetIds = sourceItemsToAssign.stream().map(ProxyIdentifiableEntity::getId)
                 .collect(Collectors.toList());

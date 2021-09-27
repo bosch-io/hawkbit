@@ -588,22 +588,23 @@ public interface TargetManagement {
 
 
     /**
-     * Toggles {@link TargetType} assignment to given {@link Target}s by means
-     * that if some (or all) of the targets in the list have the {@link Tag} not
-     * yet assigned, they will be. Only if all of them have the tag already assigned
-     * they will be removed instead.
+     * Initiates {@link TargetType} assignment to given {@link Target}s. If some
+     * targets in the list have the {@link TargetType} not yet assigned, they will
+     * get assigned. If all targets are already of that type, there will be no
+     * un-assignment.
      *
      * @param controllerIds
-     *            to toggle for
-     * @param tagName
-     *            to toggle
-     * @return TagAssigmentResult with all meta data of the assignment outcome.
+     *            to set the type to
+     * @param typeId
+     *            to assign targets to
+     * @return {@link TargetTypeAssignmentResult} with all meta data of the
+     *         assignment outcome.
      *
      * @throws EntityNotFoundException
-     *             if tag with given name does not exist
+     *             if target type with given name does not exist
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_UPDATE_TARGET)
-    TargetTypeAssignmentResult toggleTargetTypeAssignment(@NotEmpty Collection<String> controllerIds, @NotNull Long typeId);
+    TargetTypeAssignmentResult assignTargetType(@NotEmpty Collection<String> controllerIds, @NotNull Long typeId);
 
     /**
      * Un-assign a {@link TargetTag} assignment to given {@link Target}.

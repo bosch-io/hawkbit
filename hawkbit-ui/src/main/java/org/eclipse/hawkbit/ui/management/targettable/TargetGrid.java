@@ -50,6 +50,7 @@ import org.eclipse.hawkbit.ui.common.grid.support.SelectionSupport;
 import org.eclipse.hawkbit.ui.common.grid.support.assignment.AssignmentSupport;
 import org.eclipse.hawkbit.ui.common.grid.support.assignment.DistributionSetsToTargetAssignmentSupport;
 import org.eclipse.hawkbit.ui.common.grid.support.assignment.TargetTagsToTargetAssignmentSupport;
+import org.eclipse.hawkbit.ui.common.grid.support.assignment.TypeToTargetAssignmentSupport;
 import org.eclipse.hawkbit.ui.management.dstable.DistributionGridLayoutUiState;
 import org.eclipse.hawkbit.ui.management.miscs.DeploymentAssignmentWindowController;
 import org.eclipse.hawkbit.ui.management.targettag.filter.TargetTagFilterLayoutUiState;
@@ -157,9 +158,12 @@ public class TargetGrid extends AbstractGrid<ProxyTarget, TargetManagementFilter
                 uiDependencies, systemSecurityContext, configManagement, assignmentController);
         final TargetTagsToTargetAssignmentSupport targetTagsToTargetAssignment = new TargetTagsToTargetAssignmentSupport(
                 uiDependencies, targetManagement);
+        final TypeToTargetAssignmentSupport typeToTargetAssignmentSupport = new TypeToTargetAssignmentSupport(
+                uiDependencies, targetManagement);
 
         sourceTargetAssignmentStrategies.put(UIComponentIdProvider.DIST_TABLE_ID, distributionsToTargetAssignment);
         sourceTargetAssignmentStrategies.put(UIComponentIdProvider.TARGET_TAG_TABLE_ID, targetTagsToTargetAssignment);
+        sourceTargetAssignmentStrategies.put(UIComponentIdProvider.TARGET_TYPE_TABLE_ID, typeToTargetAssignmentSupport);
 
         setDragAndDropSupportSupport(new DragAndDropSupport<>(this, i18n, uiDependencies.getUiNotification(),
                 sourceTargetAssignmentStrategies, eventBus));
