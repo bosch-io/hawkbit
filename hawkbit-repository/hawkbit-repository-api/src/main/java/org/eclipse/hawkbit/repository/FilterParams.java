@@ -9,7 +9,6 @@
 package org.eclipse.hawkbit.repository;
 
 import java.util.Collection;
-import java.util.Set;
 
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
@@ -28,7 +27,6 @@ public class FilterParams {
     private final Boolean selectTargetWithNoTag;
     private final String[] filterByTagNames;
     private final Long filterByDistributionId;
-    private final Long[] filterByTargetTypeIds;
 
     /**
      * Constructor.
@@ -50,20 +48,14 @@ public class FilterParams {
      *            tag-names
      */
     public FilterParams(final Collection<TargetUpdateStatus> filterByStatus, final Boolean overdueState,
-                        final String filterBySearchText, final Long filterByInstalledOrAssignedDistributionSetId,
-                        final Boolean selectTargetWithNoTag, final Long[] filterByTargetTypeIds, final String... filterByTagNames) {
+            final String filterBySearchText, final Long filterByInstalledOrAssignedDistributionSetId,
+            final Boolean selectTargetWithNoTag, final String... filterByTagNames) {
         this.filterByStatus = filterByStatus;
         this.overdueState = overdueState;
         this.filterBySearchText = filterBySearchText;
         this.filterByDistributionId = filterByInstalledOrAssignedDistributionSetId;
         this.selectTargetWithNoTag = selectTargetWithNoTag;
         this.filterByTagNames = filterByTagNames;
-        this.filterByTargetTypeIds = filterByTargetTypeIds;
-    }
-
-
-    public Long[] getFilterByTargetTypeIds() {
-        return filterByTargetTypeIds;
     }
 
     /**

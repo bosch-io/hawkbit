@@ -12,7 +12,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
@@ -40,6 +39,7 @@ import org.eclipse.hawkbit.repository.model.TargetTagAssignmentResult;
 import org.eclipse.hawkbit.repository.model.TargetTypeAssignmentResult;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -112,7 +112,7 @@ public interface TargetManagement {
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_READ_TARGET)
     long countByFilters(Collection<TargetUpdateStatus> status, Boolean overdueState, String searchText,
-                        Long installedOrAssignedDistributionSetId, Boolean selectTargetWithNoTag, Long[] targetTypeIds, String... tagNames);
+            Long installedOrAssignedDistributionSetId, Boolean selectTargetWithNoTag, String... tagNames);
 
     /**
      * Counts number of targets with given with given distribution set Id
@@ -589,8 +589,8 @@ public interface TargetManagement {
 
     /**
      * Toggles {@link TargetType} assignment to given {@link Target}s by means
-     * that if some (or all) of the targets in the list have the {@link Tag} not
-     * yet assigned, they will be. Only if all of theme have the tag already assigned
+     * that if some (or all) of the targets in the list have the {@link TargetType} not
+     * yet assigned, they will be. Only if all of them have the tag already assigned
      * they will be removed instead.
      *
      * @param controllerIds
@@ -852,4 +852,26 @@ public interface TargetManagement {
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_UPDATE_REPOSITORY)
     TargetMetadata updateMetadata(@NotEmpty String controllerId, @NotNull MetaData metadata);
+
+    /**
+     * Finds targets by target type.
+     *
+     * @param targetTypeId
+     *            of the {@link TargetType}
+     * @return the found Targets
+     *
+     */
+    @PreAuthorize(SpringEvalExpressions.HAS_AUTH_READ_TARGET)
+    Slice<Target> findByTargetTypeId(PageRequest pageRequest, Long targetTypeId);
+
+    /**
+     * Count targets by target type.
+     *
+     * @param targetTypeId
+     *            of the {@link TargetType}
+     * @return the count Targets
+     *
+     */
+    @PreAuthorize(SpringEvalExpressions.HAS_AUTH_READ_TARGET)
+    long countByTargetTypeId(Long targetTypeId);
 }

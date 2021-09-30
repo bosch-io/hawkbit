@@ -17,7 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
@@ -74,6 +73,7 @@ import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -249,6 +249,16 @@ public class JpaTargetManagement implements TargetManagement {
         eventPublisherHolder.getEventPublisher()
                 .publishEvent(new TargetUpdatedEvent(target, eventPublisherHolder.getApplicationId()));
         return matadata;
+    }
+
+    @Override
+    public Slice<Target> findByTargetTypeId(PageRequest pageRequest, Long targetTypeId) {
+        return findTargetsBySpec(TargetSpecifications.hasTargetType(targetTypeId), pageRequest);
+    }
+
+    @Override
+    public long countByTargetTypeId(Long targetTypeId) {
+        return targetRepository.count(TargetSpecifications.hasTargetType(targetTypeId));
     }
 
     @Override
@@ -462,10 +472,10 @@ public class JpaTargetManagement implements TargetManagement {
 
     @Override
     public long countByFilters(final Collection<TargetUpdateStatus> status, final Boolean overdueState,
-                               final String searchText, final Long installedOrAssignedDistributionSetId,
-                               final Boolean selectTargetWithNoTag, Long[] targetTypeIds, final String... tagNames) {
+            final String searchText, final Long installedOrAssignedDistributionSetId,
+            final Boolean selectTargetWithNoTag, final String... tagNames) {
         final List<Specification<JpaTarget>> specList = buildSpecificationList(new FilterParams(status, overdueState,
-                searchText, installedOrAssignedDistributionSetId, selectTargetWithNoTag, targetTypeIds, tagNames));
+                searchText, installedOrAssignedDistributionSetId, selectTargetWithNoTag, tagNames));
         return countByCriteriaAPI(specList);
     }
 
@@ -491,10 +501,6 @@ public class JpaTargetManagement implements TargetManagement {
             specList.add(TargetSpecifications.hasTags(filterParams.getFilterByTagNames(),
                     filterParams.getSelectTargetWithNoTag()));
         }
-
-        if (hasTargetTypeFilterActive(filterParams)){
-            specList.add(TargetSpecifications.hasTargetTypeIn(Arrays.asList(filterParams.getFilterByTargetTypeIds())));
-        }
         return specList;
     }
 
@@ -504,14 +510,6 @@ public class JpaTargetManagement implements TargetManagement {
                 && filterParams.getFilterByTagNames().length > 0;
 
         return isNoTagActive || isAtLeastOneTagActive;
-    }
-
-    private static boolean hasTargetTypeFilterActive(final FilterParams filterParams) {
-       // final boolean isNoTargetTypeActive = Boolean.TRUE.equals(filterParams.getSelectTargetWithNoTag());
-        final boolean isAtLeastOneTargetTypeActive = filterParams.getFilterByTargetTypeIds() != null
-                && filterParams.getFilterByTargetTypeIds().length > 0;
-
-        return isAtLeastOneTargetTypeActive;
     }
 
     private Slice<Target> findByCriteriaAPI(final Pageable pageable, final List<Specification<JpaTarget>> specList) {

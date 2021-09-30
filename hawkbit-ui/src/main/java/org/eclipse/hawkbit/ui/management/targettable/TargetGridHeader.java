@@ -139,7 +139,7 @@ public class TargetGridHeader extends AbstractEntityGridHeader {
     public void restoreState() {
         super.restoreState();
 
-        if (targetTagFilterLayoutUiState.isCustomFilterTabSelected()) {
+        if (targetTagFilterLayoutUiState.isCustomFilterTabSelected() || targetTagFilterLayoutUiState.isTargetTypeFilterTabSelected()) {
             onSimpleFilterReset();
         }
 

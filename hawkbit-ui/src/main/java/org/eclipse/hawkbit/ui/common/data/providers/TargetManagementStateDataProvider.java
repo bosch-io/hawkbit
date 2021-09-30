@@ -9,7 +9,6 @@
 package org.eclipse.hawkbit.ui.common.data.providers;
 
 import java.util.Collection;
-import java.util.Set;
 
 import org.eclipse.hawkbit.repository.FilterParams;
 import org.eclipse.hawkbit.repository.TargetManagement;
@@ -65,21 +64,24 @@ public class TargetManagementStateDataProvider
         final boolean noTagClicked = filter.isNoTagClicked();
         final String[] targetTags = filter.getTargetTags().toArray(new String[0]);
         final Long targetFilterQueryId = filter.getTargetFilterQueryId();
-        final Long[] targetTypeIds = filter.getTargetTypeIds().toArray(new Long[0]);
+        final Long targetTypeId = filter.getTargetTypeId();
 
         if (pinnedDistId != null) {
             return targetManagement.findByFilterOrderByLinkedDistributionSet(pageRequest, pinnedDistId,
                     new FilterParams(targetUpdateStatusList, overdueState, searchText, distributionId, noTagClicked,
-                            null, targetTags));
+                            targetTags));
         }
 
         if (filter.isAnyFilterSelected()) {
             if (targetFilterQueryId != null) {
                 return targetManagement.findByTargetFilterQuery(pageRequest, targetFilterQueryId);
             }
+            if (targetTypeId != null) {
+                return targetManagement.findByTargetTypeId(pageRequest, targetTypeId);
+            }
 
             return targetManagement.findByFilters(pageRequest, new FilterParams(targetUpdateStatusList, overdueState,
-                    searchText, distributionId, noTagClicked, targetTypeIds, targetTags));
+                    searchText, distributionId, noTagClicked, targetTags));
         }
 
         return targetManagement.findAll(pageRequest);
@@ -97,7 +99,7 @@ public class TargetManagementStateDataProvider
         final Long distributionId = filter.getDistributionId();
         final boolean noTagClicked = filter.isNoTagClicked();
         final String[] targetTags = filter.getTargetTags().toArray(new String[0]);
-        final Long[] targetTypeIds = filter.getTargetTypeIds().toArray(new Long[0]);
+        final Long targetTypeId = filter.getTargetTypeId();
         final Long targetFilterQueryId = filter.getTargetFilterQueryId();
 
         if (filter.isAnyFilterSelected()) {
@@ -105,8 +107,12 @@ public class TargetManagementStateDataProvider
                 return targetManagement.countByTargetFilterQuery(targetFilterQueryId);
             }
 
+            if (targetTypeId != null) {
+                return targetManagement.countByTargetTypeId(targetTypeId);
+            }
+
             return targetManagement.countByFilters(targetUpdateStatusList, overdueState, searchText, distributionId,
-                    noTagClicked, targetTypeIds, targetTags);
+                    noTagClicked, targetTags);
         }
 
         return targetManagement.count();

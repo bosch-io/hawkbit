@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.ListJoin;
 import javax.persistence.criteria.MapJoin;
@@ -31,6 +32,7 @@ import org.eclipse.hawkbit.repository.jpa.model.JpaTarget;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetTag;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetTag_;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetType;
+import org.eclipse.hawkbit.repository.jpa.model.JpaTargetType_;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTarget_;
 import org.eclipse.hawkbit.repository.jpa.model.RolloutTargetGroup;
 import org.eclipse.hawkbit.repository.jpa.model.RolloutTargetGroup_;
@@ -476,12 +478,15 @@ public final class TargetSpecifications {
     /**
      * {@link Specification} for retrieving {@link Target}s by controllerId
      *
-     * @param ids
+     * @param id
      *            to search for target type
      *
      * @return the {@link Target} {@link Specification}
      */
-    public static Specification<JpaTarget> hasTargetTypeIn(final Collection<Long> ids) {
-        return (targetRoot, query, cb) -> targetRoot.get(JpaTarget_.targetType).in(ids);
+    public static Specification<JpaTarget> hasTargetType(final Long id) {
+        return (targetRoot, query, cb) -> {
+            final Join<JpaTarget, JpaTargetType> types = targetRoot.join(JpaTarget_.targetType, JoinType.LEFT);
+            return cb.equal(types.get(JpaTargetType_.id), id);
+        };
     }
 }

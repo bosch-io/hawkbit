@@ -36,13 +36,13 @@ public class TargetManagementFilterParams implements Serializable {
     private boolean noTagClicked;
     private Collection<String> targetTags;
     private Long targetFilterQueryId;
-    private Collection<Long> targetTypeIds;
+    private Long targetTypeId;
 
     /**
      * Constructor for TargetManagementFilterParams to initialize
      */
     public TargetManagementFilterParams() {
-        this(null, null, Collections.emptyList(), false, null, false, Collections.emptyList(), null, Collections.emptyList());
+        this(null, null, Collections.emptyList(), false, null, false, Collections.emptyList(), null, null);
     }
 
     /**
@@ -68,7 +68,7 @@ public class TargetManagementFilterParams implements Serializable {
     public TargetManagementFilterParams(final Long pinnedDistId, final String searchText,
             final Collection<TargetUpdateStatus> targetUpdateStatusList, final boolean overdueState,
             final Long distributionId, final boolean noTagClicked, final Collection<String> targetTags,
-            final Long targetFilterQueryId, final Collection<Long> targetTypeIds) {
+            final Long targetFilterQueryId, final Long targetTypeId) {
         this.pinnedDistId = pinnedDistId;
         this.searchText = searchText;
         this.targetUpdateStatusList = targetUpdateStatusList;
@@ -77,7 +77,7 @@ public class TargetManagementFilterParams implements Serializable {
         this.noTagClicked = noTagClicked;
         this.targetTags = targetTags;
         this.targetFilterQueryId = targetFilterQueryId;
-        this.targetTypeIds = targetTypeIds;
+        this.targetTypeId = targetTypeId;
     }
 
     /**
@@ -96,7 +96,7 @@ public class TargetManagementFilterParams implements Serializable {
         this.distributionId = filter.getDistributionId();
         this.noTagClicked = filter.isNoTagClicked();
         this.targetTags = filter.getTargetTags() != null ? new ArrayList<>(filter.getTargetTags()) : null;
-        this.targetTypeIds = filter.getTargetTypeIds();
+        this.targetTypeId = filter.getTargetTypeId();
         this.targetFilterQueryId = filter.getTargetFilterQueryId();
     }
 
@@ -107,15 +107,11 @@ public class TargetManagementFilterParams implements Serializable {
      *         <code>false</code>
      */
     public boolean isAnyFilterSelected() {
-        return isAnyTargetTypeSelected() ||isAnyTagSelected() || isAnyStatusFilterSelected() || isSearchActive() || isAnyComplexFilterSelected();
+        return isAnyTagSelected() || isAnyStatusFilterSelected() || isSearchActive() || isAnyComplexFilterSelected();
     }
 
     private boolean isAnyTagSelected() {
         return !CollectionUtils.isEmpty(targetTags) || noTagClicked;
-    }
-
-    private boolean isAnyTargetTypeSelected() {
-        return !CollectionUtils.isEmpty(targetTypeIds);
     }
 
     private boolean isAnyStatusFilterSelected() {
@@ -127,7 +123,7 @@ public class TargetManagementFilterParams implements Serializable {
     }
 
     private boolean isAnyComplexFilterSelected() {
-        return distributionId != null || targetFilterQueryId != null;
+        return distributionId != null || targetFilterQueryId != null || targetTypeId != null;
     }
 
     /**
@@ -286,12 +282,12 @@ public class TargetManagementFilterParams implements Serializable {
         this.noTagClicked = noTagClicked;
     }
 
-    public Collection<Long> getTargetTypeIds() {
-        return targetTypeIds;
+    public Long getTargetTypeId() {
+        return targetTypeId;
     }
 
-    public void setTargetTypeIds(Collection<Long> targetTypeIds) {
-        this.targetTypeIds = targetTypeIds;
+    public void setTargetTypeId(Long targetTypeId) {
+        this.targetTypeId = targetTypeId;
     }
 
     // equals requires all fields in condition
@@ -313,13 +309,13 @@ public class TargetManagementFilterParams implements Serializable {
                 && Objects.equals(this.isNoTagClicked(), other.isNoTagClicked())
                 && Objects.equals(this.getTargetTags(), other.getTargetTags())
                 && Objects.equals(this.getTargetFilterQueryId(), other.getTargetFilterQueryId())
-                && Objects.equals(this.getTargetTypeIds(), other.getTargetTypeIds());
+                && Objects.equals(this.getTargetTypeId(), other.getTargetTypeId());
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(getPinnedDistId(), getSearchText(), getTargetUpdateStatusList(), isOverdueState(),
-                getDistributionId(), isNoTagClicked(), getTargetTags(), getTargetFilterQueryId(), getTargetTypeIds());
+                getDistributionId(), isNoTagClicked(), getTargetTags(), getTargetFilterQueryId(), getTargetTypeId());
     }
 
     @Override
@@ -328,6 +324,6 @@ public class TargetManagementFilterParams implements Serializable {
                 .add("searchText", getSearchText()).add("targetUpdateStatusList", getTargetUpdateStatusList())
                 .add("overdueState", isOverdueState()).add("distributionId", getDistributionId())
                 .add("noTagClicked", isNoTagClicked()).add("targetTags", getTargetTags())
-                .add("targetFilterQueryId", getTargetFilterQueryId()).add("targetTypeId", getTargetTypeIds()).toString();
+                .add("targetFilterQueryId", getTargetFilterQueryId()).add("targetTypeId", getTargetTypeId()).toString();
     }
 }

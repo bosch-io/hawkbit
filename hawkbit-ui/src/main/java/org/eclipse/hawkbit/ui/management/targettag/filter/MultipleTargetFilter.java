@@ -20,7 +20,6 @@ import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTag;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTarget;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetFilterQuery;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetType;
-import org.eclipse.hawkbit.ui.common.data.proxies.ProxyType;
 import org.eclipse.hawkbit.ui.common.event.EventLayout;
 import org.eclipse.hawkbit.ui.common.event.EventLayoutViewAware;
 import org.eclipse.hawkbit.ui.common.event.EventTopics;
@@ -151,7 +150,6 @@ public class MultipleTargetFilter extends Accordion {
         targetTypeGridLayout.setMargin(false);
         targetTypeGridLayout.setSizeFull();
         targetTypeGridLayout.setId(UIComponentIdProvider.TARGET_TYPE_DROP_AREA_ID);
-        targetTypeGridLayout.addComponent(targetTypeFilterButtons.getNoTargetTypeButton());
         targetTypeGridLayout.addComponent(targetTypeFilterButtons);
         targetTypeGridLayout.setComponentAlignment(targetTypeFilterButtons, Alignment.MIDDLE_CENTER);
         targetTypeGridLayout.setExpandRatio(targetTypeFilterButtons, 1.0F);
@@ -169,7 +167,8 @@ public class MultipleTargetFilter extends Accordion {
 
     private List<EntityModifiedAwareSupport> getTargetTypeModifiedAwareSupports() {
         return Arrays.asList(EntityModifiedGridRefreshAwareSupport.of(targetTypeFilterButtons::refreshAll),
-                EntityModifiedGenericSupport.of(null, null, targetTypeFilterButtons::resetFilterOnTagsDeleted));
+                EntityModifiedGenericSupport.of(null, targetTypeFilterButtons::resetFilterOnTargetTypeUpdated,
+                        targetTypeFilterButtons::resetFilterOnTargetTypeDeleted));
     }
 
     private List<EntityModifiedAwareSupport> getFilterQueryModifiedAwareSupports() {
@@ -197,6 +196,7 @@ public class MultipleTargetFilter extends Accordion {
 
         if (UIComponentIdProvider.SIMPLE_FILTER_ACCORDION_TAB.equals(selectedTabId)) {
             customFilterTab.clearAppliedTargetFilterQuery();
+            targetTypeFilterButtons.clearAppliedTargetTypeFilter();
 
             targetTagFilterLayoutUiState.setCustomFilterTabSelected(false);
             targetTagFilterLayoutUiState.setTargetTypeFilterTabSelected(false);
@@ -204,13 +204,19 @@ public class MultipleTargetFilter extends Accordion {
             eventBus.publish(EventTopics.TARGET_FILTER_TAB_CHANGED, this, TargetFilterTabChangedEventPayload.SIMPLE);
         }
         if (UIComponentIdProvider.TARGET_TYPE_FILTER_ACCORDION_TAB.equals(selectedTabId)){
+            customFilterTab.clearAppliedTargetFilterQuery();
+            filterByButtons.clearTargetTagFilters();
+            filterByStatusFooter.clearStatusAndOverdueFilters();
+
             targetTagFilterLayoutUiState.setTargetTypeFilterTabSelected(true);
             targetTagFilterLayoutUiState.setCustomFilterTabSelected(false);
+
             eventBus.publish(EventTopics.TARGET_FILTER_TAB_CHANGED, this, TargetFilterTabChangedEventPayload.TARGET_TYPE);
         }
         if (UIComponentIdProvider.CUSTOM_FILTER_ACCORDION_TAB.equals(selectedTabId)){
             filterByButtons.clearTargetTagFilters();
             filterByStatusFooter.clearStatusAndOverdueFilters();
+            targetTypeFilterButtons.clearAppliedTargetTypeFilter();
 
             targetTagFilterLayoutUiState.setCustomFilterTabSelected(true);
             targetTagFilterLayoutUiState.setTargetTypeFilterTabSelected(false);
@@ -226,20 +232,14 @@ public class MultipleTargetFilter extends Accordion {
     public void restoreState() {
         if (targetTagFilterLayoutUiState.isCustomFilterTabSelected()) {
             customFilterTab.restoreState();
-
             setSelectedTab(customFilterTab);
-        }
-        if (targetTagFilterLayoutUiState.isCustomFilterTabSelected()) {
-            filterByButtons.restoreState();
-            filterByStatusFooter.restoreState();
-
-            setSelectedTab(simpleFilterTab);
-        }
-        if (targetTagFilterLayoutUiState.isTargetTypeFilterTabSelected()) {
-            filterByButtons.restoreState();
-            filterByStatusFooter.restoreState();
-
+        } else if (targetTagFilterLayoutUiState.isTargetTypeFilterTabSelected()){
+            targetTypeFilterButtons.restoreState();
             setSelectedTab(targetTypeFilterTab);
+        } else {
+            filterByButtons.restoreState();
+            filterByStatusFooter.restoreState();
+            setSelectedTab(simpleFilterTab);
         }
     }
 
@@ -249,6 +249,7 @@ public class MultipleTargetFilter extends Accordion {
     public void onViewEnter() {
         filterByButtons.reevaluateFilter();
         customFilterTab.reevaluateFilter();
+        targetTypeFilterButtons.reevaluateFilter();
     }
 
     /**
