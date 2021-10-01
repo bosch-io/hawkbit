@@ -86,7 +86,7 @@ public class TargetTypeFilterButtons extends AbstractTargetTypeFilterButtons {
 
         final Long clickedTargetTypeId = getFilterButtonClickBehaviour().getPreviouslyClickedFilterId();
 
-        if (clickedTargetTypeId.equals(targetTypeToDeleteId)) {
+        if (clickedTargetTypeId != null && clickedTargetTypeId.equals(targetTypeToDeleteId)) {
             uiNotification.displayValidationError(i18n.getMessage("message.targettype.delete", targetTypeToDeleteName));
             return false;
         } else {
