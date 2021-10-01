@@ -150,6 +150,7 @@ public class MultipleTargetFilter extends Accordion {
         targetTypeGridLayout.setMargin(false);
         targetTypeGridLayout.setSizeFull();
         targetTypeGridLayout.setId(UIComponentIdProvider.TARGET_TYPE_DROP_AREA_ID);
+        targetTypeGridLayout.addComponent(targetTypeFilterButtons.getNoTargetTypeButton());
         targetTypeGridLayout.addComponent(targetTypeFilterButtons);
         targetTypeGridLayout.setComponentAlignment(targetTypeFilterButtons, Alignment.MIDDLE_CENTER);
         targetTypeGridLayout.setExpandRatio(targetTypeFilterButtons, 1.0F);

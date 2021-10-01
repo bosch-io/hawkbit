@@ -134,7 +134,7 @@ public class TargetCountMessageLabel extends AbstractFooterSupport implements Co
         appendSearchMsg(filterMessageBuilder, targetFilterParams.getSearchText());
         appendDsMsg(filterMessageBuilder, targetFilterParams.getDistributionId());
         appendCustomFilterQueryMsg(filterMessageBuilder, targetFilterParams.getTargetFilterQueryId());
-        appendTargetTypeFilterMsg(filterMessageBuilder, targetFilterParams.getTargetTypeId());
+        appendTargetTypeFilterMsg(filterMessageBuilder, targetFilterParams.isNoTargetTypeClicked(), targetFilterParams.getTargetTypeId());
 
         String filterMessage = filterMessageBuilder.toString().trim();
         if (filterMessage.endsWith(",")) {
@@ -187,8 +187,8 @@ public class TargetCountMessageLabel extends AbstractFooterSupport implements Co
         }
     }
 
-    private void appendTargetTypeFilterMsg(final StringBuilder filterMessageBuilder, final Long targetTypeId) {
-        if (targetTypeId != null) {
+    private void appendTargetTypeFilterMsg(final StringBuilder filterMessageBuilder, boolean noTargetTypeClicked, final Long targetTypeId) {
+        if (targetTypeId != null || noTargetTypeClicked) {
             appendFilterMsg(filterMessageBuilder, i18n.getMessage("label.filter.target.type"));
         }
     }

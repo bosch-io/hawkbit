@@ -12,6 +12,7 @@ import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetType;
 import org.eclipse.hawkbit.ui.common.filterlayout.AbstractFilterSingleButtonClick;
 
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Single button click behaviour of custom target filter buttons layout.
@@ -21,25 +22,38 @@ public class TargetTypeFilterButtonClick extends AbstractFilterSingleButtonClick
     private static final long serialVersionUID = 1L;
 
     private final transient BiConsumer<ProxyTargetType, ClickBehaviourType> filterChangedCallback;
+    private final transient Consumer<ClickBehaviourType> noTargetTypeChangedCallback;
+
 
     /**
      * Constructor
      *
      * @param filterChangedCallback
      *            filterChangedCallback
+     * @param noTargetTypeChangedCallback
+     *          NoTargetTypeChangedCallback
      */
     public TargetTypeFilterButtonClick(
-            final BiConsumer<ProxyTargetType, ClickBehaviourType> filterChangedCallback) {
+            final BiConsumer<ProxyTargetType, ClickBehaviourType> filterChangedCallback, Consumer<ClickBehaviourType> noTargetTypeChangedCallback) {
         this.filterChangedCallback = filterChangedCallback;
+        this.noTargetTypeChangedCallback = noTargetTypeChangedCallback;
     }
 
     @Override
     protected void filterUnClicked(ProxyTargetType clickedFilter) {
-        filterChangedCallback.accept(clickedFilter, ClickBehaviourType.UNCLICKED);
+        if (clickedFilter.isNoTargetType()) {
+            noTargetTypeChangedCallback.accept(ClickBehaviourType.UNCLICKED);
+        } else{
+            filterChangedCallback.accept(clickedFilter, ClickBehaviourType.UNCLICKED);
+        }
     }
 
     @Override
     protected void filterClicked(ProxyTargetType clickedFilter) {
-        filterChangedCallback.accept(clickedFilter, ClickBehaviourType.CLICKED);
+        if (clickedFilter.isNoTargetType()) {
+            noTargetTypeChangedCallback.accept(ClickBehaviourType.CLICKED);
+        } else {
+            filterChangedCallback.accept(clickedFilter, ClickBehaviourType.CLICKED);
+        }
     }
 }

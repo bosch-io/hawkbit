@@ -8,6 +8,7 @@
  */
 package org.eclipse.hawkbit.ui.common.filterlayout;
 
+import com.vaadin.ui.Button;
 import com.vaadin.ui.Window;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
@@ -20,8 +21,13 @@ import org.eclipse.hawkbit.ui.common.event.EventView;
 import org.eclipse.hawkbit.ui.common.event.FilterChangedEventPayload;
 import org.eclipse.hawkbit.ui.common.event.FilterType;
 import org.eclipse.hawkbit.ui.common.filterlayout.AbstractFilterButtonClickBehaviour.ClickBehaviourType;
+import org.eclipse.hawkbit.ui.components.SPUIComponentProvider;
+import org.eclipse.hawkbit.ui.decorators.SPUITagButtonStyle;
 import org.eclipse.hawkbit.ui.management.targettag.filter.TargetTagFilterLayoutUiState;
 import org.eclipse.hawkbit.ui.management.targettag.filter.TargetTypeFilterButtonClick;
+import org.eclipse.hawkbit.ui.utils.SPUIDefinitions;
+import org.eclipse.hawkbit.ui.utils.SPUIStyleDefinitions;
+import org.eclipse.hawkbit.ui.utils.UIMessageIdProvider;
 import org.eclipse.hawkbit.ui.utils.UINotification;
 
 import java.util.Collection;
@@ -40,6 +46,8 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
 
     private final TargetTypeManagement targetTypeManagement;
 
+    private final Button noTargetTypeButton;
+
     /**
      * Constructor for AbstractTagFilterButtons
      * @param uiDependencies
@@ -56,12 +64,52 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
         this.uiNotification = uiDependencies.getUiNotification();
         this.targetTagFilterLayoutUiState = targetTagFilterLayoutUiState;
         this.targetTypeManagement = targetTypeManagement;
-        this.targetTypeFilterButtonClick = new TargetTypeFilterButtonClick(this::onFilterChangedEvent);
+        this.noTargetTypeButton = buildNoTargetTypeButton();
+        this.targetTypeFilterButtonClick = new TargetTypeFilterButtonClick(this::onFilterChangedEvent, this::onNoTargetTypeChangedEvent);
     }
 
     @Override
     protected TargetTypeFilterButtonClick getFilterButtonClickBehaviour() {
         return targetTypeFilterButtonClick;
+    }
+
+    private Button buildNoTargetTypeButton() {
+        final Button noTargetType = SPUIComponentProvider.getButton(
+                getFilterButtonIdPrefix() + "." + SPUIDefinitions.NO_TARGET_TYPE_BUTTON_ID,
+                i18n.getMessage(UIMessageIdProvider.LABEL_NO_TARGET_TYPE),
+                i18n.getMessage(UIMessageIdProvider.TOOLTIP_CLICK_TO_FILTER), "button-no-tag", false, null,
+                SPUITagButtonStyle.class);
+
+        final ProxyTargetType dummyNoTargetType = new ProxyTargetType();
+        dummyNoTargetType.setNoTargetType(true);
+
+        noTargetType.addClickListener(event -> getFilterButtonClickBehaviour().processFilterClick(dummyNoTargetType));
+
+        return noTargetType;
+    }
+
+    public Button getNoTargetTypeButton() {
+        return noTargetTypeButton;
+    }
+
+    private void onNoTargetTypeChangedEvent(final ClickBehaviourType clickType) {
+        final boolean isNoTargetTypeActivated = ClickBehaviourType.CLICKED == clickType;
+
+        if (isNoTargetTypeActivated) {
+            getNoTargetTypeButton().addStyleName(SPUIStyleDefinitions.SP_NO_TAG_BTN_CLICKED_STYLE);
+        } else {
+            getNoTargetTypeButton().removeStyleName(SPUIStyleDefinitions.SP_NO_TAG_BTN_CLICKED_STYLE);
+        }
+
+        publishNoTargetTypeChangedEvent(isNoTargetTypeActivated);
+    }
+
+
+    private void publishNoTargetTypeChangedEvent(final boolean isNoTargetTypeActivated) {
+        eventBus.publish(EventTopics.FILTER_CHANGED, this, new FilterChangedEventPayload<>(getFilterMasterEntityType(),
+                FilterType.NO_TARGET_TYPE, isNoTargetTypeActivated, getView()));
+
+        targetTagFilterLayoutUiState.setNoTargetTypeClicked(isNoTargetTypeActivated);
     }
 
     private void onFilterChangedEvent(ProxyTargetType proxyTargetType, ClickBehaviourType clickType) {
@@ -125,6 +173,10 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
                 targetTagFilterLayoutUiState.setClickedTargetTypeFilterId(null);
             }
         }
+
+        if (targetTagFilterLayoutUiState.isNoTargetTypeClicked()) {
+            getNoTargetTypeButton().addStyleName(SPUIStyleDefinitions.SP_NO_TAG_BTN_CLICKED_STYLE);
+        }
     }
 
     protected abstract Collection<Long> filterExistingTagIds(final Collection<Long> tagIds);
@@ -164,6 +216,11 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
      * Remove applied target type filter
      */
     public void clearAppliedTargetTypeFilter() {
+        if (targetTagFilterLayoutUiState.isNoTargetTypeClicked()) {
+            targetTagFilterLayoutUiState.setNoTargetTypeClicked(false);
+            getNoTargetTypeButton().removeStyleName(SPUIStyleDefinitions.SP_NO_TAG_BTN_CLICKED_STYLE);
+        }
+
         if (targetTypeFilterButtonClick.getPreviouslyClickedFilterId() != null) {
             targetTypeFilterButtonClick.setPreviouslyClickedFilterId(null);
             targetTagFilterLayoutUiState.setClickedTargetTypeFilterId(null);

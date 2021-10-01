@@ -64,6 +64,7 @@ public class TargetManagementStateDataProvider
         final boolean noTagClicked = filter.isNoTagClicked();
         final String[] targetTags = filter.getTargetTags().toArray(new String[0]);
         final Long targetFilterQueryId = filter.getTargetFilterQueryId();
+        final boolean noTargetTypeClicked = filter.isNoTargetTypeClicked();
         final Long targetTypeId = filter.getTargetTypeId();
 
         if (pinnedDistId != null) {
@@ -76,7 +77,7 @@ public class TargetManagementStateDataProvider
             if (targetFilterQueryId != null) {
                 return targetManagement.findByTargetFilterQuery(pageRequest, targetFilterQueryId);
             }
-            if (targetTypeId != null) {
+            if (targetTypeId != null || noTargetTypeClicked) {
                 return targetManagement.findByTargetTypeId(pageRequest, targetTypeId);
             }
 
@@ -99,6 +100,7 @@ public class TargetManagementStateDataProvider
         final Long distributionId = filter.getDistributionId();
         final boolean noTagClicked = filter.isNoTagClicked();
         final String[] targetTags = filter.getTargetTags().toArray(new String[0]);
+        final boolean noTargetTypeClicked = filter.isNoTargetTypeClicked();
         final Long targetTypeId = filter.getTargetTypeId();
         final Long targetFilterQueryId = filter.getTargetFilterQueryId();
 
@@ -109,6 +111,9 @@ public class TargetManagementStateDataProvider
 
             if (targetTypeId != null) {
                 return targetManagement.countByTargetTypeId(targetTypeId);
+            }
+            if (noTargetTypeClicked) {
+                return targetManagement.countByTargetTypeId(null);
             }
 
             return targetManagement.countByFilters(targetUpdateStatusList, overdueState, searchText, distributionId,
