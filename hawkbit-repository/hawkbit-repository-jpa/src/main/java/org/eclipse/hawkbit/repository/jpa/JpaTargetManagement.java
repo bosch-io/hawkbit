@@ -583,7 +583,7 @@ public class JpaTargetManagement implements TargetManagement {
         }
 
         final List<JpaTarget> targetsWithSameType = targetRepository.findAll(
-                TargetSpecifications.hasType(typeId).and(TargetSpecifications.hasControllerIdIn(controllerIds)));
+                TargetSpecifications.hasTargetType(typeId).and(TargetSpecifications.hasControllerIdIn(controllerIds)));
 
         allTargets.removeAll(targetsWithSameType);
         // set new target type to all targets without that type
