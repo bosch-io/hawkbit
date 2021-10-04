@@ -65,7 +65,7 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
         this.targetTagFilterLayoutUiState = targetTagFilterLayoutUiState;
         this.targetTypeManagement = targetTypeManagement;
         this.noTargetTypeButton = buildNoTargetTypeButton();
-        this.targetTypeFilterButtonClick = new TargetTypeFilterButtonClick(this::onFilterChangedEvent, this::onNoTargetTypeChangedEvent);
+        this.targetTypeFilterButtonClick = new TargetTypeFilterButtonClick(this::onFilterChangedEvent);
     }
 
     @Override
@@ -92,8 +92,8 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
         return noTargetTypeButton;
     }
 
-    private void onNoTargetTypeChangedEvent(final ClickBehaviourType clickType) {
-        final boolean isNoTargetTypeActivated = ClickBehaviourType.CLICKED == clickType;
+    private void onNoTargetTypeChangedEvent(final ProxyTargetType proxyTargetType, final ClickBehaviourType clickType) {
+        final boolean isNoTargetTypeActivated = proxyTargetType.isNoTargetType() && clickType == ClickBehaviourType.CLICKED;
 
         if (isNoTargetTypeActivated) {
             getNoTargetTypeButton().addStyleName(SPUIStyleDefinitions.SP_NO_TAG_BTN_CLICKED_STYLE);
@@ -115,6 +115,8 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
     private void onFilterChangedEvent(ProxyTargetType proxyTargetType, ClickBehaviourType clickType) {
 
         getDataCommunicator().reset();
+
+        onNoTargetTypeChangedEvent(proxyTargetType, clickType);
 
         final Long targetTypeId = ClickBehaviourType.CLICKED == clickType ? proxyTargetType.getId()
                 : null;
