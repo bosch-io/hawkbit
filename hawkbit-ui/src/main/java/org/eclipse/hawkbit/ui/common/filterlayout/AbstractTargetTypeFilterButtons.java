@@ -92,7 +92,9 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
         return noTargetTypeButton;
     }
 
-    private void onNoTargetTypeChangedEvent(final ProxyTargetType proxyTargetType, final ClickBehaviourType clickType) {
+    private void onFilterChangedEvent(ProxyTargetType proxyTargetType, ClickBehaviourType clickType) {
+        getDataCommunicator().reset();
+
         final boolean isNoTargetTypeActivated = proxyTargetType.isNoTargetType() && clickType == ClickBehaviourType.CLICKED;
 
         if (isNoTargetTypeActivated) {
@@ -101,27 +103,19 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
             getNoTargetTypeButton().removeStyleName(SPUIStyleDefinitions.SP_NO_TAG_BTN_CLICKED_STYLE);
         }
 
-        publishNoTargetTypeChangedEvent(isNoTargetTypeActivated);
-    }
+        if (proxyTargetType.isNoTargetType()){
+            publishNoTargetTypeChangedEvent(isNoTargetTypeActivated);
+        }
 
+        final Long targetTypeId = ClickBehaviourType.CLICKED == clickType ? proxyTargetType.getId()
+                : null;
+        publishFilterChangedEvent(targetTypeId);
+    }
 
     private void publishNoTargetTypeChangedEvent(final boolean isNoTargetTypeActivated) {
         eventBus.publish(EventTopics.FILTER_CHANGED, this, new FilterChangedEventPayload<>(getFilterMasterEntityType(),
                 FilterType.NO_TARGET_TYPE, isNoTargetTypeActivated, getView()));
-
         targetTagFilterLayoutUiState.setNoTargetTypeClicked(isNoTargetTypeActivated);
-    }
-
-    private void onFilterChangedEvent(ProxyTargetType proxyTargetType, ClickBehaviourType clickType) {
-
-        getDataCommunicator().reset();
-
-        onNoTargetTypeChangedEvent(proxyTargetType, clickType);
-
-        final Long targetTypeId = ClickBehaviourType.CLICKED == clickType ? proxyTargetType.getId()
-                : null;
-
-        publishFilterChangedEvent(targetTypeId);
     }
 
     private void publishFilterChangedEvent(final Long targetTypeId) {
