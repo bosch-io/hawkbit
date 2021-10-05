@@ -48,6 +48,9 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
 
     private final Button noTargetTypeButton;
 
+    private boolean preNoTargetTypeBtnState = false;
+
+
     /**
      * Constructor for AbstractTagFilterButtons
      * @param uiDependencies
@@ -95,26 +98,27 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
     private void onFilterChangedEvent(ProxyTargetType proxyTargetType, ClickBehaviourType clickType) {
         getDataCommunicator().reset();
 
-        final boolean isNoTargetTypeActivated = proxyTargetType.isNoTargetType() && clickType == ClickBehaviourType.CLICKED;
+        final boolean isNoTargetTypeActive = proxyTargetType.isNoTargetType() && clickType == ClickBehaviourType.CLICKED;
 
-        if (isNoTargetTypeActivated) {
+        if (isNoTargetTypeActive) {
             getNoTargetTypeButton().addStyleName(SPUIStyleDefinitions.SP_NO_TAG_BTN_CLICKED_STYLE);
         } else {
             getNoTargetTypeButton().removeStyleName(SPUIStyleDefinitions.SP_NO_TAG_BTN_CLICKED_STYLE);
         }
 
-        if (proxyTargetType.isNoTargetType()){
-            publishNoTargetTypeChangedEvent(isNoTargetTypeActivated);
+        if (preNoTargetTypeBtnState != isNoTargetTypeActive){
+            publishNoTargetTypeChangedEvent(isNoTargetTypeActive);
         }
 
         final Long targetTypeId = ClickBehaviourType.CLICKED == clickType ? proxyTargetType.getId()
                 : null;
         publishFilterChangedEvent(targetTypeId);
+        preNoTargetTypeBtnState = isNoTargetTypeActive;
     }
 
     private void publishNoTargetTypeChangedEvent(final boolean isNoTargetTypeActivated) {
-        eventBus.publish(EventTopics.FILTER_CHANGED, this, new FilterChangedEventPayload<>(getFilterMasterEntityType(),
-                FilterType.NO_TARGET_TYPE, isNoTargetTypeActivated, getView()));
+        eventBus.publish(EventTopics.FILTER_CHANGED, this, new FilterChangedEventPayload<>(ProxyTarget.class,
+                FilterType.NO_TARGET_TYPE, isNoTargetTypeActivated, EventView.DEPLOYMENT));
         targetTagFilterLayoutUiState.setNoTargetTypeClicked(isNoTargetTypeActivated);
     }
 

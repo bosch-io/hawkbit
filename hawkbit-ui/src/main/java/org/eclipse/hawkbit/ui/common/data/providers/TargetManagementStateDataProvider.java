@@ -77,7 +77,12 @@ public class TargetManagementStateDataProvider
             if (targetFilterQueryId != null) {
                 return targetManagement.findByTargetFilterQuery(pageRequest, targetFilterQueryId);
             }
-            if (targetTypeId != null || noTargetTypeClicked) {
+
+            if (noTargetTypeClicked) {
+                return targetManagement.findByTargetTypeId(pageRequest, null);
+            }
+
+            if (targetTypeId != null) {
                 return targetManagement.findByTargetTypeId(pageRequest, targetTypeId);
             }
 
@@ -109,11 +114,12 @@ public class TargetManagementStateDataProvider
                 return targetManagement.countByTargetFilterQuery(targetFilterQueryId);
             }
 
+            if (noTargetTypeClicked){
+                return targetManagement.countByTargetTypeId(null);
+            }
+
             if (targetTypeId != null) {
                 return targetManagement.countByTargetTypeId(targetTypeId);
-            }
-            if (noTargetTypeClicked) {
-                return targetManagement.countByTargetTypeId(null);
             }
 
             return targetManagement.countByFilters(targetUpdateStatusList, overdueState, searchText, distributionId,
