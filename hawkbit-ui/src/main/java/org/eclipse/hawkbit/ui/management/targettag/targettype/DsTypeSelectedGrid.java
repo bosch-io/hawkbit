@@ -8,32 +8,27 @@
  */
 package org.eclipse.hawkbit.ui.management.targettag.targettype;
 
-import com.vaadin.data.Binder;
-import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.themes.ValoTheme;
-import org.eclipse.hawkbit.ui.common.builder.FormComponentBuilder;
 import org.eclipse.hawkbit.ui.common.builder.GridComponentBuilder;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyType;
 import org.eclipse.hawkbit.ui.common.grid.AbstractGrid;
 import org.eclipse.hawkbit.ui.common.grid.selection.RangeSelectionModel;
 import org.eclipse.hawkbit.ui.utils.SPUIDefinitions;
-import org.eclipse.hawkbit.ui.utils.UIMessageIdProvider;
+import org.eclipse.hawkbit.ui.utils.UIComponentIdProvider;
 import org.eclipse.hawkbit.ui.utils.VaadinMessageSource;
 
 /**
- * Software Module Selected Type grid which is shown on the Distribution Type
+ * Distribution Set Selected Type grid which is shown on the Target Type
  * Create/Update popup layout.
  */
 public class DsTypeSelectedGrid extends Grid<ProxyType> {
     private static final long serialVersionUID = 1L;
 
-    private static final String SM_TYPE_SELECTED_NAME_ID = "smTypeSelectedName";
-
     private final VaadinMessageSource i18n;
 
     /**
-     * Constructor for SmTypeSelectedGrid
+     * Constructor for DsTypeSelectedGrid
      *
      * @param i18n
      *            VaadinMessageSource
@@ -61,7 +56,7 @@ public class DsTypeSelectedGrid extends Grid<ProxyType> {
     }
 
     private void addColumns() {
-        GridComponentBuilder.addColumn(this, ProxyType::getName).setId(SM_TYPE_SELECTED_NAME_ID)
+        GridComponentBuilder.addColumn(this, ProxyType::getName).setId(UIComponentIdProvider.DIST_TYPE_TABLE_SELECTED_ID)
                 .setCaption(i18n.getMessage("header.dt.twintable.selected"))
                 .setDescriptionGenerator(ProxyType::getDescription);
     }

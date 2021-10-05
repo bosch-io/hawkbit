@@ -589,7 +589,7 @@ public interface TargetManagement {
 
     /**
      * Toggles {@link TargetType} assignment to given {@link Target}s by means
-     * that if some (or all) of the targets in the list have the {@link TargetType} not
+     * that if some (or all) of the targets in the list have the {@link Tag} not
      * yet assigned, they will be. Only if all of them have the tag already assigned
      * they will be removed instead.
      *

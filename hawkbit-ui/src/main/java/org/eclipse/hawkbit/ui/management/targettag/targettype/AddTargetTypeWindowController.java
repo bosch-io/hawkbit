@@ -19,11 +19,10 @@ import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTarget;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetType;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyType;
 import org.eclipse.hawkbit.ui.common.targettype.ProxyTargetTypeValidator;
-import org.eclipse.hawkbit.ui.common.type.ProxyTypeValidator;
 import org.springframework.util.StringUtils;
 
 /**
- * Add distribution set type window controller
+ * Add target type window controller
  */
 public class AddTargetTypeWindowController
         extends AbstractAddNamedEntityWindowController<ProxyTargetType, ProxyTargetType, TargetType> {

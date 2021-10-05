@@ -15,21 +15,20 @@ import org.eclipse.hawkbit.ui.common.data.proxies.ProxyType;
 import org.eclipse.hawkbit.ui.common.grid.AbstractGrid;
 import org.eclipse.hawkbit.ui.common.grid.selection.RangeSelectionModel;
 import org.eclipse.hawkbit.ui.utils.SPUIDefinitions;
+import org.eclipse.hawkbit.ui.utils.UIComponentIdProvider;
 import org.eclipse.hawkbit.ui.utils.VaadinMessageSource;
 
 /**
- * Software Module Source Type grid which is shown on the Distribution Type
+ * Distribution Set Source Type grid which is shown on the Target Type
  * Create/Update popup layout.
  */
 public class DsTypeSourceGrid extends Grid<ProxyType> {
     private static final long serialVersionUID = 1L;
 
-    private static final String DS_TYPE_SOURCE_NAME_ID = "dsTypeSourceName";
-
     private final VaadinMessageSource i18n;
 
     /**
-     * Constructor for SmTypeSourceGrid
+     * Constructor for DsTypeSourceGrid
      *
      * @param i18n
      *            VaadinMessageSource
@@ -57,7 +56,7 @@ public class DsTypeSourceGrid extends Grid<ProxyType> {
     }
 
     private void addColumns() {
-        GridComponentBuilder.addColumn(this, ProxyType::getName).setId(DS_TYPE_SOURCE_NAME_ID)
+        GridComponentBuilder.addColumn(this, ProxyType::getName).setId(UIComponentIdProvider.DIST_TYPE_TABLE_SOURCE_ID)
                 .setCaption(i18n.getMessage("header.dt.twintable.available"))
                 .setDescriptionGenerator(ProxyType::getDescription);
     }

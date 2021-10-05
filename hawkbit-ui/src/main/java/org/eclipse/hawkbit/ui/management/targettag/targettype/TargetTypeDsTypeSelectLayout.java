@@ -34,7 +34,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Layout for the software modules select grids for managing Distribution Set
+ * Layout for the distribution sets select grids for managing Target
  * Types on the Distributions View.
  */
 public class TargetTypeDsTypeSelectLayout extends CustomField<Set<ProxyType>> {
@@ -90,7 +90,7 @@ public class TargetTypeDsTypeSelectLayout extends CustomField<Set<ProxyType>> {
                 "arrow-button", true, VaadinIcons.FORWARD, SPUIButtonStyleNoBorder.class);
         selectButton.addClickListener(event -> addDsTypeToSelectedGrid());
 
-        final Button unSelectButton = SPUIComponentProvider.getButton("unselect-dist-type", "", "", "arrow-button",
+        final Button unSelectButton = SPUIComponentProvider.getButton(UIComponentIdProvider.UNSELECT_DIST_TYPE, "", "", "arrow-button",
                 true, VaadinIcons.BACKWARDS, SPUIButtonStyleNoBorder.class);
         unSelectButton.addClickListener(event -> removeDsTypeFromSelectedGrid());
 

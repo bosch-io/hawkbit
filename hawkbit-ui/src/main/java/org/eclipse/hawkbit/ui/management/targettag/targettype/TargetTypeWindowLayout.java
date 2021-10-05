@@ -9,15 +9,13 @@
 package org.eclipse.hawkbit.ui.management.targettag.targettype;
 
 import com.vaadin.ui.ComponentContainer;
-import com.vaadin.ui.FormLayout;
 import org.eclipse.hawkbit.repository.DistributionSetTypeManagement;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetType;
-import org.eclipse.hawkbit.ui.common.data.proxies.ProxyType;
 import org.eclipse.hawkbit.ui.management.tag.TagWindowLayout;
 
 /**
- * Distribution set window layout
+ * Target type window layout
  */
 public class TargetTypeWindowLayout extends TagWindowLayout<ProxyTargetType> {
     private final TargetTypeWindowLayoutComponentBuilder targetTypeWindowLayoutComponentBuilder;
@@ -41,12 +39,6 @@ public class TargetTypeWindowLayout extends TagWindowLayout<ProxyTargetType> {
         this.targetTypeDsTypeSelectLayout = targetTypeWindowLayoutComponentBuilder.createTargetTypeDsSelectLayout(binder);
 
         this.colorPickerComponent.getColorPickerBtn().setCaption(i18n.getMessage("label.choose.type.color"));
-    }
-
-    @Override
-    protected FormLayout buildFormLayout() {
-        final FormLayout formLayout = super.buildFormLayout();
-        return formLayout;
     }
 
     @Override

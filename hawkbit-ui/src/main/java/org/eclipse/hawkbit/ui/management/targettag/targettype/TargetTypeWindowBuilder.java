@@ -10,17 +10,15 @@ package org.eclipse.hawkbit.ui.management.targettag.targettype;
 
 import com.vaadin.ui.Window;
 import org.eclipse.hawkbit.repository.DistributionSetTypeManagement;
-import org.eclipse.hawkbit.repository.TargetManagement;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.ui.common.AbstractEntityWindowBuilder;
 import org.eclipse.hawkbit.ui.common.CommonDialogWindow;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetType;
-import org.eclipse.hawkbit.ui.common.data.proxies.ProxyType;
 import org.eclipse.hawkbit.ui.utils.UIComponentIdProvider;
 
 /**
- * Builder for distribution set type window
+ * Builder for target type window
  */
 public class TargetTypeWindowBuilder extends AbstractEntityWindowBuilder<ProxyTargetType> {
 
