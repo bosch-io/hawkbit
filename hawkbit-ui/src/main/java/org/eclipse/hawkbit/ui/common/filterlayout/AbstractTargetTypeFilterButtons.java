@@ -9,6 +9,7 @@
 package org.eclipse.hawkbit.ui.common.filterlayout;
 
 import com.vaadin.ui.Button;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Window;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
@@ -44,9 +45,9 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
 
     private final TargetTypeFilterButtonClick targetTypeFilterButtonClick;
 
-    private final TargetTypeManagement targetTypeManagement;
+    private final transient TargetTypeManagement targetTypeManagement;
 
-    private final Button noTargetTypeButton;
+    private final HorizontalLayout noTargetTypeButton;
 
     private boolean preNoTargetTypeBtnState = false;
 
@@ -76,7 +77,8 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
         return targetTypeFilterButtonClick;
     }
 
-    private Button buildNoTargetTypeButton() {
+    private HorizontalLayout buildNoTargetTypeButton() {
+        HorizontalLayout layout = new HorizontalLayout();
         final Button noTargetType = SPUIComponentProvider.getButton(
                 getFilterButtonIdPrefix() + "." + SPUIDefinitions.NO_TARGET_TYPE_BUTTON_ID,
                 i18n.getMessage(UIMessageIdProvider.LABEL_NO_TARGET_TYPE),
@@ -88,10 +90,13 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
 
         noTargetType.addClickListener(event -> getFilterButtonClickBehaviour().processFilterClick(dummyNoTargetType));
 
-        return noTargetType;
+        layout.addStyleName("filter-drop-hint-layout");
+        layout.setWidth(100, Unit.PERCENTAGE);
+        layout.addComponent(noTargetType);
+        return layout;
     }
 
-    public Button getNoTargetTypeButton() {
+    public HorizontalLayout getNoTargetTypeButton() {
         return noTargetTypeButton;
     }
 

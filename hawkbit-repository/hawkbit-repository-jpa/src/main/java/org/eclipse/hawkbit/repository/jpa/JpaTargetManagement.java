@@ -603,6 +603,26 @@ public class JpaTargetManagement implements TargetManagement {
     @Transactional
     @Retryable(include = {
             ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))
+    public TargetTypeAssignmentResult unAssignTargetType(final Collection<String> controllerIds) {
+        final List<JpaTarget> allTargets = targetRepository
+                .findAll(TargetSpecifications.hasControllerIdIn(controllerIds));
+
+        if (allTargets.size() < controllerIds.size()) {
+            throw new EntityNotFoundException(Target.class, controllerIds,
+                    allTargets.stream().map(Target::getControllerId).collect(Collectors.toList()));
+        }
+
+        // set new target type to null for all targets
+        allTargets.forEach(target -> target.setTargetType(null));
+
+        return new TargetTypeAssignmentResult(0, Collections.emptyList(), Collections
+                .unmodifiableList(allTargets.stream().map(targetRepository::save).collect(Collectors.toList())), null);
+    }
+
+    @Override
+    @Transactional
+    @Retryable(include = {
+            ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))
     public List<Target> assignTag(final Collection<String> controllerIds, final long tagId) {
 
         final List<JpaTarget> allTargets = targetRepository

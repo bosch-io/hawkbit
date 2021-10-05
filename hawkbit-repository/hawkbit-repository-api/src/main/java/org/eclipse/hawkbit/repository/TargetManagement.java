@@ -607,6 +607,18 @@ public interface TargetManagement {
     TargetTypeAssignmentResult assignTargetType(@NotEmpty Collection<String> controllerIds, @NotNull Long typeId);
 
     /**
+     * Initiates {@link TargetType} un-assignment to given {@link Target}s. The type
+     * of the targets will be set to {@code null}
+     *
+     * @param controllerIds
+     *            to remove the type from
+     * @return {@link TargetTypeAssignmentResult} with all meta data of the
+     *         assignment outcome.
+     */
+    @PreAuthorize(SpringEvalExpressions.HAS_AUTH_UPDATE_TARGET)
+    TargetTypeAssignmentResult unAssignTargetType(@NotEmpty Collection<String> controllerIds);
+
+    /**
      * Un-assign a {@link TargetTag} assignment to given {@link Target}.
      *
      * @param controllerID
