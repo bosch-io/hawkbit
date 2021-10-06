@@ -146,11 +146,12 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
 
     /**
      * Tag deletion operation.
-     * 
+     *
      * @param tagToDelete
      *            tag to delete
+     * @return true if delete target type has no exception
      */
-    protected abstract void deleteTag(final ProxyTargetType tagToDelete);
+    protected abstract boolean deleteTargetTypeTag(final ProxyTargetType tagToDelete);
 
     /**
      * Provides the window for updating tag

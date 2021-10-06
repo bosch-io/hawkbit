@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.eclipse.hawkbit.repository.Identifiable;
 import org.eclipse.hawkbit.repository.TargetManagement;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
+import org.eclipse.hawkbit.repository.exception.TargetTypeInUseException;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.mappers.TargetTypeToProxyTargetTypeMapper;
 import org.eclipse.hawkbit.ui.common.data.providers.TargetTypeDataProvider;
@@ -88,15 +89,10 @@ public class TargetTypeFilterButtons extends AbstractTargetTypeFilterButtons {
 
         if (clickedTargetTypeId != null && clickedTargetTypeId.equals(targetTypeToDeleteId)) {
             uiNotification.displayValidationError(i18n.getMessage("message.targettype.delete", targetTypeToDeleteName));
-            return false;
         } else {
-            deleteTag(targetTypeToDelete);
-
-            eventBus.publish(EventTopics.ENTITY_MODIFIED, this,
-                    new EntityModifiedEventPayload(EntityModifiedEventPayload.EntityModifiedEventType.ENTITY_REMOVED, getFilterMasterEntityType(),
-                            ProxyTargetType.class, targetTypeToDeleteId));
-            return true;
+            return deleteTargetTypeTag(targetTypeToDelete);
         }
+        return false;
     }
 
     @Override
@@ -124,8 +120,18 @@ public class TargetTypeFilterButtons extends AbstractTargetTypeFilterButtons {
     }
 
     @Override
-    protected void deleteTag(ProxyTargetType tagToDelete) {
+    protected boolean deleteTargetTypeTag(ProxyTargetType tagToDelete) {
+        try{
             targetTypeManagement.delete(tagToDelete.getId());
+            eventBus.publish(EventTopics.ENTITY_MODIFIED, this,
+                    new EntityModifiedEventPayload(EntityModifiedEventPayload.EntityModifiedEventType.ENTITY_REMOVED, getFilterMasterEntityType(),
+                            ProxyTargetType.class, tagToDelete.getId()));
+            return true;
+        } catch (TargetTypeInUseException exception){
+            uiNotification.displayValidationError(i18n.getMessage(exception.getMessage()));
+        }
+
+        return false;
     }
 
     @Override
