@@ -203,12 +203,13 @@ public class TargetGridLayout extends AbstractGridComponentLayout {
         final boolean isTargetTypeFilterTabSelected = TargetFilterTabChangedEventPayload.TARGET_TYPE == eventPayload;
         final boolean isSimpleTypeFilterTabSelected = TargetFilterTabChangedEventPayload.SIMPLE == eventPayload;
 
+        targetGridHeader.onFilterReset();
         if (isCustomFilterTabSelected) {
-            targetGridHeader.onSimpleFilterReset();
+            targetGridHeader.disabledSearchIcon();
             targetGrid.onCustomTabSelected();
         }
         if(isTargetTypeFilterTabSelected){
-            targetGridHeader.onSimpleFilterReset();
+            targetGridHeader.enableSearchIcon();
             targetGrid.onTargetTypeTabSelected();
         }
         if (isSimpleTypeFilterTabSelected){
