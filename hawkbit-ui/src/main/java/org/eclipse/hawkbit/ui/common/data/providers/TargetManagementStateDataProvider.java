@@ -78,14 +78,12 @@ public class TargetManagementStateDataProvider
                 return targetManagement.findByTargetFilterQuery(pageRequest, targetFilterQueryId);
             }
 
-            if (noTargetTypeClicked) {
-                return targetManagement.findByTargetTypeId(pageRequest, null);
+            // Type Filter of Deployment Management view
+            if (targetTypeId != null || noTargetTypeClicked) {
+                return targetManagement.findByFilters(pageRequest, new FilterParams(searchText, distributionId, noTargetTypeClicked, targetTypeId));
             }
 
-            if (targetTypeId != null) {
-                return targetManagement.findByTargetTypeId(pageRequest, targetTypeId);
-            }
-
+            // Simple Filter of Deployment Management view
             return targetManagement.findByFilters(pageRequest, new FilterParams(targetUpdateStatusList, overdueState,
                     searchText, distributionId, noTagClicked, targetTags));
         }
@@ -114,16 +112,14 @@ public class TargetManagementStateDataProvider
                 return targetManagement.countByTargetFilterQuery(targetFilterQueryId);
             }
 
-            if (noTargetTypeClicked){
-                return targetManagement.countByTargetTypeId(null);
+            // Type Filter of Deployment Management view
+            if (targetTypeId != null || noTargetTypeClicked) {
+                return targetManagement.countByFilters(new FilterParams(searchText, distributionId, noTargetTypeClicked, targetTypeId));
             }
 
-            if (targetTypeId != null) {
-                return targetManagement.countByTargetTypeId(targetTypeId);
-            }
-
-            return targetManagement.countByFilters(targetUpdateStatusList, overdueState, searchText, distributionId,
-                    noTagClicked, targetTags);
+            // Simple Filter of Deployment Management view
+            return targetManagement.countByFilters(new FilterParams(targetUpdateStatusList, overdueState, searchText, distributionId,
+                    noTagClicked, targetTags));
         }
 
         return targetManagement.count();

@@ -471,11 +471,15 @@ public class JpaTargetManagement implements TargetManagement {
     }
 
     @Override
-    public long countByFilters(final Collection<TargetUpdateStatus> status, final Boolean overdueState,
-            final String searchText, final Long installedOrAssignedDistributionSetId,
-            final Boolean selectTargetWithNoTag, final String... tagNames) {
-        final List<Specification<JpaTarget>> specList = buildSpecificationList(new FilterParams(status, overdueState,
-                searchText, installedOrAssignedDistributionSetId, selectTargetWithNoTag, tagNames));
+    public long countByFilters(Collection<TargetUpdateStatus> status, Boolean overdueState, String searchText,
+                               Long installedOrAssignedDistributionSetId, Long targetTypeId, Boolean selectTargetWithNoTag,
+                               String... tagNames) {
+        return 0;
+    }
+
+    @Override
+    public long countByFilters(final FilterParams filterParams) {
+        final List<Specification<JpaTarget>> specList = buildSpecificationList(filterParams);
         return countByCriteriaAPI(specList);
     }
 
@@ -501,6 +505,11 @@ public class JpaTargetManagement implements TargetManagement {
             specList.add(TargetSpecifications.hasTags(filterParams.getFilterByTagNames(),
                     filterParams.getSelectTargetWithNoTag()));
         }
+
+        if (hasTypesFilterActive(filterParams)) {
+            specList.add(TargetSpecifications.hasTargetType(filterParams.getFilterByTargetType()));
+        }
+
         return specList;
     }
 
@@ -510,6 +519,13 @@ public class JpaTargetManagement implements TargetManagement {
                 && filterParams.getFilterByTagNames().length > 0;
 
         return isNoTagActive || isAtLeastOneTagActive;
+    }
+
+    private static boolean hasTypesFilterActive(final FilterParams filterParams) {
+        final boolean isNoTypeActive = Boolean.TRUE.equals(filterParams.getSelectTargetWithNoTargetType());
+        final boolean isTypeActive = filterParams.getFilterByTargetType() != null;
+
+        return isNoTypeActive || isTypeActive;
     }
 
     private Slice<Target> findByCriteriaAPI(final Pageable pageable, final List<Specification<JpaTarget>> specList) {

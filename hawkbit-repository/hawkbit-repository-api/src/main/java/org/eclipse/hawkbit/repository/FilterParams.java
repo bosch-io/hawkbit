@@ -27,9 +27,11 @@ public class FilterParams {
     private final Boolean selectTargetWithNoTag;
     private final String[] filterByTagNames;
     private final Long filterByDistributionId;
+    private final Boolean selectTargetWithNoTargetType;
+    private final Long filterByTargetType;
 
     /**
-     * Constructor.
+     * Constructor for the filter parameters of a Simple Filter.
      *
      * @param filterByInstalledOrAssignedDistributionSetId
      *            if set, a filter is added for the given
@@ -56,6 +58,30 @@ public class FilterParams {
         this.filterByDistributionId = filterByInstalledOrAssignedDistributionSetId;
         this.selectTargetWithNoTag = selectTargetWithNoTag;
         this.filterByTagNames = filterByTagNames;
+        this.selectTargetWithNoTargetType = false;
+        this.filterByTargetType = null;
+
+    }
+
+    /**
+     * Constructor for the filter parameters of a Type Filter.
+     *
+     * @param filterByInstalledOrAssignedDistributionSetId
+     *            if set, a filter is added for the given
+     *            {@link DistributionSet#getId()}
+     * @param filterBySearchText
+     *            if set, a filter is added for the given search text
+     */
+    public FilterParams(final String filterBySearchText, final Long filterByInstalledOrAssignedDistributionSetId,
+                        final Boolean selectTargetWithNoType, final Long filterByType) {
+        this.filterBySearchText = filterBySearchText;
+        this.filterByDistributionId = filterByInstalledOrAssignedDistributionSetId;
+        this.filterByStatus = null;
+        this.overdueState = null;
+        this.selectTargetWithNoTag = false;
+        this.filterByTagNames = null;
+        this.selectTargetWithNoTargetType = selectTargetWithNoType;
+        this.filterByTargetType = filterByType;
     }
 
     /**
@@ -119,5 +145,13 @@ public class FilterParams {
      */
     public String[] getFilterByTagNames() {
         return filterByTagNames;
+    }
+
+    public Boolean getSelectTargetWithNoTargetType() {
+        return selectTargetWithNoTargetType;
+    }
+
+    public Long getFilterByTargetType() {
+        return filterByTargetType;
     }
 }

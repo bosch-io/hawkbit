@@ -109,10 +109,28 @@ public interface TargetManagement {
      * 
      * @throws EntityNotFoundException
      *             if distribution set with given ID does not exist
+     *
+     * @deprecated {@link this#countByFilters(FilterParams)} can be used instead.
      */
+    @Deprecated
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_READ_TARGET)
     long countByFilters(Collection<TargetUpdateStatus> status, Boolean overdueState, String searchText,
-            Long installedOrAssignedDistributionSetId, Boolean selectTargetWithNoTag, String... tagNames);
+            Long installedOrAssignedDistributionSetId, Long targetTypeId, Boolean selectTargetWithNoTag, String... tagNames);
+
+    /**
+     * Count {@link Target}s for all the given filter parameters.
+     *
+     * @param filterParams
+     *            the filters to apply; only filters are enabled that have
+     *            non-null value; filters are AND-gated
+     *
+     * @return the found number {@link Target}s
+     *
+     * @throws EntityNotFoundException
+     *             if distribution set with given ID does not exist
+     */
+    @PreAuthorize(SpringEvalExpressions.HAS_AUTH_READ_TARGET)
+    long countByFilters(@NotNull final FilterParams filterParams);
 
     /**
      * Counts number of targets with given with given distribution set Id
