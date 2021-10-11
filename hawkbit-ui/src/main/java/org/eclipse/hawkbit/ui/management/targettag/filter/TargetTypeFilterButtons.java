@@ -43,6 +43,8 @@ import org.eclipse.hawkbit.ui.common.grid.support.assignment.TargetsToTargetType
 import org.eclipse.hawkbit.ui.common.layout.listener.EntityDraggingListener;
 import org.eclipse.hawkbit.ui.management.targettag.targettype.TargetTypeWindowBuilder;
 import org.eclipse.hawkbit.ui.utils.UIComponentIdProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
@@ -51,12 +53,13 @@ import java.util.Collection;
  */
 public class TargetTypeFilterButtons extends AbstractTargetTypeFilterButtons {
     private static final long serialVersionUID = 1L;
+    private static final Logger LOG = LoggerFactory.getLogger(TargetTypeFilterButtons.class);
 
     private final transient TargetManagement targetManagement;
     private final transient TargetTypeManagement targetTypeManagement;
     private final transient TargetTypeWindowBuilder targetTypeWindowBuilder;
-    private final CommonUiDependencies uiDependencies;
-    private EntityDraggingListener draggingListener;
+    private final transient CommonUiDependencies uiDependencies;
+    private transient EntityDraggingListener draggingListener;
 
     TargetTypeFilterButtons(final CommonUiDependencies uiDependencies,
                             final TargetTypeManagement targetTypeManagement, final TargetManagement targetManagement, final TargetTagFilterLayoutUiState targetTagFilterLayoutUiState,
@@ -149,6 +152,7 @@ public class TargetTypeFilterButtons extends AbstractTargetTypeFilterButtons {
                             ProxyTargetType.class, tagToDelete.getId()));
             return true;
         } catch (TargetTypeInUseException exception){
+            LOG.trace("Target type already in use exception: {}", exception.getMessage());
             uiNotification.displayValidationError(i18n.getMessage(exception.getMessage()));
         }
 

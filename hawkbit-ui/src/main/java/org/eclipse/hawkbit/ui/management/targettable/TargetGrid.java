@@ -308,9 +308,7 @@ public class TargetGrid extends AbstractGrid<ProxyTarget, TargetManagementFilter
      * Update filter on simple tab selection
      */
     public void onSimpleTabSelected() {
-        getFilter().ifPresent(filter -> {
-            filter.setNoTargetTypeClicked(false);
-                });
+        getFilter().ifPresent(filter -> filter.setNoTargetTypeClicked(false));
         getFilterSupport().updateFilter(TargetManagementFilterParams::setTargetFilterQueryId, null);
         getFilterSupport().updateFilter(TargetManagementFilterParams::setTargetTypeId, null);
     }

@@ -73,7 +73,6 @@ import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -252,7 +251,7 @@ public class JpaTargetManagement implements TargetManagement {
     }
 
     @Override
-    public Slice<Target> findByTargetTypeId(PageRequest pageRequest, Long targetTypeId) {
+    public Slice<Target> findByTargetTypeId(Pageable pageRequest, Long targetTypeId) {
         return findTargetsBySpec(TargetSpecifications.hasTargetType(targetTypeId), pageRequest);
     }
 

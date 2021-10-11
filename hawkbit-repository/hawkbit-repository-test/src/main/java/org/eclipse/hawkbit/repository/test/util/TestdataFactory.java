@@ -1000,6 +1000,23 @@ public class TestdataFactory {
     }
 
     /**
+     * builds a set of {@link Target} fixtures from the given parameters.
+     *
+     * @param numberOfTargets
+     *            number of targets to create
+     * @param prefix
+     *            prefix used for the controller ID and description
+     * @param type
+     *            the target type
+     * @return set of {@link Target}
+     */
+    public List<Target> createTargetsWithType(final int numberOfTargets, final String prefix, final TargetType type) {
+        return targetManagement.create(IntStream.range(0, numberOfTargets).mapToObj(i -> entityFactory.target().create()
+                .controllerId(String.format("%s-%05d", prefix, i)).description(prefix + i).targetType(type.getId()))
+                .collect(Collectors.toList()));
+    }
+
+    /**
      * Create a set of {@link TargetTag}s.
      *
      * @param number

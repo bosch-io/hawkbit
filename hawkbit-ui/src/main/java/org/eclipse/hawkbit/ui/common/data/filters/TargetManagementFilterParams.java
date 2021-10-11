@@ -110,7 +110,7 @@ public class TargetManagementFilterParams implements Serializable {
      *         <code>false</code>
      */
     public boolean isAnyFilterSelected() {
-        return isAnyTagSelected() || isAnyStatusFilterSelected() || isSearchActive() || isAnyComplexFilterSelected() || noTargetTypeClicked;
+        return isAnyTagSelected() || isAnyStatusFilterSelected() || isSearchActive() || isAnyComplexFilterSelected();
     }
 
     private boolean isAnyTagSelected() {
@@ -126,7 +126,7 @@ public class TargetManagementFilterParams implements Serializable {
     }
 
     private boolean isAnyComplexFilterSelected() {
-        return distributionId != null || targetFilterQueryId != null || targetTypeId != null;
+        return distributionId != null || targetFilterQueryId != null || targetTypeId != null || isNoTargetTypeClicked();
     }
 
 

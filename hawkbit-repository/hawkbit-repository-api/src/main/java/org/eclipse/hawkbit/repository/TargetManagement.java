@@ -39,7 +39,6 @@ import org.eclipse.hawkbit.repository.model.TargetTagAssignmentResult;
 import org.eclipse.hawkbit.repository.model.TargetTypeAssignmentResult;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -893,7 +892,7 @@ public interface TargetManagement {
      *
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_READ_TARGET)
-    Slice<Target> findByTargetTypeId(PageRequest pageRequest, Long targetTypeId);
+    Slice<Target> findByTargetTypeId(Pageable pageRequest, Long targetTypeId);
 
     /**
      * Count targets by target type.
