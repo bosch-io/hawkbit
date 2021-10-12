@@ -9,6 +9,7 @@
 package org.eclipse.hawkbit.ui.management.targettag.filter;
 
 import com.vaadin.ui.AbstractLayout;
+import com.vaadin.ui.Button;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.Window;
 
@@ -183,7 +184,7 @@ public class TargetTypeFilterButtons extends AbstractTargetTypeFilterButtons {
         final TargetsToNoTargetTypeAssignmentSupport targetsToNoTargetTypeAssignmentSupport = new TargetsToNoTargetTypeAssignmentSupport(
                 uiDependencies, targetManagement);
 
-        final DropTargetExtension<AbstractLayout> dropExtension = new DropTargetExtension<>(getNoTargetTypeButton());
+        final DropTargetExtension<Button> dropExtension = new DropTargetExtension<>(getNoTargetTypeButton());
 
         dropExtension.addDropListener(event -> {
             List<ProxyTarget> droppedTargets = getDroppedTargets(event);

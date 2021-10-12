@@ -47,7 +47,7 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
 
     private final transient TargetTypeManagement targetTypeManagement;
 
-    private final HorizontalLayout noTargetTypeButton;
+    private final Button noTargetTypeButton;
 
     private boolean preNoTargetTypeBtnState = false;
 
@@ -77,8 +77,7 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
         return targetTypeFilterButtonClick;
     }
 
-    private HorizontalLayout buildNoTargetTypeButton() {
-        HorizontalLayout layout = new HorizontalLayout();
+    private Button buildNoTargetTypeButton() {
         final Button noTargetType = SPUIComponentProvider.getButton(
                 getFilterButtonIdPrefix() + "." + SPUIDefinitions.NO_TARGET_TYPE_BUTTON_ID,
                 i18n.getMessage(UIMessageIdProvider.LABEL_NO_TARGET_TYPE),
@@ -90,13 +89,11 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
 
         noTargetType.addClickListener(event -> getFilterButtonClickBehaviour().processFilterClick(dummyNoTargetType));
 
-        layout.addStyleName("filter-drop-hint-layout");
-        layout.setWidth(100, Unit.PERCENTAGE);
-        layout.addComponent(noTargetType);
-        return layout;
+        noTargetType.addStyleName("filter-drop-hint-layout");
+        return noTargetType;
     }
 
-    public HorizontalLayout getNoTargetTypeButton() {
+    public Button getNoTargetTypeButton() {
         return noTargetTypeButton;
     }
 
