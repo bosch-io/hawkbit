@@ -8,7 +8,6 @@
  */
 package org.eclipse.hawkbit.ui.management.targettag.filter;
 
-import com.vaadin.ui.AbstractLayout;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.Window;
@@ -30,7 +29,6 @@ import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.mappers.TargetTypeToProxyTargetTypeMapper;
 import org.eclipse.hawkbit.ui.common.data.providers.TargetTypeDataProvider;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyIdentifiableEntity;
-import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTag;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTarget;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetType;
 import org.eclipse.hawkbit.ui.common.event.EntityModifiedEventPayload;
@@ -50,7 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 
 /**
- * Target Tag filter buttons table.
+ * Target Type filter buttons table.
  */
 public class TargetTypeFilterButtons extends AbstractTargetTypeFilterButtons {
     private static final long serialVersionUID = 1L;
@@ -115,7 +113,7 @@ public class TargetTypeFilterButtons extends AbstractTargetTypeFilterButtons {
         if (clickedTargetTypeId != null && clickedTargetTypeId.equals(targetTypeToDeleteId)) {
             uiNotification.displayValidationError(i18n.getMessage("message.targettype.delete", targetTypeToDeleteName));
         } else {
-            return deleteTargetTypeTag(targetTypeToDelete);
+            return deleteTargetType(targetTypeToDelete);
         }
         return false;
     }
@@ -145,12 +143,12 @@ public class TargetTypeFilterButtons extends AbstractTargetTypeFilterButtons {
     }
 
     @Override
-    protected boolean deleteTargetTypeTag(ProxyTargetType tagToDelete) {
+    protected boolean deleteTargetType(ProxyTargetType typeToDelete) {
         try{
-            targetTypeManagement.delete(tagToDelete.getId());
+            targetTypeManagement.delete(typeToDelete.getId());
             eventBus.publish(EventTopics.ENTITY_MODIFIED, this,
                     new EntityModifiedEventPayload(EntityModifiedEventPayload.EntityModifiedEventType.ENTITY_REMOVED, getFilterMasterEntityType(),
-                            ProxyTargetType.class, tagToDelete.getId()));
+                            ProxyTargetType.class, typeToDelete.getId()));
             return true;
         } catch (TargetTypeInUseException exception){
             LOG.trace("Target type already in use exception: {}", exception.getMessage());
@@ -161,13 +159,13 @@ public class TargetTypeFilterButtons extends AbstractTargetTypeFilterButtons {
     }
 
     @Override
-    protected Window getUpdateWindow(ProxyTag clickedFilter) {
+    protected Window getUpdateWindow(ProxyTargetType clickedFilter) {
         return null;
     }
 
     @Override
-    protected Collection<Long> filterExistingTagIds(Collection<Long> tagIds) {
-        return targetTypeManagement.get(tagIds).stream().map(Identifiable::getId).collect(Collectors.toSet());
+    protected Collection<Long> filterExistingTypeIds(Collection<Long> typeIds) {
+        return targetTypeManagement.get(typeIds).stream().map(Identifiable::getId).collect(Collectors.toSet());
     }
 
     @Override

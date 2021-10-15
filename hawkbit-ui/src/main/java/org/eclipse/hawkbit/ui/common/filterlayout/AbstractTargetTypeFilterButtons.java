@@ -9,12 +9,10 @@
 package org.eclipse.hawkbit.ui.common.filterlayout;
 
 import com.vaadin.ui.Button;
-import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Window;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyIdentifiableEntity;
-import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTag;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTarget;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetType;
 import org.eclipse.hawkbit.ui.common.event.EventTopics;
@@ -34,7 +32,7 @@ import org.eclipse.hawkbit.ui.utils.UINotification;
 import java.util.Collection;
 
 /**
- * Class for defining the tag filter buttons.
+ * Class for defining the target type filter buttons.
  */
 public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButtons<ProxyTargetType, Void> {
     private static final long serialVersionUID = 1L;
@@ -53,7 +51,7 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
 
 
     /**
-     * Constructor for AbstractTagFilterButtons
+     * Constructor for AbstractTargetTypeFilterButtons
      * @param uiDependencies
      *            {@link CommonUiDependencies}
      * @param targetTagFilterLayoutUiState
@@ -147,22 +145,22 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
 
 
     /**
-     * Tag deletion operation.
+     * Type deletion operation.
      *
-     * @param tagToDelete
-     *            tag to delete
+     * @param typeToDelete
+     *            target type to delete
      * @return true if delete target type has no exception
      */
-    protected abstract boolean deleteTargetTypeTag(final ProxyTargetType tagToDelete);
+    protected abstract boolean deleteTargetType(final ProxyTargetType typeToDelete);
 
     /**
-     * Provides the window for updating tag
+     * Provides the window for updating the target type
      *
      * @param clickedFilter
-     *            tag to update
+     *            type to update
      * @return update window
      */
-    protected abstract Window getUpdateWindow(final ProxyTag clickedFilter);
+    protected abstract Window getUpdateWindow(final ProxyTargetType clickedFilter);
 
     @Override
     public void restoreState() {
@@ -182,7 +180,7 @@ public abstract class AbstractTargetTypeFilterButtons extends AbstractFilterButt
         }
     }
 
-    protected abstract Collection<Long> filterExistingTagIds(final Collection<Long> tagIds);
+    protected abstract Collection<Long> filterExistingTypeIds(final Collection<Long> tagIds);
 
     public void resetFilterOnTargetTypeUpdated(Collection<Long> updatedTargetTypeIds) {
         if (isClickedTargetTypeInIds(updatedTargetTypeIds)) {

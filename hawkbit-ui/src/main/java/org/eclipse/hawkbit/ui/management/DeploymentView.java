@@ -96,10 +96,10 @@ public class DeploymentView extends AbstractEventListenersAwareView implements B
             final TargetManagement targetManagement, final EntityFactory entityFactory, final UiProperties uiProperties,
             final TargetTagManagement targetTagManagement, final TargetTypeManagement targetTypeManagement,
             final DistributionSetTagManagement distributionSetTagManagement,
-                   final TargetFilterQueryManagement targetFilterQueryManagement, final SystemManagement systemManagement,
-                   final TenantConfigurationManagement configManagement,
-                   final TargetManagementStateDataSupplier targetManagementStateDataSupplier,
-                   final SystemSecurityContext systemSecurityContext, @Qualifier("uiExecutor") final Executor uiExecutor) {
+            final TargetFilterQueryManagement targetFilterQueryManagement, final SystemManagement systemManagement,
+            final TenantConfigurationManagement configManagement,
+            final TargetManagementStateDataSupplier targetManagementStateDataSupplier,
+            final SystemSecurityContext systemSecurityContext, @Qualifier("uiExecutor") final Executor uiExecutor) {
         this.permChecker = permChecker;
         this.managementUIState = managementUIState;
 

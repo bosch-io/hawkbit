@@ -1110,7 +1110,7 @@ public class TargetManagementTest extends AbstractJpaIntegrationTest {
     @Description("Tests the assignment of types to multiple targets.")
     @ExpectEvents({ @Expect(type = TargetCreatedEvent.class, count = 20),
             @Expect(type = TargetTypeCreatedEvent.class, count = 2),
-            @Expect(type = TargetUpdatedEvent.class, count = 20) })
+            @Expect(type = TargetUpdatedEvent.class, count = 29), @Expect(type = TargetDeletedEvent.class, count = 1) })
     public void targetTypeBulkAssignments() {
         final List<Target> typeATargets = testdataFactory.createTargets(10, "typeATargets", "first description");
         final List<Target> typeBTargets = testdataFactory.createTargets(10, "typeBTargets", "first description");
@@ -1136,6 +1136,13 @@ public class TargetManagementTest extends AbstractJpaIntegrationTest {
         assertThat(resultB.getAlreadyAssigned()).isEqualTo(10);
         checkTargetsHaveType(typeATargets, typeA);
         checkTargetsHaveType(typeBTargets, typeB);
+
+        // verify that type assignment does not throw an error if target list includes an unknown id
+        targetManagement.deleteByControllerID(typeATargets.get(0).getControllerId());
+        final TargetTypeAssignmentResult resultC = initiateTypeAssignment(typeATargets, typeB);
+        assertThat(resultC.getAssigned()).isEqualTo(9);
+        assertThat(resultC.getAlreadyAssigned()).isZero();
+        checkTargetsHaveType(typeATargets, typeB);
     }
 
     private void checkTargetsHaveType(final List<Target> targets, final TargetType type) {

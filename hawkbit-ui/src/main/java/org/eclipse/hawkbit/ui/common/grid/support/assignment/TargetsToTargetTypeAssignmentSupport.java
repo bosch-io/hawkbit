@@ -87,7 +87,7 @@ public class TargetsToTargetTypeAssignmentSupport extends AbstractTargetsToTarge
         publishTypeAssignmentEvent(sourceItemsToAssign);
     }
 
-    protected AbstractAssignmentResult<Target> initiateTargetTypeAssignment(final List<ProxyTarget> sourceItems,
+    private AbstractAssignmentResult<Target> initiateTargetTypeAssignment(final List<ProxyTarget> sourceItems,
                                                                           final Long typeId) {
         final Collection<String> controllerIdsToAssign = sourceItems.stream().map(ProxyTarget::getControllerId)
                 .collect(Collectors.toList());
