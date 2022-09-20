@@ -39,6 +39,9 @@ public class DmfActionUpdateStatus {
     @JsonProperty
     private List<String> message;
 
+    @JsonProperty
+    private int code;
+
     public DmfActionUpdateStatus(@JsonProperty(value = "actionId", required = true) final Long actionId,
             @JsonProperty(value = "actionStatus", required = true) final DmfActionStatus actionStatus) {
         this.actionId = actionId;
@@ -99,4 +102,11 @@ public class DmfActionUpdateStatus {
         return message.addAll(messages);
     }
 
+    public void setCode(int code) {
+        this.code = code;
+    }
+
+    public int getCode() {
+        return code;
+    }
 }
