@@ -253,7 +253,12 @@ public interface Action extends TenantAwareBaseEntity {
          * Action has been downloaded by the target and waiting for update to
          * start.
          */
-        DOWNLOADED
+        DOWNLOADED,
+
+        /**
+         * Action is waiting to be confirmed by the user
+         */
+        WAIT_CONFIRMATION
     }
 
     /**

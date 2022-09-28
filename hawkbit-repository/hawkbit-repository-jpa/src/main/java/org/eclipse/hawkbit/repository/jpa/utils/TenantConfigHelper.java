@@ -9,6 +9,7 @@
 package org.eclipse.hawkbit.repository.jpa.utils;
 
 import static org.eclipse.hawkbit.tenancy.configuration.TenantConfigurationProperties.TenantConfigurationKey.MULTI_ASSIGNMENTS_ENABLED;
+import static org.eclipse.hawkbit.tenancy.configuration.TenantConfigurationProperties.TenantConfigurationKey.USER_CONSENT_ENABLED;
 
 import org.eclipse.hawkbit.repository.TenantConfigurationManagement;
 import org.eclipse.hawkbit.security.SystemSecurityContext;
@@ -49,5 +50,15 @@ public final class TenantConfigHelper {
     public boolean isMultiAssignmentsEnabled() {
         return systemSecurityContext.runAsSystem(() -> tenantConfigurationManagement
                 .getConfigurationValue(MULTI_ASSIGNMENTS_ENABLED, Boolean.class).getValue());
+    }
+
+    /**
+     * Is user-consent flow enabled for the current tenant
+     *
+     * @return is enabled
+     */
+    public boolean isUserConsentEnabled() {
+        return systemSecurityContext.runAsSystem(() -> tenantConfigurationManagement
+            .getConfigurationValue(USER_CONSENT_ENABLED, Boolean.class).getValue());
     }
 }

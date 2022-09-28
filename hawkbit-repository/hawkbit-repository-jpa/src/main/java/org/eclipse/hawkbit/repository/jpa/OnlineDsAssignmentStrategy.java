@@ -48,9 +48,10 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
     OnlineDsAssignmentStrategy(final TargetRepository targetRepository,
             final AfterTransactionCommitExecutor afterCommit, final EventPublisherHolder eventPublisherHolder,
             final ActionRepository actionRepository, final ActionStatusRepository actionStatusRepository,
-            final QuotaManagement quotaManagement, final BooleanSupplier multiAssignmentsConfig) {
+            final QuotaManagement quotaManagement, final BooleanSupplier multiAssignmentsConfig,
+            final BooleanSupplier userConsentConfig) {
         super(targetRepository, afterCommit, eventPublisherHolder, actionRepository, actionStatusRepository,
-                quotaManagement, multiAssignmentsConfig);
+                quotaManagement, multiAssignmentsConfig, userConsentConfig);
     }
 
     @Override
@@ -130,7 +131,11 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
             final List<JpaTarget> targets, final JpaDistributionSet set) {
         final JpaAction result = super.createTargetAction(initiatedBy, targetWithActionType, targets, set);
         if (result != null) {
-            result.setStatus(Status.RUNNING);
+            if (isUserConsentEnabled()) {
+                result.setStatus(Status.WAIT_CONFIRMATION);
+            } else {
+                result.setStatus(Status.RUNNING);
+            }
         }
         return result;
     }
@@ -138,7 +143,11 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
     @Override
     public JpaActionStatus createActionStatus(final JpaAction action, final String actionMessage) {
         final JpaActionStatus result = super.createActionStatus(action, actionMessage);
-        result.setStatus(Status.RUNNING);
+        if (isUserConsentEnabled()) {
+            result.setStatus(Status.WAIT_CONFIRMATION);
+        } else {
+            result.setStatus(Status.RUNNING);
+        }
         return result;
     }
 
