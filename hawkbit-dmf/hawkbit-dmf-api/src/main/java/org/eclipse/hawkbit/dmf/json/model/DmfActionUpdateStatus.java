@@ -34,9 +34,6 @@ public class DmfActionUpdateStatus {
     private Long softwareModuleId;
 
     @JsonProperty
-    private Integer code;
-
-    @JsonProperty
     private List<String> message;
 
     @JsonProperty
@@ -106,7 +103,4 @@ public class DmfActionUpdateStatus {
         this.code = code;
     }
 
-    public int getCode() {
-        return code;
-    }
 }
