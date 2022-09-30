@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.eclipse.hawkbit.dmf.amqp.api.EventTopic;
 import org.eclipse.hawkbit.dmf.amqp.api.MessageHeaderKey;
 import org.eclipse.hawkbit.dmf.amqp.api.MessageType;
+import org.eclipse.hawkbit.dmf.json.model.DmfActionStatus;
 import org.eclipse.hawkbit.dmf.json.model.DmfActionUpdateStatus;
 import org.eclipse.hawkbit.dmf.json.model.DmfAttributeUpdate;
 import org.eclipse.hawkbit.dmf.json.model.DmfCreateThing;
@@ -282,7 +283,7 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
             amqpMessageDispatcherService.sendCancelMessageToTarget(target.getTenant(), target.getControllerId(),
                     action.getId(), target.getAddress());
         } else {
-            amqpMessageDispatcherService.sendUpdateMessageToTarget(new ActionProperties(action), action.getTarget(),
+            amqpMessageDispatcherService.sendUpdateMessageToTarget(action, action.getTarget(),
                     getSoftwareModulesWithMetadata(action.getDistributionSet()));
         }
     }
@@ -364,7 +365,7 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
                 ? controllerManagement.addCancelActionStatus(actionStatus)
                 : controllerManagement.addUpdateActionStatus(actionStatus);
 
-        if (shouldTargetProceed(updatedAction)) {
+        if (shouldTargetProceed(updatedAction) || actionUpdateStatus.getActionStatus() == DmfActionStatus.CONFIRMED) {
             sendUpdateCommandToTarget(action.getTarget());
         }
     }
@@ -410,6 +411,12 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
             break;
         case CANCEL_REJECTED:
             status = handleCancelRejectedState(message, action);
+            break;
+        case CONFIRMED:
+            status = Status.RUNNING;
+            break;
+        case DENIED:
+            status = Status.WAIT_CONFIRMATION;
             break;
         default:
             logAndThrowMessageError(message, "Status for action does not exisit.");

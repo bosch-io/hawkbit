@@ -376,4 +376,8 @@ public class JpaAction extends AbstractJpaTenantAwareBaseEntity implements Actio
     public String getInitiatedBy() {
         return initiatedBy;
     }
+
+    public boolean isWaitingConfirmation() {
+        return status == Status.WAIT_CONFIRMATION;
+    }
 }

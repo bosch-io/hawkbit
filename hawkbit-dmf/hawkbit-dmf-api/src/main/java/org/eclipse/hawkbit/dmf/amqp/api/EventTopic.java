@@ -56,6 +56,10 @@ public enum EventTopic {
     /**
      * Topic when sending a download and install action to multiple devices.
      */
-    BATCH_DOWNLOAD_AND_INSTALL
+    BATCH_DOWNLOAD_AND_INSTALL,
 
+    /**
+     * Topic when confirmation of an action is requested.
+     */
+    CONFIRM
 }

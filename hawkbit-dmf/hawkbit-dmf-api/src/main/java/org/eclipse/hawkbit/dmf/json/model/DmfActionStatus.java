@@ -67,9 +67,9 @@ public enum DmfActionStatus {
     DOWNLOADED,
 
     /**
-     * Action is approved by the target.
+     * Action is confirmed by the target.
      */
-    APPROVED,
+    CONFIRMED,
 
     /**
      * Action has been denied by the target.
