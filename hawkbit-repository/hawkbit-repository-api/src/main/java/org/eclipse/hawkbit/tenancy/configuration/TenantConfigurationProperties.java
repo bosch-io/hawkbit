@@ -155,7 +155,7 @@ public class TenantConfigurationProperties {
         /**
          * Switch to enable/disable the user-consent flow
          */
-        public static final String USER_CONSENT_ENABLED = "user.consent.enabled";
+        public static final String USER_CONSENT_ENABLED = "user.consent.flow.enabled";
 
         private String keyName;
         private String defaultValue = "";

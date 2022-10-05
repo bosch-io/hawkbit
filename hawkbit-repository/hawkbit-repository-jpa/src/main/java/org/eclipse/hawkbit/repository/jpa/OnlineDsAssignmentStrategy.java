@@ -132,7 +132,7 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
         final JpaAction result = super.createTargetAction(initiatedBy, targetWithActionType, targets, set);
         if (result != null) {
             if (isUserConsentEnabled()) {
-                result.setStatus(Status.WAIT_CONFIRMATION);
+                result.setStatus(Status.WAIT_FOR_CONFIRMATION);
             } else {
                 result.setStatus(Status.RUNNING);
             }
@@ -144,7 +144,7 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
     public JpaActionStatus createActionStatus(final JpaAction action, final String actionMessage) {
         final JpaActionStatus result = super.createActionStatus(action, actionMessage);
         if (isUserConsentEnabled()) {
-            result.setStatus(Status.WAIT_CONFIRMATION);
+            result.setStatus(Status.WAIT_FOR_CONFIRMATION);
         } else {
             result.setStatus(Status.RUNNING);
         }

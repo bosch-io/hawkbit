@@ -258,7 +258,7 @@ public interface Action extends TenantAwareBaseEntity {
         /**
          * Action is waiting to be confirmed by the user
          */
-        WAIT_CONFIRMATION
+        WAIT_FOR_CONFIRMATION
     }
 
     /**

@@ -191,7 +191,6 @@ public class JpaTenantConfigurationManagement implements TenantConfigurationMana
         assertMultiAssignmentsValueChange(key, valueChange);
         assertAutoCloseValueChange(key, valueChange);
         assertBatchAssignmentValueChange(key, valueChange);
-        assertUserConsentValueChange(key, valueChange);
     }
 
     @SuppressWarnings("squid:S1172")
@@ -228,13 +227,6 @@ public class JpaTenantConfigurationManagement implements TenantConfigurationMana
                         "The Multi-Assignments feature, which is already enabled .", key);
                 throw new TenantConfigurationValueChangeNotAllowedException();
             }
-        }
-    }
-
-    private static void assertUserConsentValueChange(final String key, final JpaTenantConfiguration valueChange) {
-        if (USER_CONSENT_ENABLED.equals(key) && !Boolean.parseBoolean(valueChange.getValue())) {
-            LOG.debug("The User-Consent '{}' feature cannot be disabled.", key);
-            throw new TenantConfigurationValueChangeNotAllowedException();
         }
     }
 

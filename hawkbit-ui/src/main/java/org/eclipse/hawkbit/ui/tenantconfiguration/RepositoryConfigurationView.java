@@ -78,7 +78,7 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
         this.actionAutocloseConfigurationItem = new ActionAutoCloseConfigurationItem(i18n);
         this.actionAutocleanupConfigurationItem = new ActionAutoCleanupConfigurationItem(getBinder(), i18n);
         this.multiAssignmentsConfigurationItem = new MultiAssignmentsConfigurationItem(i18n, getBinder());
-        this.userConsentConfigurationItem = new UserConsentConfigurationItem(i18n, getBinder());
+        this.userConsentConfigurationItem = new UserConsentConfigurationItem(i18n);
         init();
     }
 
@@ -135,17 +135,6 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
             UIComponentIdProvider.REPOSITORY_USER_CONSENT_CHECKBOX, getBinder(),
             ProxySystemConfigRepository::isUserConsent, ProxySystemConfigRepository::setUserConsent);
         userConsentCheckBox.setStyleName(DIST_CHECKBOX_STYLE);
-        userConsentCheckBox.setEnabled(!getBinderBean().isUserConsent());
-        userConsentConfigurationItem.setEnabled(!getBinderBean().isUserConsent());
-        userConsentCheckBox.addValueChangeListener(event -> {
-            actionAutoCloseCheckBox.setEnabled(!event.getValue());
-            actionAutocloseConfigurationItem.setEnabled(!event.getValue());
-            if (event.getValue()) {
-                userConsentConfigurationItem.showSettings();
-            } else {
-                userConsentConfigurationItem.hideSettings();
-            }
-        });
         gridLayout.addComponent(userConsentCheckBox, 0, 2);
         gridLayout.addComponent(userConsentConfigurationItem, 1, 2);
 
@@ -181,14 +170,6 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
         multiAssignmentsConfigurationItem.setEnabled(false);
     }
 
-    /**
-     * Disable user consent option
-     */
-    public void disableUserConsentOption() {
-        userConsentCheckBox.setEnabled(false);
-        userConsentConfigurationItem.setEnabled(false);
-    }
-
     @Override
     public void save() {
         writeConfigOption(TenantConfigurationKey.ACTION_CLEANUP_ENABLED, getBinderBean().isActionAutocleanup());
@@ -209,11 +190,7 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
             this.disableMultipleAssignmentOption();
         }
 
-        if (getBinderBean().isUserConsent()
-            && !readConfigOption(TenantConfigurationKey.USER_CONSENT_ENABLED)) {
-            writeConfigOption(TenantConfigurationKey.USER_CONSENT_ENABLED, getBinderBean().isUserConsent());
-            this.disableUserConsentOption();
-        }
+        writeConfigOption(TenantConfigurationKey.USER_CONSENT_ENABLED, getBinderBean().isUserConsent());
     }
 
     @Override

@@ -109,7 +109,7 @@ public class JpaAction extends AbstractJpaTenantAwareBaseEntity implements Actio
             @ConversionValue(objectValue = "SCHEDULED", dataValue = "8"),
             @ConversionValue(objectValue = "CANCEL_REJECTED", dataValue = "9"),
             @ConversionValue(objectValue = "DOWNLOADED", dataValue = "10"),
-            @ConversionValue(objectValue = "WAIT_CONFIRMATION", dataValue = "11")})
+            @ConversionValue(objectValue = "WAIT_FOR_CONFIRMATION", dataValue = "11")})
     @Convert("status")
     @NotNull
     private Status status;
