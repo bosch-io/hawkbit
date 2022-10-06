@@ -31,6 +31,8 @@ public class TargetWithActionType {
     private String maintenanceWindowDuration;
     private String maintenanceWindowTimeZone;
 
+    private boolean confirmed;
+
     /**
      * Constructor that uses {@link ActionType#FORCED}
      * 
@@ -38,7 +40,7 @@ public class TargetWithActionType {
      *            ID if the controller
      */
     public TargetWithActionType(final String controllerId) {
-        this(controllerId, ActionType.FORCED, 0, null);
+        this(controllerId, ActionType.FORCED, 0, null, false);
     }
 
     /**
@@ -55,11 +57,12 @@ public class TargetWithActionType {
      *            the priority of an {@link Action}
      */
     public TargetWithActionType(final String controllerId, final ActionType actionType, final long forceTime,
-            final Integer weight) {
+            final Integer weight, final boolean confirmed) {
         this.controllerId = controllerId;
         this.actionType = actionType != null ? actionType : ActionType.FORCED;
         this.forceTime = forceTime;
         this.weight = weight;
+        this.confirmed = confirmed;
     }
 
     /**
@@ -93,8 +96,8 @@ public class TargetWithActionType {
      */
     public TargetWithActionType(final String controllerId, final ActionType actionType, final long forceTime,
             final Integer weight, final String maintenanceSchedule, final String maintenanceWindowDuration,
-            final String maintenanceWindowTimeZone) {
-        this(controllerId, actionType, forceTime, weight);
+            final String maintenanceWindowTimeZone, final boolean confirmed) {
+        this(controllerId, actionType, forceTime, weight, confirmed);
 
         this.maintenanceSchedule = maintenanceSchedule;
         this.maintenanceWindowDuration = maintenanceWindowDuration;
@@ -184,5 +187,13 @@ public class TargetWithActionType {
                 && Objects.equals(maintenanceSchedule, other.maintenanceSchedule)
                 && Objects.equals(maintenanceWindowDuration, other.maintenanceWindowDuration)
                 && Objects.equals(maintenanceWindowTimeZone, other.maintenanceWindowTimeZone);
+    }
+
+    public boolean isConfirmed() {
+        return confirmed;
+    }
+
+    public void setConfirmed(boolean confirmed) {
+        this.confirmed = confirmed;
     }
 }

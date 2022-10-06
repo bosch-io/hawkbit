@@ -49,6 +49,8 @@ public final class UIMessageIdProvider {
 
     public static final String CAPTION_ACTION_TIME_FORCED = "label.action.time.forced";
 
+    public static final String CAPTION_ACTION_CONFIRMATION = "label.action.confirmation";
+
     public static final String CAPTION_ACTION_MESSAGES = "caption.action.messages";
 
     public static final String CAPTION_ACTION_HISTORY = "caption.action.history";

@@ -57,9 +57,9 @@ public class DeploymentRequest {
      */
     public DeploymentRequest(final String controllerId, final Long distributionSetId, final ActionType actionType,
             final long forceTime, final Integer weight, final String maintenanceSchedule,
-            final String maintenanceWindowDuration, final String maintenanceWindowTimeZone) {
+            final String maintenanceWindowDuration, final String maintenanceWindowTimeZone, final boolean confirmed) {
         this.targetWithActionType = new TargetWithActionType(controllerId, actionType, forceTime, weight,
-                maintenanceSchedule, maintenanceWindowDuration, maintenanceWindowTimeZone);
+                maintenanceSchedule, maintenanceWindowDuration, maintenanceWindowTimeZone, confirmed);
         this.distributionSetId = distributionSetId;
     }
 

@@ -36,6 +36,8 @@ import com.vaadin.ui.Link;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.themes.ValoTheme;
 
+import static org.eclipse.hawkbit.ui.utils.UIMessageIdProvider.CAPTION_ACTION_CONFIRMATION;
+
 /**
  * Builder for Assignment window components.
  */
@@ -91,11 +93,20 @@ public class AssignmentWindowLayoutComponentBuilder {
         return maintenanceWindowToggle;
     }
 
+    public CheckBox createConfirmationToggle(final Binder<ProxyAssignmentWindow> binder) {
+        final CheckBox confirmationToggle = FormComponentBuilder.createCheckBox(
+                i18n.getMessage(CAPTION_ACTION_CONFIRMATION), UIComponentIdProvider.ASSIGNMENT_CONFIRMATION_GIVEN,
+                binder, ProxyAssignmentWindow::isConfirmed, ProxyAssignmentWindow::setConfirmed);
+        confirmationToggle.addStyleName(ValoTheme.CHECKBOX_SMALL);
+
+        return confirmationToggle;
+    }
+
     /**
      * Create maintenance schedule
      *
      * @param binder
-     *          Proxy assignment window binder
+     *            Proxy assignment window binder
      *
      * @return maintenance schedule text field
      */
@@ -207,5 +218,16 @@ public class AssignmentWindowLayoutComponentBuilder {
         maintenanceHelpLink.setDescription(i18n.getMessage("tooltip.documentation.link"));
 
         return maintenanceHelpLink;
+    }
+
+    public Link createConfirmationHelpLink(final UiProperties uiProperties) {
+        final String confirmationFlowHelpUrl = uiProperties.getLinks().getDocumentation().getConfirmationFlow();
+        final Link confirmationHelpLink = new Link("", new ExternalResource(confirmationFlowHelpUrl));
+
+        confirmationHelpLink.setTargetName("_blank");
+        confirmationHelpLink.setIcon(VaadinIcons.QUESTION_CIRCLE);
+        confirmationHelpLink.setDescription(i18n.getMessage("tooltip.documentation.link"));
+
+        return confirmationHelpLink;
     }
 }

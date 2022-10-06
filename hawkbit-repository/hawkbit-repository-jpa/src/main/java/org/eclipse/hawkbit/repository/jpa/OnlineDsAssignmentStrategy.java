@@ -131,7 +131,7 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
             final List<JpaTarget> targets, final JpaDistributionSet set) {
         final JpaAction result = super.createTargetAction(initiatedBy, targetWithActionType, targets, set);
         if (result != null) {
-            if (isUserConsentEnabled()) {
+            if (isUserConsentEnabled() && Boolean.FALSE.equals(targetWithActionType.isConfirmed())) {
                 result.setStatus(Status.WAIT_FOR_CONFIRMATION);
             } else {
                 result.setStatus(Status.RUNNING);
@@ -140,11 +140,18 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
         return result;
     }
 
+    /**
+     * Will be called to create the initial action status for an action
+     */
     @Override
     public JpaActionStatus createActionStatus(final JpaAction action, final String actionMessage) {
         final JpaActionStatus result = super.createActionStatus(action, actionMessage);
         if (isUserConsentEnabled()) {
             result.setStatus(Status.WAIT_FOR_CONFIRMATION);
+            if (action.getStatus().equals(Status.RUNNING)) {
+                // action is in RUNNING state only if it's confirmed during assignment already
+                result.addMessage(String.format("Assignment confirmed by initiator [%s].", action.getInitiatedBy()));
+            }
         } else {
             result.setStatus(Status.RUNNING);
         }

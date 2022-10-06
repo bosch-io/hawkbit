@@ -255,6 +255,11 @@ public class UiProperties implements Serializable {
             private String maintenanceWindowView = "";
 
             /**
+             * Link to documentation of the confirmation flow.
+             */
+            private String confirmationFlow = "";
+
+            /**
              * Link to documentation of system configuration view.
              */
             private String systemConfigurationView = "";
@@ -354,6 +359,13 @@ public class UiProperties implements Serializable {
             }
 
             /**
+             * @return Link to documentation of the confirmation flow
+             */
+            public String getConfirmationFlow(){
+                return confirmationFlow;
+            }
+
+            /**
              * @return Link to documentation of provisioning state machine
              */
             public String getProvisioningStateMachine() {
@@ -423,6 +435,10 @@ public class UiProperties implements Serializable {
 
             public void setMaintenanceWindowView(final String maintenanceWindowView) {
                 this.maintenanceWindowView = maintenanceWindowView;
+            }
+
+            public void setConfirmationFlow(final String confirmationFlow) {
+                this.confirmationFlow = confirmationFlow;
             }
 
             public void setProvisioningStateMachine(final String provisioningStateMachine) {
