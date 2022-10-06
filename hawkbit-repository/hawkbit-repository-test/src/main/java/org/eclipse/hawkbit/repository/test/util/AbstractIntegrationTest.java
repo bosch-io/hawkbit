@@ -312,6 +312,10 @@ public abstract class AbstractIntegrationTest {
         tenantConfigurationManagement.addOrUpdateConfiguration(TenantConfigurationKey.MULTI_ASSIGNMENTS_ENABLED, true);
     }
 
+    protected void enableUserConsentFlow() {
+        tenantConfigurationManagement.addOrUpdateConfiguration(TenantConfigurationKey.USER_CONSENT_ENABLED, true);
+    }
+
     protected DistributionSetMetadata createDistributionSetMetadata(final long dsId, final MetaData md) {
         return createDistributionSetMetadata(dsId, Collections.singletonList(md)).get(0);
     }

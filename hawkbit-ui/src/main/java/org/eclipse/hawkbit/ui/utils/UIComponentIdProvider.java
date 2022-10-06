@@ -385,7 +385,10 @@ public final class UIComponentIdProvider {
      */
     public static final String MAINTENANCE_WINDOW_TIME_ZONE_ID = "maintenance.window.time.zone";
 
-    public static final String ASSIGNMENT_CONFIRMATION_GIVEN = "deployment.assignment.action.confirmation.given";
+    /**
+     * Id for the confirm assignment button
+     */
+    public static final String ASSIGNMENT_CONFIRM = "deployment.assignment.action.confirm";
 
     /**
      * Id for maintenance window - label schedule translator

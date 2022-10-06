@@ -95,9 +95,10 @@ public class AssignmentWindowLayoutComponentBuilder {
 
     public CheckBox createConfirmationToggle(final Binder<ProxyAssignmentWindow> binder) {
         final CheckBox confirmationToggle = FormComponentBuilder.createCheckBox(
-                i18n.getMessage(CAPTION_ACTION_CONFIRMATION), UIComponentIdProvider.ASSIGNMENT_CONFIRMATION_GIVEN,
+                i18n.getMessage(CAPTION_ACTION_CONFIRMATION), UIComponentIdProvider.ASSIGNMENT_CONFIRM,
                 binder, ProxyAssignmentWindow::isConfirmed, ProxyAssignmentWindow::setConfirmed);
         confirmationToggle.addStyleName(ValoTheme.CHECKBOX_SMALL);
+        confirmationToggle.addStyleName("dist-window-maintenance-window-enable");
 
         return confirmationToggle;
     }
