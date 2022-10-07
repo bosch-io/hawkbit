@@ -184,10 +184,11 @@ public class JpaRolloutManagement implements RolloutManagement {
     @Transactional
     @Retryable(include = {
             ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))
-    public Rollout create(final RolloutCreate rollout, final int amountGroup, final RolloutGroupConditions conditions) {
+    public Rollout create(final RolloutCreate rollout, final int amountGroup, final boolean isConsentGiven,
+            final RolloutGroupConditions conditions) {
         RolloutHelper.verifyRolloutGroupParameter(amountGroup, quotaManagement);
         final JpaRollout savedRollout = createRollout((JpaRollout) rollout.build());
-        return createRolloutGroups(amountGroup, conditions, savedRollout);
+        return createRolloutGroups(amountGroup, conditions, savedRollout, isConsentGiven);
     }
 
     @Override
@@ -213,7 +214,7 @@ public class JpaRolloutManagement implements RolloutManagement {
     }
 
     private Rollout createRolloutGroups(final int amountOfGroups, final RolloutGroupConditions conditions,
-            final JpaRollout rollout) {
+            final JpaRollout rollout, final boolean isConsentGiven) {
         RolloutHelper.verifyRolloutInStatus(rollout, RolloutStatus.CREATING);
         RolloutHelper.verifyRolloutGroupConditions(conditions);
 
@@ -232,6 +233,7 @@ public class JpaRolloutManagement implements RolloutManagement {
             group.setRollout(savedRollout);
             group.setParent(lastSavedGroup);
             group.setStatus(RolloutGroupStatus.CREATING);
+            group.setConsentGiven(isConsentGiven);
 
             addSuccessAndErrorConditionsAndActions(group, conditions);
 
@@ -274,6 +276,7 @@ public class JpaRolloutManagement implements RolloutManagement {
             group.setRollout(savedRollout);
             group.setParent(lastSavedGroup);
             group.setStatus(RolloutGroupStatus.CREATING);
+            group.setConsentGiven(srcGroup.isConsentGiven());
 
             group.setTargetPercentage(srcGroup.getTargetPercentage());
             if (srcGroup.getTargetFilterQuery() != null) {

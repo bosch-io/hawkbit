@@ -67,6 +67,7 @@ public class RolloutGroupToAdvancedDefinitionMapper {
         advancedGroupRow.setTargetPercentage(rolloutGroup.getTargetPercentage());
         advancedGroupRow.setTriggerThresholdPercentage(rolloutGroup.getSuccessConditionExp());
         advancedGroupRow.setErrorThresholdPercentage(rolloutGroup.getErrorConditionExp());
+        advancedGroupRow.setConsentGiven(rolloutGroup.isConsentGiven());
 
         return advancedGroupRow;
     }

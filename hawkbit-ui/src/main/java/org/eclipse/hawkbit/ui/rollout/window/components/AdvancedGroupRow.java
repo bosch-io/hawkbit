@@ -8,12 +8,14 @@
  */
 package org.eclipse.hawkbit.ui.rollout.window.components;
 
+import com.vaadin.ui.CheckBox;
 import org.eclipse.hawkbit.repository.model.RolloutGroup;
 import org.eclipse.hawkbit.ui.common.builder.BoundComponent;
 import org.eclipse.hawkbit.ui.common.builder.FormComponentBuilder;
 import org.eclipse.hawkbit.ui.common.builder.TextFieldBuilder;
 import org.eclipse.hawkbit.ui.common.data.providers.TargetFilterQueryDataProvider;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyAdvancedRolloutGroup;
+import org.eclipse.hawkbit.ui.common.data.proxies.ProxySimpleRolloutGroupsDefinition;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetFilterQuery;
 import org.eclipse.hawkbit.ui.utils.UIComponentIdProvider;
 import org.eclipse.hawkbit.ui.utils.UIMessageIdProvider;
@@ -34,6 +36,8 @@ import com.vaadin.ui.themes.ValoTheme;
  * Advance group row component
  */
 public class AdvancedGroupRow {
+    
+    private static final String DIST_CHECKBOX_STYLE = "dist-checkbox-style";
 
     private final VaadinMessageSource i18n;
     private final TargetFilterQueryDataProvider targetFilterQueryDataProvider;
@@ -45,6 +49,8 @@ public class AdvancedGroupRow {
     private final TextField targetPercentage;
     private final TextField triggerThreshold;
     private final TextField errorThreshold;
+    private final CheckBox consentGivenToggle;
+    private final boolean showConsentOption;
 
     /**
      * Constructor for AdvancedGroupRow
@@ -55,9 +61,11 @@ public class AdvancedGroupRow {
      *          TargetFilterQueryDataProvider
      */
     public AdvancedGroupRow(final VaadinMessageSource i18n,
-            final TargetFilterQueryDataProvider targetFilterQueryDataProvider) {
+            final TargetFilterQueryDataProvider targetFilterQueryDataProvider,
+            final boolean showConsentOption) {
         this.i18n = i18n;
         this.targetFilterQueryDataProvider = targetFilterQueryDataProvider;
+        this.showConsentOption = showConsentOption;
 
         this.binder = new Binder<>();
 
@@ -66,6 +74,7 @@ public class AdvancedGroupRow {
         this.targetPercentage = createTargetPercentage();
         this.triggerThreshold = createTriggerThreshold();
         this.errorThreshold = createErrorThreshold();
+        this.consentGivenToggle = createConsentToggle();
     }
 
     private TextField createGroupName() {
@@ -121,14 +130,22 @@ public class AdvancedGroupRow {
 
     private TextField createErrorThreshold() {
         final TextField errorThresholdField = new TextFieldBuilder(32).prompt(i18n.getMessage("prompt.error.threshold"))
-                .buildTextComponent();
+              .buildTextComponent();
         errorThresholdField.setWidth(5, Unit.EM);
 
         binder.forField(errorThresholdField).asRequired(i18n.getMessage("prompt.error.threshold.required")).bind(
-                ProxyAdvancedRolloutGroup::getErrorThresholdPercentage,
-                ProxyAdvancedRolloutGroup::setErrorThresholdPercentage);
+              ProxyAdvancedRolloutGroup::getErrorThresholdPercentage,
+              ProxyAdvancedRolloutGroup::setErrorThresholdPercentage);
 
         return errorThresholdField;
+    }
+
+    public CheckBox createConsentToggle() {
+        final CheckBox checkBox = new CheckBox();
+        checkBox.setWidth(5, Unit.EM);
+        checkBox.setStyleName(DIST_CHECKBOX_STYLE);
+        binder.forField(checkBox).bind(ProxyAdvancedRolloutGroup::isConsentGiven, ProxyAdvancedRolloutGroup::setConsentGiven);
+        return checkBox;
     }
 
     /**
@@ -145,6 +162,9 @@ public class AdvancedGroupRow {
         layout.addComponent(targetPercentage, 2, index);
         layout.addComponent(triggerThreshold, 3, index);
         layout.addComponent(errorThreshold, 4, index);
+        if (showConsentOption) {
+            layout.addComponent(consentGivenToggle, 5, index);
+        }
     }
 
     /**

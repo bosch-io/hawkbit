@@ -1175,7 +1175,7 @@ public class TestdataFactory {
         final Rollout rollout = rolloutManagement.create(
                 entityFactory.rollout().create().name(rolloutName).description(rolloutDescription)
                         .targetFilterQuery(filterQuery).set(distributionSet).actionType(actionType).weight(weight),
-                groupSize, conditions);
+                groupSize, false, conditions); //TODO
 
         // Run here, because Scheduler is disabled during tests
         rolloutManagement.handleRollouts();

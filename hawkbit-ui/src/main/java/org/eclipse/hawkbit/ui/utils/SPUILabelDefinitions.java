@@ -190,6 +190,8 @@ public final class SPUILabelDefinitions {
      */
     public static final String ROLLOUT_GROUP_ERROR_THRESHOLD = "errorConditionExp";
 
+    public static final String ROLLOUT_GROUP_CONSENT_GIVEN = "consentGiven";
+
     /**
      * Rollout group started date column property.
      */

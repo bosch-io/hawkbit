@@ -1363,7 +1363,7 @@ class RolloutManagementTest extends AbstractJpaIntegrationTest {
                 .targetFilterQuery("controllerId==" + targetPrefixName + "-*").set(distributionSet);
 
         assertThatExceptionOfType(AssignmentQuotaExceededException.class)
-                .isThrownBy(() -> rolloutManagement.create(rollout, amountGroups, conditions));
+                .isThrownBy(() -> rolloutManagement.create(rollout, amountGroups, false, conditions)); //TODO
     }
 
     @Test
@@ -1587,7 +1587,7 @@ class RolloutManagementTest extends AbstractJpaIntegrationTest {
         final RolloutCreate rollout = generateTargetsAndRollout(rolloutName, targets);
 
         assertThatExceptionOfType(AssignmentQuotaExceededException.class)
-                .isThrownBy(() -> rolloutManagement.create(rollout, maxGroups + 1, conditions))
+                .isThrownBy(() -> rolloutManagement.create(rollout, maxGroups + 1, false, conditions)) //TODO
                 .withMessageContaining("not be greater than " + maxGroups);
 
     }
@@ -1610,7 +1610,7 @@ class RolloutManagementTest extends AbstractJpaIntegrationTest {
         final RolloutCreate rolloutToCreate = entityFactory.rollout().create().name(rolloutName)
                 .description("some description").targetFilterQuery("id==" + rolloutName + "-*").set(distributionSet);
 
-        Rollout myRollout = rolloutManagement.create(rolloutToCreate, amountGroups, conditions);
+        Rollout myRollout = rolloutManagement.create(rolloutToCreate, amountGroups, false, conditions); //TODO
         myRollout = getRollout(myRollout.getId());
 
         assertThat(myRollout.getStatus()).isEqualTo(RolloutStatus.CREATING);
@@ -1903,7 +1903,7 @@ class RolloutManagementTest extends AbstractJpaIntegrationTest {
         final RolloutCreate rolloutToCreate = entityFactory.rollout().create().name(rolloutName)
                 .targetFilterQuery("name==*").set(testDs);
 
-        final Rollout createdRollout = rolloutManagement.create(rolloutToCreate, 1, conditions);
+        final Rollout createdRollout = rolloutManagement.create(rolloutToCreate, 1, false, conditions); //TODO
 
         // Let the executor handle created Rollout
         rolloutManagement.handleRollouts();

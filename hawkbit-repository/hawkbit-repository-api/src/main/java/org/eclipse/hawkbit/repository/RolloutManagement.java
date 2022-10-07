@@ -140,7 +140,8 @@ public interface RolloutManagement {
      *             exceeded.
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_ROLLOUT_MANAGEMENT_CREATE)
-    Rollout create(@NotNull @Valid RolloutCreate create, int amountGroup, @NotNull RolloutGroupConditions conditions);
+    Rollout create(@NotNull @Valid RolloutCreate create, int amountGroup, boolean isConsentGiven,
+            @NotNull RolloutGroupConditions conditions);
 
     /**
      * Persists a new rollout entity. The filter within the

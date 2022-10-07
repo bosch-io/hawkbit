@@ -642,7 +642,7 @@ public class RolloutResourceDocumentationTest extends AbstractApiRestDocumentati
         if (isMultiAssignmentsEnabled()) {
             rolloutCreate.weight(400);
         }
-        final Rollout rollout = rolloutManagement.create(rolloutCreate, 5, new RolloutGroupConditionBuilder()
+        final Rollout rollout = rolloutManagement.create(rolloutCreate, 5, false, new RolloutGroupConditionBuilder() //TODO
                 .withDefaults().successCondition(RolloutGroupSuccessCondition.THRESHOLD, "10").build());
 
         // Run here, because Scheduler is disabled during tests

@@ -63,6 +63,8 @@ public interface RolloutGroupCreate {
      */
     RolloutGroupCreate conditions(RolloutGroupConditions conditions);
 
+    RolloutGroupCreate isConsentGiven(boolean isConsentGiven);
+
     /**
      * @return peek on current state of {@link RolloutGroup} in the builder
      */

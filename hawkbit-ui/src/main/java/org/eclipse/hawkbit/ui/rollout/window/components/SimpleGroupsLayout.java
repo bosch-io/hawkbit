@@ -12,6 +12,7 @@ import java.util.function.IntConsumer;
 
 import org.eclipse.hawkbit.repository.QuotaManagement;
 import org.eclipse.hawkbit.ui.common.builder.BoundComponent;
+import org.eclipse.hawkbit.ui.common.builder.FormComponentBuilder;
 import org.eclipse.hawkbit.ui.common.builder.LabelBuilder;
 import org.eclipse.hawkbit.ui.common.builder.TextFieldBuilder;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxySimpleRolloutGroupsDefinition;
@@ -27,11 +28,13 @@ import com.vaadin.data.ValidationException;
 import com.vaadin.data.ValidationResult;
 import com.vaadin.data.converter.StringToIntegerConverter;
 import com.vaadin.data.validator.IntegerRangeValidator;
+import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.RadioButtonGroup;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.themes.ValoTheme;
+import org.eclipse.hawkbit.utils.TenantConfigHelper;
 
 /**
  * Simple group layout component
@@ -57,6 +60,9 @@ public class SimpleGroupsLayout extends ValidatableLayout {
     private final Label groupSizeLabel;
     private final TextField triggerThreshold;
     private final Label percentHintLabel;
+
+    private final CheckBox giveConsentToggle;
+
     private final BoundComponent<TextField> errorThreshold;
     private final RadioButtonGroup<ERROR_THRESHOLD_OPTIONS> errorThresholdOptionGroup;
 
@@ -72,7 +78,8 @@ public class SimpleGroupsLayout extends ValidatableLayout {
      * @param quotaManagement
      *            QuotaManagement
      */
-    public SimpleGroupsLayout(final VaadinMessageSource i18n, final QuotaManagement quotaManagement) {
+    public SimpleGroupsLayout(final VaadinMessageSource i18n, final QuotaManagement quotaManagement,
+            final TenantConfigHelper tenantConfigHelper) {
         super();
 
         this.i18n = i18n;
@@ -86,8 +93,9 @@ public class SimpleGroupsLayout extends ValidatableLayout {
         this.percentHintLabel = getPercentHintLabel();
         this.errorThreshold = createErrorThreshold();
         this.errorThresholdOptionGroup = createErrorThresholdOptionGroup();
+        this.giveConsentToggle = createConsentToggle();
 
-        this.layout = buildLayout();
+        this.layout = buildLayout(tenantConfigHelper.isUserConsentEnabled());
 
         addValueChangeListeners();
         setValidationStatusByBinder(binder);
@@ -244,12 +252,26 @@ public class SimpleGroupsLayout extends ValidatableLayout {
         return errorThresholdOptions;
     }
 
-    private GridLayout buildLayout() {
+    public CheckBox createConsentToggle() {
+        final CheckBox consentToggle = FormComponentBuilder.createCheckBox(
+                UIComponentIdProvider.ROLLOUT_USER_CONSENT_GIVEN, binder,
+                ProxySimpleRolloutGroupsDefinition::isConsentGiven,
+                ProxySimpleRolloutGroupsDefinition::setConsentGiven);
+        consentToggle.addStyleName(ValoTheme.CHECKBOX_SMALL);
+
+        return consentToggle;
+    }
+
+    private GridLayout buildLayout(final boolean isConsentFlowActive) {
         final GridLayout gridLayout = new GridLayout();
         gridLayout.setMargin(false);
         gridLayout.setSpacing(true);
         gridLayout.setSizeUndefined();
-        gridLayout.setRows(4);
+        if (isConsentFlowActive) {
+            gridLayout.setRows(5);
+        } else {
+            gridLayout.setRows(4);
+        }
         gridLayout.setColumns(3);
         gridLayout.setStyleName("marginTop");
 
@@ -267,6 +289,12 @@ public class SimpleGroupsLayout extends ValidatableLayout {
         gridLayout.addComponent(SPUIComponentProvider.generateLabel(i18n, "prompt.error.threshold"), 0, 3);
         gridLayout.addComponent(errorThreshold.getComponent(), 1, 3);
         gridLayout.addComponent(errorThresholdOptionGroup, 2, 3);
+
+        if (isConsentFlowActive) {
+            gridLayout.addComponent(SPUIComponentProvider.generateLabel(i18n, "prompt.consent.given"), 0, 4);
+            gridLayout.addComponent(giveConsentToggle, 1, 4);
+            // add component with help
+        }
 
         return gridLayout;
     }

@@ -21,6 +21,8 @@ public class ProxySimpleRolloutGroupsDefinition implements Serializable {
     private String triggerThresholdPercentage;
     private String errorThresholdPercentage;
 
+    private boolean isConsentGiven;
+
     /**
      * Gets the count of simple rollout Groups
      *
@@ -78,4 +80,11 @@ public class ProxySimpleRolloutGroupsDefinition implements Serializable {
         this.errorThresholdPercentage = errorThresholdPercentage;
     }
 
+    public boolean isConsentGiven() {
+        return isConsentGiven;
+    }
+
+    public void setConsentGiven(boolean consentGiven) {
+        isConsentGiven = consentGiven;
+    }
 }

@@ -109,6 +109,8 @@ public interface RolloutGroup extends NamedEntity {
      */
     float getTargetPercentage();
 
+    boolean isConsentGiven();
+
     /**
      * Rollout group state machine.
      *

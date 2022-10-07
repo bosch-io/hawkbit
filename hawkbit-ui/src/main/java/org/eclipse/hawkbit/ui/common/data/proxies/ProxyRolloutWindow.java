@@ -288,6 +288,10 @@ public class ProxyRolloutWindow implements Serializable {
         return simpleGroupsDefinition.getErrorThresholdPercentage();
     }
 
+    public boolean isConsentGiven() {
+        return simpleGroupsDefinition.isConsentGiven();
+    }
+
     /**
      * Sets the errorThresholdPercentage
      *

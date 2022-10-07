@@ -559,12 +559,12 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
 
     @Override
     public long startScheduledActionsByRolloutGroupParent(final long rolloutId, final long distributionSetId,
-            final Long rolloutGroupParentId) {
+            final Long rolloutGroupParentId, final boolean consentGiven) {
         long totalActionsCount = 0L;
         long lastStartedActionsCount;
         do {
             lastStartedActionsCount = startScheduledActionsByRolloutGroupParentInNewTransaction(rolloutId,
-                    distributionSetId, rolloutGroupParentId, ACTION_PAGE_LIMIT);
+                    distributionSetId, rolloutGroupParentId, ACTION_PAGE_LIMIT, consentGiven);
             totalActionsCount += lastStartedActionsCount;
         } while (lastStartedActionsCount > 0);
 
@@ -572,16 +572,16 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
     }
 
     private long startScheduledActionsByRolloutGroupParentInNewTransaction(final Long rolloutId,
-            final Long distributionSetId, final Long rolloutGroupParentId, final int limit) {
+            final Long distributionSetId, final Long rolloutGroupParentId, final int limit, final boolean consentGiven) {
         return DeploymentHelper.runInNewTransaction(txManager, "startScheduledActions-" + rolloutId, status -> {
             final Page<Action> rolloutGroupActions = findActionsByRolloutAndRolloutGroupParent(rolloutId,
                     rolloutGroupParentId, limit);
-
+            
             if (rolloutGroupActions.getContent().isEmpty()) {
                 return 0L;
             }
             
-            final List<Action> newTargetAssignments = handleTargetAssignments(rolloutGroupActions);
+            final List<Action> newTargetAssignments = handleTargetAssignments(rolloutGroupActions, consentGiven);
 
             if (!newTargetAssignments.isEmpty()) {
                 onlineDsAssignmentStrategy.sendDeploymentEvents(distributionSetId, newTargetAssignments);
@@ -590,8 +590,8 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
             return rolloutGroupActions.getTotalElements();
         });
     }
-    
-    private List<Action> handleTargetAssignments(final Page<Action> rolloutGroupActions) {
+
+    private List<Action> handleTargetAssignments(final Page<Action> rolloutGroupActions, final boolean consentGiven) {
         // Close actions already assigned and collect pending assignments
         final List<JpaAction> pendingTargetAssignments = rolloutGroupActions.getContent().stream()
                 .map(JpaAction.class::cast).map(this::closeActionIfSetWasAlreadyAssigned).filter(Objects::nonNull)
@@ -600,7 +600,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
             return new ArrayList<>(pendingTargetAssignments);
         }
         // check if old actions needs to be canceled first
-        return startScheduledActionsAndHandleOpenCancellationFirst(pendingTargetAssignments);
+        return startScheduledActionsAndHandleOpenCancellationFirst(pendingTargetAssignments, consentGiven);
     }
 
     private Page<Action> findActionsByRolloutAndRolloutGroupParent(final Long rolloutId,
@@ -639,11 +639,12 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         return action;
     }
 
-    private List<Action> startScheduledActionsAndHandleOpenCancellationFirst(final List<JpaAction> actions) {
+    private List<Action> startScheduledActionsAndHandleOpenCancellationFirst(final List<JpaAction> actions,
+            final boolean consentGiven) {
         if (!isMultiAssignmentsEnabled()) {
             closeOrCancelOpenDeviceActions(actions);
         }
-        final List<JpaAction> savedActions = activateActions(actions);
+        final List<JpaAction> savedActions = activateActions(actions, consentGiven);
         setInitialActionStatus(savedActions);
         setAssignmentOnTargets(savedActions);
         return Collections.unmodifiableList(savedActions);
@@ -659,12 +660,20 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         }
     }
 
-    private List<JpaAction> activateActions(final List<JpaAction> actions){
+    private List<JpaAction> activateActions(final List<JpaAction> actions, final boolean consentGiven) {
         actions.forEach(action -> {
             action.setActive(true);
+            if (isUserConsentFlowActive() && Boolean.FALSE.equals(consentGiven)) {
+                action.setStatus(Status.WAIT_FOR_CONFIRMATION);
+                return;
+            }
             action.setStatus(Status.RUNNING);
         });
         return actionRepository.saveAll(actions);
+    }
+    
+    private boolean isUserConsentFlowActive(){
+        return TenantConfigHelper.usingContext(systemSecurityContext, tenantConfigurationManagement).isUserConsentEnabled();
     }
 
     private void setAssignmentOnTargets(final List<JpaAction> actions) {

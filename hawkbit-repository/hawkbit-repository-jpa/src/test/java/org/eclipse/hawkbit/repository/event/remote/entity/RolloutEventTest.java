@@ -45,7 +45,7 @@ public class RolloutEventTest extends AbstractRemoteEntityEventTest<Rollout> {
 
         return rolloutManagement.create(
                 entityFactory.rollout().create().name("exampleRollout").targetFilterQuery("controllerId==*").set(ds),
-                5, new RolloutGroupConditionBuilder().withDefaults()
+                5, false, new RolloutGroupConditionBuilder().withDefaults() //TODO
                         .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "10").build());
     }
 

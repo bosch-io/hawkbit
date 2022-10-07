@@ -294,10 +294,9 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
         final Rollout rollout = rolloutManagement.create(entityFactory.rollout()
                 .create()
                 .name("rollout1")
-                .set(dsA.getId())
-                .targetFilterQuery("controllerId==rollout*"), 4, new RolloutGroupConditionBuilder().withDefaults()
-                .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100")
-                .build());
+                .set(dsA.getId()).targetFilterQuery("controllerId==rollout*"), 4, false, //TODO
+                new RolloutGroupConditionBuilder().withDefaults()
+                        .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
 
         retrieveAndVerifyRolloutInCreating(dsA, rollout);
         retrieveAndVerifyRolloutInReady(rollout);
@@ -654,7 +653,7 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
                 .create()
                 .name("rollout1")
                 .set(dsA.getId())
-                .targetFilterQuery("controllerId==rollout*"), 4, new RolloutGroupConditionBuilder().withDefaults()
+                .targetFilterQuery("controllerId==rollout*"), 4, false, new RolloutGroupConditionBuilder().withDefaults() //TODO
                         .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
 
         final RolloutGroup firstGroup = rolloutGroupManagement
@@ -1035,7 +1034,7 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
             final String targetFilterQuery) {
         final Rollout rollout = rolloutManagement.create(
                 entityFactory.rollout().create().name(name).set(distributionSetId).targetFilterQuery(targetFilterQuery),
-                amountGroups, new RolloutGroupConditionBuilder().withDefaults()
+                amountGroups, false, new RolloutGroupConditionBuilder().withDefaults() //TODO
                         .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
 
         // Run here, because Scheduler is disabled during tests

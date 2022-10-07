@@ -129,7 +129,7 @@ public class MgmtRolloutResource implements MgmtRolloutRestApi {
             rollout = rolloutManagement.create(create, rolloutGroups, rolloutGroupConditions);
 
         } else if (rolloutRequestBody.getAmountGroups() != null) {
-            rollout = rolloutManagement.create(create, rolloutRequestBody.getAmountGroups(), rolloutGroupConditions);
+            rollout = rolloutManagement.create(create, rolloutRequestBody.getAmountGroups(), false, rolloutGroupConditions); //TODO
 
         } else {
             throw new ValidationException("Either 'amountGroups' or 'groups' must be defined in the request");

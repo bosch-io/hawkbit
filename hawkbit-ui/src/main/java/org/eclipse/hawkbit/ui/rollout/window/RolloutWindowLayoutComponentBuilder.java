@@ -67,7 +67,8 @@ public final class RolloutWindowLayoutComponentBuilder {
      * @return Layout to create simple group
      */
     public SimpleGroupsLayout createSimpleGroupsLayout() {
-        return new SimpleGroupsLayout(dependencies.getI18n(), dependencies.getQuotaManagement());
+        return new SimpleGroupsLayout(dependencies.getI18n(), dependencies.getQuotaManagement(),
+                dependencies.getTenantConfigHelper());
     }
 
     /**
@@ -77,7 +78,8 @@ public final class RolloutWindowLayoutComponentBuilder {
      */
     public AdvancedGroupsLayout createAdvancedGroupsLayout() {
         return new AdvancedGroupsLayout(dependencies.getI18n(), dependencies.getEntityFactory(),
-                dependencies.getRolloutManagement(), dependencies.getQuotaManagement(), targetFilterQueryDataProvider);
+                dependencies.getRolloutManagement(), dependencies.getQuotaManagement(), targetFilterQueryDataProvider,
+                dependencies.getTenantConfigHelper());
     }
 
     /**
