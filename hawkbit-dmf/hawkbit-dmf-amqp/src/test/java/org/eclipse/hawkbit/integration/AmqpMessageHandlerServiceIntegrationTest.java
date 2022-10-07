@@ -1010,8 +1010,15 @@ class AmqpMessageHandlerServiceIntegrationTest extends AbstractAmqpServiceIntegr
     void confirmedActionStatus() {
         enableUserConsentFlow();
         final String controllerId = TARGET_PREFIX + "confirmedActionStatus";
-        final Long actionId = registerTargetAndSendActionStatus(DmfActionStatus.CONFIRMED, controllerId);
+
+        final DistributionSetAssignmentResult assignmentResult = registerTargetAndAssignDistributionSet(controllerId);
+        final Long actionId = getFirstAssignedActionId(assignmentResult);
+        createAndSendActionStatusUpdateMessage(controllerId, actionId, DmfActionStatus.CONFIRMED);
         assertAction(actionId, 1, Status.WAIT_CONFIRMATION, Status.RUNNING);
+
+        // assert download and install message
+        waitUntilEventMessagesAreDispatchedToTarget(EventTopic.CONFIRM, EventTopic.DOWNLOAD_AND_INSTALL);
+        assertDownloadAndInstallMessage(assignmentResult.getDistributionSet().getModules(), controllerId);
     }
 
     @Test

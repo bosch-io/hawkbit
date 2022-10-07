@@ -392,7 +392,8 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
             status = Status.RETRIEVED;
             break;
         case RUNNING:
-            status = Status.RUNNING;
+            case CONFIRMED:
+                status = Status.RUNNING;
             break;
         case CANCELED:
             status = Status.CANCELED;
@@ -411,9 +412,6 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
             break;
         case CANCEL_REJECTED:
             status = handleCancelRejectedState(message, action);
-            break;
-        case CONFIRMED:
-            status = Status.RUNNING;
             break;
         case DENIED:
             status = Status.WAIT_CONFIRMATION;

@@ -557,6 +557,7 @@ public class AmqpMessageHandlerServiceTest {
         final ActionStatusCreate create = mock(ActionStatusCreate.class);
         when(builder.create(22L)).thenReturn(create);
         when(create.status(any())).thenReturn(create);
+        when(create.messages(any())).thenReturn(create);
         when(entityFactoryMock.actionStatus()).thenReturn(builder);
         // for the test the same action can be used
         when(controllerManagementMock.findActiveActionWithHighestWeight(any())).thenReturn(Optional.of(action));

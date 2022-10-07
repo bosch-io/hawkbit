@@ -714,5 +714,9 @@ public class AmqpMessageDispatcherServiceIntegrationTest extends AbstractAmqpSer
 
         waitUntilTargetHasStatus(controllerId, TargetUpdateStatus.PENDING);
         assertConfirmMessage(getDistributionSet().getModules(), controllerId);
+        assertEventMessageNotPresent(EventTopic.DOWNLOAD_AND_INSTALL);
+    }
+    protected void assertEventMessageNotPresent(final EventTopic eventTopic) {
+        assertThat(replyToListener.getLatestEventMessage(eventTopic)).isNull();
     }
 }

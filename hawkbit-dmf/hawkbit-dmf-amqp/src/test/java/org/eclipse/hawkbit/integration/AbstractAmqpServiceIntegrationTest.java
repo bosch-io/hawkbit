@@ -470,7 +470,7 @@ public abstract class AbstractAmqpServiceIntegrationTest extends AbstractAmqpInt
     }
 
     protected void assertConfirmRequest(final DmfConfirmRequest request, final Set<SoftwareModule> softwareModules,
-                                        final String controllerId) {
+            final String controllerId) {
         assertSoftwareModules(softwareModules, request.getSoftwareModules());
         final Target updatedTarget = waitUntilIsPresent(() -> targetManagement.getByControllerID(controllerId));
         assertThat(updatedTarget).isNotNull();
