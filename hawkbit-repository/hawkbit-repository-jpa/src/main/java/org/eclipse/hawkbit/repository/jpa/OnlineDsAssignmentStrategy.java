@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.hawkbit.repository.QuotaManagement;
+import org.eclipse.hawkbit.repository.RepositoryConstants;
 import org.eclipse.hawkbit.repository.event.remote.MultiActionAssignEvent;
 import org.eclipse.hawkbit.repository.event.remote.MultiActionCancelEvent;
 import org.eclipse.hawkbit.repository.event.remote.TargetAssignDistributionSetEvent;
@@ -145,6 +146,7 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
         final JpaActionStatus result = super.createActionStatus(action, actionMessage);
         if (isUserConsentEnabled()) {
             result.setStatus(Status.WAIT_FOR_CONFIRMATION);
+            result.addMessage(RepositoryConstants.SERVER_MESSAGE_PREFIX + "Waiting for the confirmation by the device before processing with the deployment");
         } else {
             result.setStatus(Status.RUNNING);
         }
