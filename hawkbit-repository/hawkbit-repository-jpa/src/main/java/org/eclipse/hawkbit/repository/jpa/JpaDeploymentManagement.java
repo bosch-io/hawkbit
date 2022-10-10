@@ -662,6 +662,10 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
     private List<JpaAction> activateActions(final List<JpaAction> actions){
         actions.forEach(action -> {
             action.setActive(true);
+            if (isUserConsentEnabled()) {
+                action.setStatus(Status.WAIT_FOR_CONFIRMATION);
+                return;
+            }
             action.setStatus(Status.RUNNING);
         });
         return actionRepository.saveAll(actions);

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.hawkbit.repository.QuotaManagement;
+import org.eclipse.hawkbit.repository.RepositoryConstants;
 import org.eclipse.hawkbit.repository.event.remote.MultiActionAssignEvent;
 import org.eclipse.hawkbit.repository.event.remote.MultiActionCancelEvent;
 import org.eclipse.hawkbit.repository.event.remote.TargetAssignDistributionSetEvent;
@@ -151,6 +152,9 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
             if (action.getStatus().equals(Status.RUNNING)) {
                 // action is in RUNNING state only if it's confirmed during assignment already
                 result.addMessage(String.format("Assignment confirmed by initiator [%s].", action.getInitiatedBy()));
+            } else {
+                result.addMessage(RepositoryConstants.SERVER_MESSAGE_PREFIX
+                        + "Waiting for the confirmation by the device before processing with the deployment");
             }
         } else {
             result.setStatus(Status.RUNNING);
