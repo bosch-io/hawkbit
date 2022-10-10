@@ -1525,6 +1525,12 @@ public final class UIComponentIdProvider {
 
     /**
      * Configuration checkbox for
+     * {@link TenantConfigurationKey#USER_CONSENT_ENABLED}.
+     */
+    public static final String REPOSITORY_USER_CONSENT_CHECKBOX = "repositoryuserconsentcheckbox";
+
+    /**
+     * Configuration checkbox for
      * {@link TenantConfigurationKey#ROLLOUT_APPROVAL_ENABLED}
      */
     public static final String ROLLOUT_APPROVAL_ENABLED_CHECKBOX = "rollout.approve.enabled.checkbox";

@@ -172,10 +172,10 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         this.virtualPropertyReplacer = virtualPropertyReplacer;
         this.txManager = txManager;
         onlineDsAssignmentStrategy = new OnlineDsAssignmentStrategy(targetRepository, afterCommit, eventPublisherHolder,
-                actionRepository, actionStatusRepository, quotaManagement, this::isMultiAssignmentsEnabled);
+                actionRepository, actionStatusRepository, quotaManagement, this::isMultiAssignmentsEnabled, this::isUserConsentEnabled);
         offlineDsAssignmentStrategy = new OfflineDsAssignmentStrategy(targetRepository, afterCommit,
                 eventPublisherHolder, actionRepository, actionStatusRepository, quotaManagement,
-                this::isMultiAssignmentsEnabled);
+                this::isMultiAssignmentsEnabled, this::isUserConsentEnabled);
         this.tenantConfigurationManagement = tenantConfigurationManagement;
         this.quotaManagement = quotaManagement;
         this.systemSecurityContext = systemSecurityContext;
@@ -664,6 +664,10 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
     private List<JpaAction> activateActions(final List<JpaAction> actions){
         actions.forEach(action -> {
             action.setActive(true);
+            if (isUserConsentEnabled()) {
+                action.setStatus(Status.WAIT_FOR_CONFIRMATION);
+                return;
+            }
             action.setStatus(Status.RUNNING);
         });
         return actionRepository.saveAll(actions);
@@ -953,6 +957,11 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
     private boolean isMultiAssignmentsEnabled() {
         return TenantConfigHelper.usingContext(systemSecurityContext, tenantConfigurationManagement)
                 .isMultiAssignmentsEnabled();
+    }
+
+    private boolean isUserConsentEnabled() {
+        return TenantConfigHelper.usingContext(systemSecurityContext, tenantConfigurationManagement)
+            .isUserConsentEnabled();
     }
 
     private <T extends Serializable> T getConfigValue(final String key, final Class<T> valueType) {

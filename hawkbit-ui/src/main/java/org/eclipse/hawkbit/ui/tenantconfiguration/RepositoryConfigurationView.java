@@ -19,6 +19,7 @@ import org.eclipse.hawkbit.ui.components.SPUIComponentProvider;
 import org.eclipse.hawkbit.ui.tenantconfiguration.repository.ActionAutoCleanupConfigurationItem;
 import org.eclipse.hawkbit.ui.tenantconfiguration.repository.ActionAutoCloseConfigurationItem;
 import org.eclipse.hawkbit.ui.tenantconfiguration.repository.MultiAssignmentsConfigurationItem;
+import org.eclipse.hawkbit.ui.tenantconfiguration.repository.UserConsentConfigurationItem;
 import org.eclipse.hawkbit.ui.utils.UIComponentIdProvider;
 import org.eclipse.hawkbit.ui.utils.VaadinMessageSource;
 
@@ -60,6 +61,10 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
 
     private CheckBox multiAssignmentsCheckBox;
 
+    private UserConsentConfigurationItem userConsentConfigurationItem;
+
+    private CheckBox userConsentCheckBox;
+
     RepositoryConfigurationView(final VaadinMessageSource i18n, final UiProperties uiProperties,
             final TenantConfigurationManagement tenantConfigurationManagement) {
         super(tenantConfigurationManagement);
@@ -73,6 +78,7 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
         this.actionAutocloseConfigurationItem = new ActionAutoCloseConfigurationItem(i18n);
         this.actionAutocleanupConfigurationItem = new ActionAutoCleanupConfigurationItem(getBinder(), i18n);
         this.multiAssignmentsConfigurationItem = new MultiAssignmentsConfigurationItem(i18n, getBinder());
+        this.userConsentConfigurationItem = new UserConsentConfigurationItem(i18n);
         init();
     }
 
@@ -92,7 +98,7 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
         header.addStyleName("config-panel-header");
         vLayout.addComponent(header);
 
-        final GridLayout gridLayout = new GridLayout(3, 3);
+        final GridLayout gridLayout = new GridLayout(3, 4);
         gridLayout.setSpacing(true);
 
         gridLayout.setColumnExpandRatio(1, 1.0F);
@@ -125,6 +131,13 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
         gridLayout.addComponent(multiAssignmentsCheckBox, 0, 1);
         gridLayout.addComponent(multiAssignmentsConfigurationItem, 1, 1);
 
+        userConsentCheckBox = FormComponentBuilder.createCheckBox(
+            UIComponentIdProvider.REPOSITORY_USER_CONSENT_CHECKBOX, getBinder(),
+            ProxySystemConfigRepository::isUserConsent, ProxySystemConfigRepository::setUserConsent);
+        userConsentCheckBox.setStyleName(DIST_CHECKBOX_STYLE);
+        gridLayout.addComponent(userConsentCheckBox, 0, 2);
+        gridLayout.addComponent(userConsentConfigurationItem, 1, 2);
+
         final CheckBox actionAutoCleanupCheckBox = FormComponentBuilder.createCheckBox(
                 UIComponentIdProvider.REPOSITORY_ACTIONS_AUTOCLEANUP_CHECKBOX, getBinder(),
                 ProxySystemConfigRepository::isActionAutocleanup, ProxySystemConfigRepository::setActionAutocleanup);
@@ -136,8 +149,8 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
                 actionAutocleanupConfigurationItem.hideSettings();
             }
         });
-        gridLayout.addComponent(actionAutoCleanupCheckBox, 0, 2);
-        gridLayout.addComponent(actionAutocleanupConfigurationItem, 1, 2);
+        gridLayout.addComponent(actionAutoCleanupCheckBox, 0, 3);
+        gridLayout.addComponent(actionAutocleanupConfigurationItem, 1, 3);
 
         final Link linkToProvisioningHelp = SPUIComponentProvider.getHelpLink(i18n,
                 uiProperties.getLinks().getDocumentation().getProvisioningStateMachine());
@@ -176,6 +189,8 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
             writeConfigOption(TenantConfigurationKey.MULTI_ASSIGNMENTS_ENABLED, getBinderBean().isMultiAssignments());
             this.disableMultipleAssignmentOption();
         }
+
+        writeConfigOption(TenantConfigurationKey.USER_CONSENT_ENABLED, getBinderBean().isUserConsent());
     }
 
     @Override
@@ -183,6 +198,7 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
         final ProxySystemConfigRepository configBean = new ProxySystemConfigRepository();
         configBean.setActionAutoclose(readConfigOption(TenantConfigurationKey.REPOSITORY_ACTIONS_AUTOCLOSE_ENABLED));
         configBean.setMultiAssignments(readConfigOption(TenantConfigurationKey.MULTI_ASSIGNMENTS_ENABLED));
+        configBean.setUserConsent(readConfigOption(TenantConfigurationKey.USER_CONSENT_ENABLED));
         configBean.setActionAutocleanup(readConfigOption(TenantConfigurationKey.ACTION_CLEANUP_ENABLED));
         configBean.setActionCleanupStatus(getActionStatusOption());
         configBean.setActionExpiryDays(String.valueOf(getActionExpiry()));
