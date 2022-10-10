@@ -143,7 +143,7 @@ public class RolloutGroupGrid extends AbstractGrid<ProxyRolloutGroup, Long> {
               .setId(SPUILabelDefinitions.ROLLOUT_GROUP_ERROR_THRESHOLD)
               .setCaption(i18n.getMessage("header.rolloutgroup.threshold.error")).setHidable(true);
 
-        GridComponentBuilder.addColumn(this, group -> group.isConsentGiven() ? "given" : "n/a")
+        GridComponentBuilder.addColumn(this, group -> group.isConsentGiven() ? "GIVEN" : "NO")
               .setId(SPUILabelDefinitions.ROLLOUT_GROUP_CONSENT_GIVEN)
               .setCaption(i18n.getMessage("header.rolloutgroup.consent.given")).setHidable(true);
 
