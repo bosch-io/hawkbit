@@ -27,6 +27,8 @@ import org.eclipse.hawkbit.ddi.json.model.DdiCancel;
 import org.eclipse.hawkbit.ddi.json.model.DdiCancelActionToStop;
 import org.eclipse.hawkbit.ddi.json.model.DdiChunk;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfigData;
+import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationBase;
+import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationFeedback;
 import org.eclipse.hawkbit.ddi.json.model.DdiControllerBase;
 import org.eclipse.hawkbit.ddi.json.model.DdiDeployment;
 import org.eclipse.hawkbit.ddi.json.model.DdiDeployment.DdiMaintenanceWindowStatus;
@@ -621,4 +623,105 @@ public class DdiRootController implements DdiRootControllerRestApi {
         return null;
     }
 
+
+    @Override
+    public ResponseEntity<DdiConfirmationBase> getControllerBaseconfirmationAction(
+            @PathVariable("tenant") final String tenant, @PathVariable("controllerId") final String controllerId,
+            @PathVariable("actionId") final Long actionId,
+            @RequestParam(value = "c", required = false, defaultValue = "-1") final int resource,
+            @RequestParam(value = "actionHistory", defaultValue = DdiRestConstants.NO_ACTION_HISTORY) final Integer actionHistoryMessageCount) {
+        LOG.debug("getControllerBaseconfirmationAction({},{})", controllerId, resource);
+
+        final Target target = findTarget(controllerId);
+        final Action action = findActionForTarget(actionId, target);
+
+        checkAndCancelExpiredAction(action);
+
+        if (!action.isCancelingOrCanceled()) {
+
+            final DdiConfirmationBase base = generateDdiConfirmationBase(target, action, actionHistoryMessageCount);
+
+            LOG.debug("Found an active UpdateAction for target {}. returning deployment: {}", controllerId, base);
+
+            controllerManagement.registerRetrieved(action.getId(), RepositoryConstants.SERVER_MESSAGE_PREFIX
+                    + "Target retrieved confirmation action and now should confirm the action.");
+
+            return new ResponseEntity<>(base, HttpStatus.OK);
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+    private DdiConfirmationBase generateDdiConfirmationBase(final Target target, final Action action,
+                                                        final Integer actionHistoryMessageCount) {
+        final List<DdiChunk> chunks = DataConversionHelper.createChunks(target, action, artifactUrlHandler,
+                systemManagement, new ServletServerHttpRequest(requestResponseContextHolder.getHttpServletRequest()),
+                controllerManagement);
+
+        final List<String> actionHistoryMsgs = controllerManagement.getActionHistoryMessages(action.getId(),
+                actionHistoryMessageCount == null ? Integer.parseInt(DdiRestConstants.NO_ACTION_HISTORY)
+                        : actionHistoryMessageCount);
+
+        final DdiActionHistory actionHistory = actionHistoryMsgs.isEmpty() ? null
+                : new DdiActionHistory(action.getStatus().name(), actionHistoryMsgs);
+
+        final HandlingType downloadType = calculateDownloadType(action);
+        final HandlingType updateType = calculateUpdateType(action, downloadType);
+
+        final DdiMaintenanceWindowStatus maintenanceWindow = calculateMaintenanceWindow(action);
+
+        return new DdiConfirmationBase(Long.toString(action.getId()),
+                new DdiDeployment(downloadType, updateType, chunks, maintenanceWindow), actionHistory);
+    }
+
+    @Override
+    public ResponseEntity<Void> postConfirmationActionFeedback(@Valid @RequestBody final DdiConfirmationFeedback feedback,
+            @PathVariable("tenant") final String tenant, @PathVariable("controllerId") final String controllerId,
+            @PathVariable("actionId") @NotEmpty final Long actionId) {
+        LOG.debug("provideConfirmationActionFeedback for target [{},{}]: {}", controllerId, actionId, feedback);
+
+        final Target target = findTarget(controllerId);
+        final Action action = findActionForTarget(actionId, target);
+
+        if (!action.isActive()) {
+            LOG.warn("Updating action {} with confirmation {} not possible since action not active anymore.",
+                    action.getId(), feedback.getConfirmation());
+            return new ResponseEntity<>(HttpStatus.GONE);
+        }
+
+
+        final ActionStatusCreate actionStatusCreate = entityFactory.actionStatus().create(actionId);
+        final List<String> messages = new ArrayList<>();
+
+        if (!CollectionUtils.isEmpty(feedback.getDetails())) {
+            messages.addAll(feedback.getDetails());
+        }
+
+        final Integer code = feedback.getCode();
+        if (code != null) {
+            actionStatusCreate.code(code);
+            messages.add("Device reported confirmation code: " + code);
+        }
+
+        final Status status;
+        switch (feedback.getConfirmation()) {
+            case CONFIRMED:
+                LOG.info("Controller confirmed the action (actionId: {}, controllerId: {}) as we got {} report.",
+                        actionId, controllerId, feedback.getConfirmation());
+                status = Status.RUNNING;
+                addMessageIfEmpty("Target REJECTED update", messages);
+                break;
+            case DENIED:
+            default:
+                LOG.debug("Controller denied the action (actionId: {}, controllerId: {}) as we got {} report.",
+                        actionId, controllerId, feedback.getConfirmation());
+                status = Status.WAIT_FOR_CONFIRMATION;
+                addMessageIfEmpty("Target confirmed download start", messages);
+                break;
+        }
+
+        controllerManagement.addUpdateActionStatus(actionStatusCreate.status(status).messages(messages));
+
+        return ResponseEntity.ok().build();
+    }
 }
