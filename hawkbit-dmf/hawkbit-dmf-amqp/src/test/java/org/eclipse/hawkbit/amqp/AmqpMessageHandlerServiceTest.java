@@ -570,16 +570,16 @@ public class AmqpMessageHandlerServiceTest {
         // test
         amqpMessageHandlerService.onMessage(message, MessageType.EVENT.name(), TENANT, VIRTUAL_HOST);
 
-        final ArgumentCaptor<Action> actionCaptor = ArgumentCaptor.forClass(JpaAction.class);
+        final ArgumentCaptor<ActionProperties> actionPropertiesCaptor = ArgumentCaptor.forClass(ActionProperties.class);
         final ArgumentCaptor<Target> targetCaptor = ArgumentCaptor.forClass(Target.class);
 
-        verify(amqpMessageDispatcherServiceMock, times(1)).sendUpdateMessageToTarget(actionCaptor.capture(),
+        verify(amqpMessageDispatcherServiceMock, times(1)).sendUpdateMessageToTarget(actionPropertiesCaptor.capture(),
                 targetCaptor.capture(), any(Map.class));
-        final Action capturedAction = actionCaptor.getValue();
-        assertThat(capturedAction).isNotNull();
-        assertThat(capturedAction.getTenant()).as("event has tenant").isEqualTo("DEFAULT");
+        final ActionProperties actionProperties = actionPropertiesCaptor.getValue();
+        assertThat(actionProperties).isNotNull();
+        assertThat(actionProperties.getTenant()).as("event has tenant").isEqualTo("DEFAULT");
         assertThat(targetCaptor.getValue().getControllerId()).as("event has wrong controller id").isEqualTo("target1");
-        assertThat(capturedAction.getId()).as("event has wrong action id").isEqualTo(22L);
+        assertThat(actionProperties.getId()).as("event has wrong action id").isEqualTo(22L);
     }
 
     @Test

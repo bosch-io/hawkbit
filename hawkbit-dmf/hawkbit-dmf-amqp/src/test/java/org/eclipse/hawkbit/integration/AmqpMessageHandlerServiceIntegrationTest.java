@@ -1014,7 +1014,7 @@ class AmqpMessageHandlerServiceIntegrationTest extends AbstractAmqpServiceIntegr
         final DistributionSetAssignmentResult assignmentResult = registerTargetAndAssignDistributionSet(controllerId);
         final Long actionId = getFirstAssignedActionId(assignmentResult);
         createAndSendActionStatusUpdateMessage(controllerId, actionId, DmfActionStatus.CONFIRMED);
-        assertAction(actionId, 1, Status.WAIT_CONFIRMATION, Status.RUNNING);
+        assertAction(actionId, 1, Status.WAIT_FOR_CONFIRMATION, Status.RUNNING);
 
         // assert download and install message
         waitUntilEventMessagesAreDispatchedToTarget(EventTopic.CONFIRM, EventTopic.DOWNLOAD_AND_INSTALL);
@@ -1036,6 +1036,6 @@ class AmqpMessageHandlerServiceIntegrationTest extends AbstractAmqpServiceIntegr
         enableUserConsentFlow();
         final String controllerId = TARGET_PREFIX + "deniedActionStatus";
         final Long actionId = registerTargetAndSendActionStatus(DmfActionStatus.DENIED, controllerId);
-        assertAction(actionId, 1, Status.WAIT_CONFIRMATION);
+        assertAction(actionId, 1, Status.WAIT_FOR_CONFIRMATION);
     }
 }

@@ -22,6 +22,8 @@ public class ActionProperties implements Serializable {
     private String tenant;
     private boolean maintenanceWindowAvailable;
 
+    private Action.Status status;
+
     public ActionProperties() {
     }
 
@@ -35,6 +37,7 @@ public class ActionProperties implements Serializable {
         this.actionType = action.getActionType();
         this.tenant = action.getTenant();
         this.maintenanceWindowAvailable = action.isMaintenanceWindowAvailable();
+        this.status = action.getStatus();
     }
 
     public void setId(final Long id) {
@@ -67,5 +70,9 @@ public class ActionProperties implements Serializable {
 
     public void setActionType(final Action.ActionType actionType) {
         this.actionType = actionType;
+    }
+
+    public boolean isWaitingConfirmation() {
+        return status == Action.Status.WAIT_FOR_CONFIRMATION;
     }
 }

@@ -283,7 +283,7 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
             amqpMessageDispatcherService.sendCancelMessageToTarget(target.getTenant(), target.getControllerId(),
                     action.getId(), target.getAddress());
         } else {
-            amqpMessageDispatcherService.sendUpdateMessageToTarget(action, action.getTarget(),
+            amqpMessageDispatcherService.sendUpdateMessageToTarget(new ActionProperties(action), action.getTarget(),
                     getSoftwareModulesWithMetadata(action.getDistributionSet()));
         }
     }
@@ -414,7 +414,7 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
             status = handleCancelRejectedState(message, action);
             break;
         case DENIED:
-            status = Status.WAIT_CONFIRMATION;
+            status = Status.WAIT_FOR_CONFIRMATION;
             break;
         default:
             logAndThrowMessageError(message, "Status for action does not exisit.");
