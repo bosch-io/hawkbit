@@ -414,7 +414,7 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
             status = handleCancelRejectedState(message, action);
             break;
         case DENIED:
-            status = Status.WAIT_CONFIRMATION;
+            status = Status.WAIT_FOR_CONFIRMATION;
             break;
         default:
             logAndThrowMessageError(message, "Status for action does not exisit.");
