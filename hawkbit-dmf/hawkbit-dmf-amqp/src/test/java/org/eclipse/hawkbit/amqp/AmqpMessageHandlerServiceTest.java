@@ -46,6 +46,7 @@ import org.eclipse.hawkbit.repository.TenantConfigurationManagement;
 import org.eclipse.hawkbit.repository.UpdateMode;
 import org.eclipse.hawkbit.repository.builder.ActionStatusBuilder;
 import org.eclipse.hawkbit.repository.builder.ActionStatusCreate;
+import org.eclipse.hawkbit.repository.jpa.model.JpaAction;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaActionStatusBuilder;
 import org.eclipse.hawkbit.repository.jpa.model.JpaActionStatus;
 import org.eclipse.hawkbit.repository.jpa.model.helper.SecurityTokenGeneratorHolder;
@@ -556,6 +557,7 @@ public class AmqpMessageHandlerServiceTest {
         final ActionStatusCreate create = mock(ActionStatusCreate.class);
         when(builder.create(22L)).thenReturn(create);
         when(create.status(any())).thenReturn(create);
+        when(create.messages(any())).thenReturn(create);
         when(entityFactoryMock.actionStatus()).thenReturn(builder);
         // for the test the same action can be used
         when(controllerManagementMock.findActiveActionWithHighestWeight(any())).thenReturn(Optional.of(action));
@@ -568,16 +570,16 @@ public class AmqpMessageHandlerServiceTest {
         // test
         amqpMessageHandlerService.onMessage(message, MessageType.EVENT.name(), TENANT, VIRTUAL_HOST);
 
-        final ArgumentCaptor<ActionProperties> actionPropertiesCaptor = ArgumentCaptor.forClass(ActionProperties.class);
+        final ArgumentCaptor<Action> actionCaptor = ArgumentCaptor.forClass(JpaAction.class);
         final ArgumentCaptor<Target> targetCaptor = ArgumentCaptor.forClass(Target.class);
 
-        verify(amqpMessageDispatcherServiceMock, times(1)).sendUpdateMessageToTarget(actionPropertiesCaptor.capture(),
-              targetCaptor.capture(), any(Map.class));
-        final ActionProperties actionProperties = actionPropertiesCaptor.getValue();
-        assertThat(actionProperties).isNotNull();
-        assertThat(actionProperties.getTenant()).as("event has tenant").isEqualTo("DEFAULT");
+        verify(amqpMessageDispatcherServiceMock, times(1)).sendUpdateMessageToTarget(actionCaptor.capture(),
+                targetCaptor.capture(), any(Map.class));
+        final Action capturedAction = actionCaptor.getValue();
+        assertThat(capturedAction).isNotNull();
+        assertThat(capturedAction.getTenant()).as("event has tenant").isEqualTo("DEFAULT");
         assertThat(targetCaptor.getValue().getControllerId()).as("event has wrong controller id").isEqualTo("target1");
-        assertThat(actionProperties.getId()).as("event has wrong action id").isEqualTo(22L);
+        assertThat(capturedAction.getId()).as("event has wrong action id").isEqualTo(22L);
     }
 
     @Test
