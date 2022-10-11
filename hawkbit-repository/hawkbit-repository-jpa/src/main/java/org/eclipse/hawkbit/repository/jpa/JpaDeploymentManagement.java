@@ -170,7 +170,8 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         this.virtualPropertyReplacer = virtualPropertyReplacer;
         this.txManager = txManager;
         onlineDsAssignmentStrategy = new OnlineDsAssignmentStrategy(targetRepository, afterCommit, eventPublisherHolder,
-                actionRepository, actionStatusRepository, quotaManagement, this::isMultiAssignmentsEnabled, this::isUserConsentEnabled);
+                actionRepository, actionStatusRepository, quotaManagement, this::isMultiAssignmentsEnabled,
+                this::isUserConsentEnabled);
         offlineDsAssignmentStrategy = new OfflineDsAssignmentStrategy(targetRepository, afterCommit,
                 eventPublisherHolder, actionRepository, actionStatusRepository, quotaManagement,
                 this::isMultiAssignmentsEnabled, this::isUserConsentEnabled);
@@ -559,12 +560,12 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
 
     @Override
     public long startScheduledActionsByRolloutGroupParent(final long rolloutId, final long distributionSetId,
-            final Long rolloutGroupParentId, final boolean consentGiven) {
+            final Long rolloutGroupParentId) {
         long totalActionsCount = 0L;
         long lastStartedActionsCount;
         do {
             lastStartedActionsCount = startScheduledActionsByRolloutGroupParentInNewTransaction(rolloutId,
-                    distributionSetId, rolloutGroupParentId, ACTION_PAGE_LIMIT, consentGiven);
+                    distributionSetId, rolloutGroupParentId, ACTION_PAGE_LIMIT);
             totalActionsCount += lastStartedActionsCount;
         } while (lastStartedActionsCount > 0);
 
@@ -572,16 +573,16 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
     }
 
     private long startScheduledActionsByRolloutGroupParentInNewTransaction(final Long rolloutId,
-            final Long distributionSetId, final Long rolloutGroupParentId, final int limit, final boolean consentGiven) {
+            final Long distributionSetId, final Long rolloutGroupParentId, final int limit) {
         return DeploymentHelper.runInNewTransaction(txManager, "startScheduledActions-" + rolloutId, status -> {
             final Page<Action> rolloutGroupActions = findActionsByRolloutAndRolloutGroupParent(rolloutId,
                     rolloutGroupParentId, limit);
-            
+
             if (rolloutGroupActions.getContent().isEmpty()) {
                 return 0L;
             }
-            
-            final List<Action> newTargetAssignments = handleTargetAssignments(rolloutGroupActions, consentGiven);
+
+            final List<Action> newTargetAssignments = handleTargetAssignments(rolloutGroupActions);
 
             if (!newTargetAssignments.isEmpty()) {
                 onlineDsAssignmentStrategy.sendDeploymentEvents(distributionSetId, newTargetAssignments);
@@ -591,7 +592,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         });
     }
 
-    private List<Action> handleTargetAssignments(final Page<Action> rolloutGroupActions, final boolean consentGiven) {
+    private List<Action> handleTargetAssignments(final Page<Action> rolloutGroupActions) {
         // Close actions already assigned and collect pending assignments
         final List<JpaAction> pendingTargetAssignments = rolloutGroupActions.getContent().stream()
                 .map(JpaAction.class::cast).map(this::closeActionIfSetWasAlreadyAssigned).filter(Objects::nonNull)
@@ -600,7 +601,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
             return new ArrayList<>(pendingTargetAssignments);
         }
         // check if old actions needs to be canceled first
-        return startScheduledActionsAndHandleOpenCancellationFirst(pendingTargetAssignments, consentGiven);
+        return startScheduledActionsAndHandleOpenCancellationFirst(pendingTargetAssignments);
     }
 
     private Page<Action> findActionsByRolloutAndRolloutGroupParent(final Long rolloutId,
@@ -639,12 +640,11 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         return action;
     }
 
-    private List<Action> startScheduledActionsAndHandleOpenCancellationFirst(final List<JpaAction> actions,
-            final boolean consentGiven) {
+    private List<Action> startScheduledActionsAndHandleOpenCancellationFirst(final List<JpaAction> actions) {
         if (!isMultiAssignmentsEnabled()) {
             closeOrCancelOpenDeviceActions(actions);
         }
-        final List<JpaAction> savedActions = activateActions(actions, consentGiven);
+        final List<JpaAction> savedActions = activateActions(actions);
         setInitialActionStatus(savedActions);
         setAssignmentOnTargets(savedActions);
         return Collections.unmodifiableList(savedActions);
@@ -660,10 +660,11 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         }
     }
 
-    private List<JpaAction> activateActions(final List<JpaAction> actions, final boolean consentGiven) {
+    private List<JpaAction> activateActions(final List<JpaAction> actions) {
         actions.forEach(action -> {
             action.setActive(true);
-            if (isUserConsentFlowActive() && Boolean.FALSE.equals(consentGiven)) {
+            final boolean confirmationRequired = action.getRolloutGroup().isConfirmationRequired();
+            if (isUserConsentFlowActive() && Boolean.TRUE.equals(confirmationRequired)) {
                 action.setStatus(Status.WAIT_FOR_CONFIRMATION);
                 return;
             }

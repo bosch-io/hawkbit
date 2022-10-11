@@ -10,7 +10,13 @@ package org.eclipse.hawkbit.ui.rollout.window.components;
 
 import java.util.function.IntConsumer;
 
+import com.vaadin.icons.VaadinIcons;
+import com.vaadin.server.ExternalResource;
+import com.vaadin.ui.Alignment;
+import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.Link;
 import org.eclipse.hawkbit.repository.QuotaManagement;
+import org.eclipse.hawkbit.ui.UiProperties;
 import org.eclipse.hawkbit.ui.common.builder.BoundComponent;
 import org.eclipse.hawkbit.ui.common.builder.FormComponentBuilder;
 import org.eclipse.hawkbit.ui.common.builder.LabelBuilder;
@@ -61,7 +67,8 @@ public class SimpleGroupsLayout extends ValidatableLayout {
     private final TextField triggerThreshold;
     private final Label percentHintLabel;
 
-    private final CheckBox giveConsentToggle;
+    private final CheckBox requireConfirmationToggle;
+    private final Link confirmationHelpLink;
 
     private final BoundComponent<TextField> errorThreshold;
     private final RadioButtonGroup<ERROR_THRESHOLD_OPTIONS> errorThresholdOptionGroup;
@@ -79,7 +86,7 @@ public class SimpleGroupsLayout extends ValidatableLayout {
      *            QuotaManagement
      */
     public SimpleGroupsLayout(final VaadinMessageSource i18n, final QuotaManagement quotaManagement,
-            final TenantConfigHelper tenantConfigHelper) {
+            final TenantConfigHelper tenantConfigHelper, final UiProperties uiProperties) {
         super();
 
         this.i18n = i18n;
@@ -93,7 +100,8 @@ public class SimpleGroupsLayout extends ValidatableLayout {
         this.percentHintLabel = getPercentHintLabel();
         this.errorThreshold = createErrorThreshold();
         this.errorThresholdOptionGroup = createErrorThresholdOptionGroup();
-        this.giveConsentToggle = createConsentToggle();
+        this.requireConfirmationToggle = createConfirmationToggle();
+        this.confirmationHelpLink = createConfirmationHelpLink(uiProperties);
 
         this.layout = buildLayout(tenantConfigHelper.isUserConsentEnabled());
 
@@ -252,14 +260,25 @@ public class SimpleGroupsLayout extends ValidatableLayout {
         return errorThresholdOptions;
     }
 
-    public CheckBox createConsentToggle() {
-        final CheckBox consentToggle = FormComponentBuilder.createCheckBox(
-                UIComponentIdProvider.ROLLOUT_USER_CONSENT_GIVEN, binder,
-                ProxySimpleRolloutGroupsDefinition::isConsentGiven,
-                ProxySimpleRolloutGroupsDefinition::setConsentGiven);
-        consentToggle.addStyleName(ValoTheme.CHECKBOX_SMALL);
+    public CheckBox createConfirmationToggle() {
+        final CheckBox confirmationToggle = FormComponentBuilder.createCheckBox(
+                UIComponentIdProvider.ROLLOUT_CONFIRMATION_REQUIRED, binder,
+                ProxySimpleRolloutGroupsDefinition::isConfirmationRequired,
+                ProxySimpleRolloutGroupsDefinition::setConfirmationRequired);
+        confirmationToggle.addStyleName(ValoTheme.CHECKBOX_SMALL);
 
-        return consentToggle;
+        return confirmationToggle;
+    }
+
+    public Link createConfirmationHelpLink(final UiProperties uiProperties) {
+        final String confirmationFlowHelpUrl = uiProperties.getLinks().getDocumentation().getConfirmationFlow();
+        final Link confirmationHelpLink = new Link("", new ExternalResource(confirmationFlowHelpUrl));
+
+        confirmationHelpLink.setTargetName("_blank");
+        confirmationHelpLink.setIcon(VaadinIcons.QUESTION_CIRCLE);
+        confirmationHelpLink.setDescription(i18n.getMessage("tooltip.documentation.link"));
+
+        return confirmationHelpLink;
     }
 
     private GridLayout buildLayout(final boolean isConsentFlowActive) {
@@ -291,12 +310,24 @@ public class SimpleGroupsLayout extends ValidatableLayout {
         gridLayout.addComponent(errorThresholdOptionGroup, 2, 3);
 
         if (isConsentFlowActive) {
-            gridLayout.addComponent(SPUIComponentProvider.generateLabel(i18n, "prompt.consent.given"), 0, 4);
-            gridLayout.addComponent(giveConsentToggle, 1, 4);
-            // add component with help
+            gridLayout.addComponent(SPUIComponentProvider.generateLabel(i18n, "prompt.confirmation.required"), 0, 4);
+            final HorizontalLayout confirmationLayout = initializeConfirmationElements();
+            gridLayout.addComponent(confirmationLayout, 1, 4);
+            gridLayout.setComponentAlignment(confirmationLayout, Alignment.MIDDLE_CENTER);
         }
 
         return gridLayout;
+    }
+
+    private HorizontalLayout initializeConfirmationElements(){
+        final HorizontalLayout confirmationLayout = new HorizontalLayout();
+        confirmationLayout.setSpacing(false);
+        confirmationLayout.setMargin(false);
+        confirmationLayout.addComponent(requireConfirmationToggle);
+        confirmationLayout.setComponentAlignment(requireConfirmationToggle, Alignment.MIDDLE_CENTER);
+        confirmationLayout.addComponent(confirmationHelpLink);
+        confirmationLayout.setComponentAlignment(confirmationHelpLink, Alignment.MIDDLE_CENTER);
+        return confirmationLayout;
     }
 
     private void addValueChangeListeners() {

@@ -490,7 +490,7 @@ public class JpaRolloutExecutor implements RolloutExecutor {
         }
 
         deploymentManagement.startScheduledActionsByRolloutGroupParent(rollout.getId(),
-                rollout.getDistributionSet().getId(), null, rolloutGroup.isConsentGiven());
+                rollout.getDistributionSet().getId(), null);
 
         rolloutGroup.setStatus(RolloutGroupStatus.RUNNING);
         rolloutGroupRepository.save(rolloutGroup);

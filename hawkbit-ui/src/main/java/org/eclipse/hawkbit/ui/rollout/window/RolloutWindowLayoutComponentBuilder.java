@@ -68,7 +68,7 @@ public final class RolloutWindowLayoutComponentBuilder {
      */
     public SimpleGroupsLayout createSimpleGroupsLayout() {
         return new SimpleGroupsLayout(dependencies.getI18n(), dependencies.getQuotaManagement(),
-                dependencies.getTenantConfigHelper());
+                dependencies.getTenantConfigHelper(), dependencies.getUiProperties());
     }
 
     /**

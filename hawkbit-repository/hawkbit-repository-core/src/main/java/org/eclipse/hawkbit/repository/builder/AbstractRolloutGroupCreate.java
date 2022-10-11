@@ -23,7 +23,7 @@ public abstract class AbstractRolloutGroupCreate<T> extends AbstractNamedEntityB
     protected String targetFilterQuery;
     protected Float targetPercentage;
     protected RolloutGroupConditions conditions;
-    protected boolean isConsentGiven;
+    protected boolean confirmationRequired;
 
     public T targetFilterQuery(final String targetFilterQuery) {
         this.targetFilterQuery = StringUtils.trimWhitespace(targetFilterQuery);
@@ -40,8 +40,8 @@ public abstract class AbstractRolloutGroupCreate<T> extends AbstractNamedEntityB
         return (T) this;
     }
 
-    public T isConsentGiven(final boolean isConsentGiven) {
-        this.isConsentGiven = isConsentGiven;
+    public T confirmationRequired(final boolean confirmationRequired) {
+        this.confirmationRequired = confirmationRequired;
         return (T) this;
     }
 

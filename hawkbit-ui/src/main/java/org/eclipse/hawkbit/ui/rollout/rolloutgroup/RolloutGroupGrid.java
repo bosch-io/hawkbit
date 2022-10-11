@@ -141,13 +141,14 @@ public class RolloutGroupGrid extends AbstractGrid<ProxyRolloutGroup, Long> {
 
         GridComponentBuilder.addColumn(this, group -> group.getErrorConditionExp() + "%")
               .setId(SPUILabelDefinitions.ROLLOUT_GROUP_ERROR_THRESHOLD)
-              .setCaption(i18n.getMessage("header.rolloutgroup.threshold.error")).setHidable(true);
+                .setCaption(i18n.getMessage("header.rolloutgroup.threshold.error")).setHidable(true);
 
-        GridComponentBuilder.addColumn(this, group -> group.isConsentGiven() ? "GIVEN" : "NO")
-              .setId(SPUILabelDefinitions.ROLLOUT_GROUP_CONSENT_GIVEN)
-              .setCaption(i18n.getMessage("header.rolloutgroup.consent.given")).setHidable(true);
+        GridComponentBuilder.addColumn(this, group -> group.isConfirmationRequired() ? "required" : "not required")
+                .setId(SPUILabelDefinitions.ROLLOUT_GROUP_CONFIRMATION_REQUIRED)
+                .setCaption(i18n.getMessage("header.rolloutgroup.confirmation")).setHidable(true);
 
-        GridComponentBuilder.addColumn(this, group -> group.getSuccessConditionExp() + "%")
+        GridComponentBuilder.addColumn(this, group -> group
+                .getSuccessConditionExp() + "%")
                 .setId(SPUILabelDefinitions.ROLLOUT_GROUP_THRESHOLD)
                 .setCaption(i18n.getMessage("header.rolloutgroup.threshold")).setHidable(true);
 

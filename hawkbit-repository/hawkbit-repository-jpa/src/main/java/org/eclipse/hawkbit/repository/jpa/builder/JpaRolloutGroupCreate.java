@@ -34,7 +34,7 @@ public class JpaRolloutGroupCreate extends AbstractRolloutGroupCreate<RolloutGro
         if (conditions != null) {
             addSuccessAndErrorConditionsAndActions(group, conditions);
         }
-        group.setConsentGiven(isConsentGiven);
+        group.setConfirmationRequired(confirmationRequired);
 
         return group;
     }

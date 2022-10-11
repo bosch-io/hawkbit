@@ -181,7 +181,7 @@ public final class SPUILabelDefinitions {
     public static final String VAR_TOTAL_TARGETS = "totalTargetsCount";
 
     /**
-     * Total target count status coulmn property name.
+     * Total target count status column property name.
      */
     public static final String VAR_TOTAL_TARGETS_COUNT_STATUS = "totalTargetCountStatus";
 
@@ -190,7 +190,7 @@ public final class SPUILabelDefinitions {
      */
     public static final String ROLLOUT_GROUP_ERROR_THRESHOLD = "errorConditionExp";
 
-    public static final String ROLLOUT_GROUP_CONSENT_GIVEN = "consentGiven";
+    public static final String ROLLOUT_GROUP_CONFIRMATION_REQUIRED = "confirmationRequired";
 
     /**
      * Rollout group started date column property.

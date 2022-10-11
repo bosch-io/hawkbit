@@ -53,7 +53,7 @@ public class ProxyRolloutGroup extends ProxyNamedEntity {
     private String errorConditionExp;
     private RolloutGroupErrorAction errorAction;
     private String errorActionExp;
-    private boolean isConsentGiven;
+    private boolean confirmationRequired;
 
     /**
      * Constructor
@@ -285,12 +285,12 @@ public class ProxyRolloutGroup extends ProxyNamedEntity {
     }
 
 
-    public boolean isConsentGiven() {
-        return isConsentGiven;
+    public boolean isConfirmationRequired() {
+        return confirmationRequired;
     }
 
-    public void setConsentGiven(final boolean isConsentGiven) {
-        this.isConsentGiven = isConsentGiven;
+    public void setConfirmationRequired(final boolean confirmationRequired) {
+        this.confirmationRequired = confirmationRequired;
     }
 
     public RolloutGroupErrorAction getErrorAction() {

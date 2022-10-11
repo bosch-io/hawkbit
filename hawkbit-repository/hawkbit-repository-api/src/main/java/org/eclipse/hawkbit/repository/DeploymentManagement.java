@@ -499,13 +499,15 @@ public interface DeploymentManagement {
      *
      * @param rolloutId
      *            the rollout the actions belong to
+     * @param distributionSetId
+     *            if a confirmation is required
      * @param rolloutGroupParentId
      *            the parent rollout group the actions should reference. null
      *            references the first group
      * @return the amount of started actions
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_READ_TARGET)
-    long startScheduledActionsByRolloutGroupParent(long rolloutId, long distributionSetId, Long rolloutGroupParentId, boolean consentGiven);
+    long startScheduledActionsByRolloutGroupParent(long rolloutId, long distributionSetId, Long rolloutGroupParentId);
 
     /**
      * All {@link ActionStatus} entries in the repository.

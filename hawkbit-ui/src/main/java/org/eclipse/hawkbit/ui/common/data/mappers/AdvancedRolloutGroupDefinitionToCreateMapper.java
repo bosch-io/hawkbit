@@ -56,6 +56,6 @@ public class AdvancedRolloutGroupDefinitionToCreateMapper {
                 .description(advancedRolloutGroupDefinition.getGroupName())
                 .targetFilterQuery(advancedRolloutGroupDefinition.getTargetFilterQuery())
                 .targetPercentage(advancedRolloutGroupDefinition.getTargetPercentage()).conditions(conditions)
-                .isConsentGiven(advancedRolloutGroupDefinition.isConsentGiven());
+                .confirmationRequired(advancedRolloutGroupDefinition.isConfirmationRequired());
     }
 }

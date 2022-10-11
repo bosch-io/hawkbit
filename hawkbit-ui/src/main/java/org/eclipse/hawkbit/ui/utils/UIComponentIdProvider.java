@@ -1573,7 +1573,7 @@ public final class UIComponentIdProvider {
 
     public static final String ROLLOUT_START_OPTIONS_ID = "rollout.start.options.id";
 
-    public static final String ROLLOUT_USER_CONSENT_GIVEN = "rollout.user.consent.given";
+    public static final String ROLLOUT_CONFIRMATION_REQUIRED = "rollout.confirmation.required";
 
     public static final String SM_TYPE_COLOR_STYLE = "sm-type-colors";
 

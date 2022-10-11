@@ -108,27 +108,28 @@ public interface RolloutManagement {
 
     /**
      * Persists a new rollout entity. The filter within the
-     * {@link Rollout#getTargetFilterQuery()} is used to retrieve the targets
-     * which are effected by this rollout to create. The amount of groups will
-     * be defined as equally sized.
+     * {@link Rollout#getTargetFilterQuery()} is used to retrieve the targets which
+     * are effected by this rollout to create. The amount of groups will be defined
+     * as equally sized.
      *
      * The rollout is not started. Only the preparation of the rollout is done,
-     * creating and persisting all the necessary groups. The Rollout and the
-     * groups are persisted in {@link RolloutStatus#CREATING} and
+     * creating and persisting all the necessary groups. The Rollout and the groups
+     * are persisted in {@link RolloutStatus#CREATING} and
      * {@link RolloutGroupStatus#CREATING}.
      *
      * The RolloutScheduler will start to assign targets to the groups. Once all
-     * targets have been assigned to the groups, the rollout status is changed
-     * to {@link RolloutStatus#READY} so it can be started with
-     * {@link #start(Rollout)}.
+     * targets have been assigned to the groups, the rollout status is changed to
+     * {@link RolloutStatus#READY} so it can be started with .
      *
      * @param create
      *            the rollout entity to create
      * @param amountGroup
      *            the amount of groups to split the rollout into
+     * @param confirmationRequired
+     *            if a confirmation is required by the device
      * @param conditions
-     *            the rolloutgroup conditions and actions which should be
-     *            applied for each {@link RolloutGroup}
+     *            the rolloutgroup conditions and actions which should be applied
+     *            for each {@link RolloutGroup}
      * @return the persisted rollout.
      *
      * @throws EntityNotFoundException
@@ -140,7 +141,7 @@ public interface RolloutManagement {
      *             exceeded.
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_ROLLOUT_MANAGEMENT_CREATE)
-    Rollout create(@NotNull @Valid RolloutCreate create, int amountGroup, boolean isConsentGiven,
+    Rollout create(@NotNull @Valid RolloutCreate create, int amountGroup, boolean confirmationRequired,
             @NotNull RolloutGroupConditions conditions);
 
     /**

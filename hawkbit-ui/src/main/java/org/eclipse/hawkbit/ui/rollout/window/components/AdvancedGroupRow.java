@@ -15,7 +15,6 @@ import org.eclipse.hawkbit.ui.common.builder.FormComponentBuilder;
 import org.eclipse.hawkbit.ui.common.builder.TextFieldBuilder;
 import org.eclipse.hawkbit.ui.common.data.providers.TargetFilterQueryDataProvider;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyAdvancedRolloutGroup;
-import org.eclipse.hawkbit.ui.common.data.proxies.ProxySimpleRolloutGroupsDefinition;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetFilterQuery;
 import org.eclipse.hawkbit.ui.utils.UIComponentIdProvider;
 import org.eclipse.hawkbit.ui.utils.UIMessageIdProvider;
@@ -49,7 +48,7 @@ public class AdvancedGroupRow {
     private final TextField targetPercentage;
     private final TextField triggerThreshold;
     private final TextField errorThreshold;
-    private final CheckBox consentGivenToggle;
+    private final CheckBox requireConfirmationToggle;
     private final boolean showConsentOption;
 
     /**
@@ -74,7 +73,7 @@ public class AdvancedGroupRow {
         this.targetPercentage = createTargetPercentage();
         this.triggerThreshold = createTriggerThreshold();
         this.errorThreshold = createErrorThreshold();
-        this.consentGivenToggle = createConsentToggle();
+        this.requireConfirmationToggle = createConfirmationToggle();
     }
 
     private TextField createGroupName() {
@@ -140,11 +139,12 @@ public class AdvancedGroupRow {
         return errorThresholdField;
     }
 
-    public CheckBox createConsentToggle() {
+    public CheckBox createConfirmationToggle() {
         final CheckBox checkBox = new CheckBox();
         checkBox.setWidth(5, Unit.EM);
         checkBox.setStyleName(DIST_CHECKBOX_STYLE);
-        binder.forField(checkBox).bind(ProxyAdvancedRolloutGroup::isConsentGiven, ProxyAdvancedRolloutGroup::setConsentGiven);
+        binder.forField(checkBox).bind(ProxyAdvancedRolloutGroup::isConfirmationRequired, ProxyAdvancedRolloutGroup::setConfirmationRequired);
+        checkBox.setValue(true);
         return checkBox;
     }
 
@@ -163,7 +163,7 @@ public class AdvancedGroupRow {
         layout.addComponent(triggerThreshold, 3, index);
         layout.addComponent(errorThreshold, 4, index);
         if (showConsentOption) {
-            layout.addComponent(consentGivenToggle, 5, index);
+            layout.addComponent(requireConfirmationToggle, 5, index);
         }
     }
 
@@ -179,6 +179,7 @@ public class AdvancedGroupRow {
         targetPercentage.setId(UIComponentIdProvider.ROLLOUT_GROUP_TARGET_PERC_ID + "." + index);
         triggerThreshold.setId(UIComponentIdProvider.ROLLOUT_TRIGGER_THRESOLD_ID + "." + index);
         errorThreshold.setId(UIComponentIdProvider.ROLLOUT_ERROR_THRESOLD_ID + "." + index);
+        errorThreshold.setId(UIComponentIdProvider.ROLLOUT_CONFIRMATION_REQUIRED + "." + index);
     }
 
     /**

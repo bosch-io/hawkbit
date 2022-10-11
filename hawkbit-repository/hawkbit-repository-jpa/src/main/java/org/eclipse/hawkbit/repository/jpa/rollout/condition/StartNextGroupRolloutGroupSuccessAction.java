@@ -58,8 +58,7 @@ public class StartNextGroupRolloutGroupSuccessAction implements RolloutGroupActi
         // rolloutGroup, so retrieve all child-group actions which need to be
         // started.
         final long countOfStartedActions = deploymentManagement.startScheduledActionsByRolloutGroupParent(
-                rollout.getId(), rollout.getDistributionSet().getId(), rolloutGroup.getId(),
-                rolloutGroup.isConsentGiven());
+                rollout.getId(), rollout.getDistributionSet().getId(), rolloutGroup.getId());
         logger.debug("{} Next actions started for rollout {} and parent group {}", countOfStartedActions, rollout,
                 rolloutGroup);
         if (countOfStartedActions > 0) {
