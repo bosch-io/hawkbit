@@ -378,6 +378,6 @@ public class JpaAction extends AbstractJpaTenantAwareBaseEntity implements Actio
     }
 
     public boolean isWaitingConfirmation() {
-        return status == Status.WAIT_CONFIRMATION;
+        return status == Status.WAIT_FOR_CONFIRMATION;
     }
 }
