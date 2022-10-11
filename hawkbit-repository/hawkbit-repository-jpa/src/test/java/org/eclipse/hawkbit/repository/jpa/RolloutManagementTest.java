@@ -1776,7 +1776,7 @@ class RolloutManagementTest extends AbstractJpaIntegrationTest {
                 .name(prefixRolloutRunning + "-testRollout").targetFilterQuery("name==" + randomString + "*")
                 .set(testDs);
 
-        Rollout rolloutRunning = rolloutManagement.create(rolloutRunningCreate, 1, conditions);
+        Rollout rolloutRunning = rolloutManagement.create(rolloutRunningCreate, 1, false, conditions);
         // Let the executor handle created Rollout
         rolloutManagement.handleRollouts();
         // start the rollout, so it has active running actions and a group which
@@ -1789,7 +1789,7 @@ class RolloutManagementTest extends AbstractJpaIntegrationTest {
         final RolloutCreate rolloutReadyCreate = entityFactory.rollout().create()
                 .name(prefixRolloutReady + "-testRollout").targetFilterQuery("name==" + randomString + "*")
                 .set(testDs);
-        Rollout rolloutReady = rolloutManagement.create(rolloutReadyCreate, 1, conditions);
+        Rollout rolloutReady = rolloutManagement.create(rolloutReadyCreate, 1, false, conditions);
         // Let the executor handle created Rollout
         rolloutManagement.handleRollouts();
         rolloutReady = reloadRollout(rolloutReady);
