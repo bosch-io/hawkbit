@@ -154,6 +154,15 @@ public class TargetWithActionType {
         return maintenanceWindowTimeZone;
     }
 
+    /**
+     * Return if a confirmation is required for this assignment (depends if user consent flow is active)
+     *
+     * @return the flag
+     */
+    public boolean isConfirmationRequired() {
+        return confirmationRequired;
+    }
+
     @Override
     public String toString() {
         return "TargetWithActionType [controllerId=" + controllerId + ", actionType=" + getActionType() + ", forceTime="
@@ -188,11 +197,4 @@ public class TargetWithActionType {
                 && Objects.equals(maintenanceWindowTimeZone, other.maintenanceWindowTimeZone);
     }
 
-    public boolean isConfirmationRequired() {
-        return confirmationRequired;
-    }
-
-    public void setConfirmationRequired(boolean confirmationRequired) {
-        this.confirmationRequired = confirmationRequired;
-    }
 }

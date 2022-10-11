@@ -874,10 +874,14 @@ public class TestdataFactory {
      * @return {@link List} of {@link Target} entities
      */
     public List<Target> createTargets(final int number) {
+        return createTargets(DEFAULT_CONTROLLER_ID, number);
+    }
+
+    public List<Target> createTargets(final String prefix, final int number) {
 
         final List<TargetCreate> targets = Lists.newArrayListWithExpectedSize(number);
         for (int i = 0; i < number; i++) {
-            targets.add(entityFactory.target().create().controllerId(DEFAULT_CONTROLLER_ID + i));
+            targets.add(entityFactory.target().create().controllerId(prefix + i));
         }
 
         return createTargets(targets);
