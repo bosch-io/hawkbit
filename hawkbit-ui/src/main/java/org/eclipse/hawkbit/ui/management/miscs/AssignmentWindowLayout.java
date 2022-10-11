@@ -36,7 +36,7 @@ public class AssignmentWindowLayout extends VerticalLayout {
 
     private final BoundComponent<ActionTypeOptionGroupAssignmentLayout> actionTypeLayout;
     private final CheckBox maintenanceWindowToggle;
-    private final CheckBox confirmAssignmentToggle;
+    private final CheckBox confirmationRequiredToggle;
     
     private final Link confirmationHelpLink;
 
@@ -61,7 +61,7 @@ public class AssignmentWindowLayout extends VerticalLayout {
 
         this.actionTypeLayout = componentBuilder.createActionTypeOptionGroupLayout(proxyAssignmentBinder);
         this.maintenanceWindowToggle = componentBuilder.createEnableMaintenanceWindowToggle(proxyAssignmentBinder);
-        this.confirmAssignmentToggle = componentBuilder.createConfirmationToggle(proxyAssignmentBinder);
+        this.confirmationRequiredToggle = componentBuilder.createConfirmationToggle(proxyAssignmentBinder);
         this.confirmationHelpLink = componentBuilder.createConfirmationHelpLink(uiProperties);
 
         this.maintenanceSchedule = componentBuilder.createMaintenanceSchedule(proxyAssignmentBinder);
@@ -98,17 +98,18 @@ public class AssignmentWindowLayout extends VerticalLayout {
         addComponent(maintenanceWindowLayout);
 
         final HorizontalLayout confirmationOptionsLayout = new HorizontalLayout();
-        confirmationOptionsLayout.addComponent(confirmAssignmentToggle);
+        confirmationOptionsLayout.addComponent(confirmationRequiredToggle);
         confirmationOptionsLayout.addComponent(confirmationHelpLink);
         addComponent(confirmationOptionsLayout);
         refreshConfirmCheckBoxState(false);
     }
 
     public void refreshConfirmCheckBoxState(final boolean isUserConsentFlowEnabled) {
-        confirmAssignmentToggle.setEnabled(isUserConsentFlowEnabled);
-        confirmAssignmentToggle.setVisible(isUserConsentFlowEnabled);
+        confirmationRequiredToggle.setEnabled(isUserConsentFlowEnabled);
+        confirmationRequiredToggle.setVisible(isUserConsentFlowEnabled);
         confirmationHelpLink.setEnabled(isUserConsentFlowEnabled);
         confirmationHelpLink.setVisible(isUserConsentFlowEnabled);
+        getProxyAssignmentBinder().getBean().setConfirmationRequired(isUserConsentFlowEnabled);
     }
 
     private void addValueChangeListeners() {

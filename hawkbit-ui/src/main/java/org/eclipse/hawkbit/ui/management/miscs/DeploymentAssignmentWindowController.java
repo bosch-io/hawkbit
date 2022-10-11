@@ -120,7 +120,7 @@ public class DeploymentAssignmentWindowController {
         final String maintenanceDuration = proxyAssignmentWindow.getMaintenanceDuration();
         final String maintenanceTimeZone = proxyAssignmentWindow.getMaintenanceTimeZone();
 
-        final boolean isConfirmed = proxyAssignmentWindow.isConfirmed();
+        final boolean confirmationRequired = proxyAssignmentWindow.isConfirmationRequired();
 
         final Set<Long> dsIdsToAssign = proxyDistributionSets.stream().map(ProxyDistributionSet::getId)
                 .collect(Collectors.toSet());
@@ -128,7 +128,8 @@ public class DeploymentAssignmentWindowController {
         final List<DeploymentRequest> deploymentRequests = new ArrayList<>();
         dsIdsToAssign.forEach(dsId -> proxyTargets.forEach(t -> {
             final DeploymentRequestBuilder request = DeploymentManagement.deploymentRequest(t.getControllerId(), dsId)
-                    .setActionType(actionType).setForceTime(forcedTimeStamp).setConfirmed(isConfirmed);
+                    .setActionType(actionType).setForceTime(forcedTimeStamp)
+                    .setConfirmationRequired(confirmationRequired);
             if (proxyAssignmentWindow.isMaintenanceWindowEnabled()) {
                 request.setMaintenance(maintenanceSchedule, maintenanceDuration, maintenanceTimeZone);
             }

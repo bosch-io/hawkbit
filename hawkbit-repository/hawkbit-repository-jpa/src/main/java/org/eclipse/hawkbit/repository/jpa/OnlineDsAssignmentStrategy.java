@@ -132,7 +132,7 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
             final List<JpaTarget> targets, final JpaDistributionSet set) {
         final JpaAction result = super.createTargetAction(initiatedBy, targetWithActionType, targets, set);
         if (result != null) {
-            if (isUserConsentEnabled() && Boolean.FALSE.equals(targetWithActionType.isConfirmed())) {
+            if (isUserConsentEnabled() && targetWithActionType.isConfirmationRequired()) {
                 result.setStatus(Status.WAIT_FOR_CONFIRMATION);
             } else {
                 result.setStatus(Status.RUNNING);

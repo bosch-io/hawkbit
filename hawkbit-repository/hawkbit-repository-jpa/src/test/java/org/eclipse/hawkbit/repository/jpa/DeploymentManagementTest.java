@@ -682,7 +682,7 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
         final List<DeploymentRequest> deploymentRequests = new ArrayList<>();
         distributionSets.forEach(ds -> targets.forEach(target -> deploymentRequests
                 .add(DeploymentManagement.deploymentRequest(target.getControllerId(), ds.getId()).setWeight(weight)
-                        .setConfirmed(confirmedByOperator).build())));
+                        .setConfirmationRequired(confirmedByOperator).build())));
         return deploymentRequests;
     }
 
