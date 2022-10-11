@@ -109,7 +109,6 @@ public class AssignmentWindowLayout extends VerticalLayout {
         confirmationRequiredToggle.setVisible(isUserConsentFlowEnabled);
         confirmationHelpLink.setEnabled(isUserConsentFlowEnabled);
         confirmationHelpLink.setVisible(isUserConsentFlowEnabled);
-        getProxyAssignmentBinder().getBean().setConfirmationRequired(isUserConsentFlowEnabled);
     }
 
     private void addValueChangeListeners() {
