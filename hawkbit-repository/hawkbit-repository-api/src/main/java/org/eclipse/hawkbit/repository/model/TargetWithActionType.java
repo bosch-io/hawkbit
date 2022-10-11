@@ -30,8 +30,7 @@ public class TargetWithActionType {
     private String maintenanceSchedule;
     private String maintenanceWindowDuration;
     private String maintenanceWindowTimeZone;
-
-    private boolean confirmed;
+    private boolean confirmationRequired;
 
     /**
      * Constructor that uses {@link ActionType#FORCED}
@@ -51,18 +50,18 @@ public class TargetWithActionType {
      * @param actionType
      *            specified for the action.
      * @param forceTime
-     *            after that point in time the action is exposed as forced in
-     *            case the type is {@link ActionType#TIMEFORCED}
+     *            after that point in time the action is exposed as forced in case
+     *            the type is {@link ActionType#TIMEFORCED}
      * @param weight
      *            the priority of an {@link Action}
      */
     public TargetWithActionType(final String controllerId, final ActionType actionType, final long forceTime,
-            final Integer weight, final boolean confirmed) {
+            final Integer weight, final boolean confirmationRequired) {
         this.controllerId = controllerId;
         this.actionType = actionType != null ? actionType : ActionType.FORCED;
         this.forceTime = forceTime;
         this.weight = weight;
-        this.confirmed = confirmed;
+        this.confirmationRequired = confirmationRequired;
     }
 
     /**
@@ -96,8 +95,8 @@ public class TargetWithActionType {
      */
     public TargetWithActionType(final String controllerId, final ActionType actionType, final long forceTime,
             final Integer weight, final String maintenanceSchedule, final String maintenanceWindowDuration,
-            final String maintenanceWindowTimeZone, final boolean confirmed) {
-        this(controllerId, actionType, forceTime, weight, confirmed);
+            final String maintenanceWindowTimeZone, final boolean confirmationRequired) {
+        this(controllerId, actionType, forceTime, weight, confirmationRequired);
 
         this.maintenanceSchedule = maintenanceSchedule;
         this.maintenanceWindowDuration = maintenanceWindowDuration;
@@ -155,12 +154,21 @@ public class TargetWithActionType {
         return maintenanceWindowTimeZone;
     }
 
+    /**
+     * Return if a confirmation is required for this assignment (depends if user consent flow is active)
+     *
+     * @return the flag
+     */
+    public boolean isConfirmationRequired() {
+        return confirmationRequired;
+    }
+
     @Override
     public String toString() {
         return "TargetWithActionType [controllerId=" + controllerId + ", actionType=" + getActionType() + ", forceTime="
                 + getForceTime() + ", weight=" + getWeight() + ", maintenanceSchedule=" + getMaintenanceSchedule()
                 + ", maintenanceWindowDuration=" + getMaintenanceWindowDuration() + ", maintenanceWindowTimeZone="
-                + getMaintenanceWindowTimeZone() + "]";
+                + getMaintenanceWindowTimeZone() + ", confirmationRequired=" + isConfirmationRequired() + "]";
     }
 
     @Override
@@ -189,11 +197,4 @@ public class TargetWithActionType {
                 && Objects.equals(maintenanceWindowTimeZone, other.maintenanceWindowTimeZone);
     }
 
-    public boolean isConfirmed() {
-        return confirmed;
-    }
-
-    public void setConfirmed(boolean confirmed) {
-        this.confirmed = confirmed;
-    }
 }

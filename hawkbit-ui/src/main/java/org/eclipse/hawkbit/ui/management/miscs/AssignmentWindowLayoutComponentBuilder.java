@@ -36,7 +36,7 @@ import com.vaadin.ui.Link;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.themes.ValoTheme;
 
-import static org.eclipse.hawkbit.ui.utils.UIMessageIdProvider.CAPTION_ACTION_CONFIRMATION;
+import static org.eclipse.hawkbit.ui.utils.UIMessageIdProvider.CAPTION_ACTION_CONFIRMATION_REQUIRED;
 
 /**
  * Builder for Assignment window components.
@@ -95,8 +95,9 @@ public class AssignmentWindowLayoutComponentBuilder {
 
     public CheckBox createConfirmationToggle(final Binder<ProxyAssignmentWindow> binder) {
         final CheckBox confirmationToggle = FormComponentBuilder.createCheckBox(
-                i18n.getMessage(CAPTION_ACTION_CONFIRMATION), UIComponentIdProvider.ASSIGNMENT_CONFIRM,
-                binder, ProxyAssignmentWindow::isConfirmed, ProxyAssignmentWindow::setConfirmed);
+                i18n.getMessage(CAPTION_ACTION_CONFIRMATION_REQUIRED),
+                UIComponentIdProvider.ASSIGNMENT_CONFIRMATION_REQUIRED, binder,
+                ProxyAssignmentWindow::isConfirmationRequired, ProxyAssignmentWindow::setConfirmationRequired);
         confirmationToggle.addStyleName(ValoTheme.CHECKBOX_SMALL);
         confirmationToggle.addStyleName("dist-window-maintenance-window-enable");
 

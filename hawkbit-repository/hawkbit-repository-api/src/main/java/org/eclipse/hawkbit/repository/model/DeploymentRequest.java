@@ -57,9 +57,10 @@ public class DeploymentRequest {
      */
     public DeploymentRequest(final String controllerId, final Long distributionSetId, final ActionType actionType,
             final long forceTime, final Integer weight, final String maintenanceSchedule,
-            final String maintenanceWindowDuration, final String maintenanceWindowTimeZone, final boolean confirmed) {
+            final String maintenanceWindowDuration, final String maintenanceWindowTimeZone,
+            final boolean confirmationRequired) {
         this.targetWithActionType = new TargetWithActionType(controllerId, actionType, forceTime, weight,
-                maintenanceSchedule, maintenanceWindowDuration, maintenanceWindowTimeZone, confirmed);
+                maintenanceSchedule, maintenanceWindowDuration, maintenanceWindowTimeZone, confirmationRequired);
         this.distributionSetId = distributionSetId;
     }
 
@@ -78,11 +79,11 @@ public class DeploymentRequest {
     @Override
     public String toString() {
         return String.format(
-                "DeploymentRequest [controllerId=%s, distributionSetId=%d, actionType=%s, forceTime=%d, weight=%d, maintenanceSchedule=%s, maintenanceWindowDuration=%s, maintenanceWindowTimeZone=%s]",
+                "DeploymentRequest [controllerId=%s, distributionSetId=%d, actionType=%s, forceTime=%d, weight=%d, maintenanceSchedule=%s, maintenanceWindowDuration=%s, maintenanceWindowTimeZone=%s, confirmationRequired=%s]",
                 targetWithActionType.getControllerId(), getDistributionSetId(), targetWithActionType.getActionType(),
                 targetWithActionType.getForceTime(), targetWithActionType.getWeight(),
                 targetWithActionType.getMaintenanceSchedule(), targetWithActionType.getMaintenanceWindowDuration(),
-                targetWithActionType.getMaintenanceWindowTimeZone());
+                targetWithActionType.getMaintenanceWindowTimeZone(), targetWithActionType.isConfirmationRequired());
     }
 
     @Override

@@ -581,7 +581,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
             if (rolloutGroupActions.getContent().isEmpty()) {
                 return 0L;
             }
-
+            
             final List<Action> newTargetAssignments = handleTargetAssignments(rolloutGroupActions);
 
             if (!newTargetAssignments.isEmpty()) {
@@ -591,7 +591,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
             return rolloutGroupActions.getTotalElements();
         });
     }
-
+    
     private List<Action> handleTargetAssignments(final Page<Action> rolloutGroupActions) {
         // Close actions already assigned and collect pending assignments
         final List<JpaAction> pendingTargetAssignments = rolloutGroupActions.getContent().stream()
@@ -660,21 +660,17 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         }
     }
 
-    private List<JpaAction> activateActions(final List<JpaAction> actions) {
+    private List<JpaAction> activateActions(final List<JpaAction> actions){
         actions.forEach(action -> {
             action.setActive(true);
             final boolean confirmationRequired = action.getRolloutGroup().isConfirmationRequired();
-            if (isUserConsentFlowActive() && Boolean.TRUE.equals(confirmationRequired)) {
+            if (isUserConsentEnabled() && confirmationRequired) {
                 action.setStatus(Status.WAIT_FOR_CONFIRMATION);
                 return;
             }
             action.setStatus(Status.RUNNING);
         });
         return actionRepository.saveAll(actions);
-    }
-    
-    private boolean isUserConsentFlowActive(){
-        return TenantConfigHelper.usingContext(systemSecurityContext, tenantConfigurationManagement).isUserConsentEnabled();
     }
 
     private void setAssignmentOnTargets(final List<JpaAction> actions) {
