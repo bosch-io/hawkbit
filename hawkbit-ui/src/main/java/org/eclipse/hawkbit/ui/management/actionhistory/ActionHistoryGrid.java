@@ -328,7 +328,7 @@ public class ActionHistoryGrid extends AbstractGrid<ProxyAction, String> {
     private void confirmAndForceQuitAction(final Long actionId) {
         final ConfirmationDialog confirmDialog = new ConfirmationDialog(i18n,
                 i18n.getMessage("caption.forcequit.action.confirmbox"),
-                i18n.getMessage("message.forcequit.action.confirm"), ok -> {
+                i18n.getMessage("message.forcequit.action.confirm"), null, ok -> {
                     if (ok) {
                         forceQuitActiveAction(actionId);
                     }

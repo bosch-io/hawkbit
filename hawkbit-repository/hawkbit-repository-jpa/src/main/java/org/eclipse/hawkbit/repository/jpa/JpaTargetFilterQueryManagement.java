@@ -263,6 +263,7 @@ public class JpaTargetFilterQueryManagement implements TargetFilterQueryManageme
             targetFilterQuery.setAutoAssignActionType(null);
             targetFilterQuery.setAutoAssignWeight(null);
             targetFilterQuery.setAutoAssignInitiatedBy(null);
+            targetFilterQuery.setConfirmationRequired(false);
         } else {
             WeightValidationHelper.usingContext(systemSecurityContext, tenantConfigurationManagement).validate(update);
             // we cannot be sure that the quota was enforced at creation time
@@ -277,6 +278,7 @@ public class JpaTargetFilterQueryManagement implements TargetFilterQueryManageme
             targetFilterQuery.setAutoAssignInitiatedBy(tenantAware.getCurrentUsername());
             targetFilterQuery.setAutoAssignActionType(sanitizeAutoAssignActionType(update.getActionType()));
             targetFilterQuery.setAutoAssignWeight(update.getWeight());
+            targetFilterQuery.setConfirmationRequired(update.getConfirmationRequired());
         }
         return targetFilterQueryRepository.save(targetFilterQuery);
     }

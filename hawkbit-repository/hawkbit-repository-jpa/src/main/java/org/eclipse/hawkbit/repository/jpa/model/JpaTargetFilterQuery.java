@@ -80,6 +80,9 @@ public class JpaTargetFilterQuery extends AbstractJpaTenantAwareBaseEntity
     @Column(name = "auto_assign_initiated_by", nullable = true, length = USERNAME_FIELD_LENGTH)
     private String autoAssignInitiatedBy;
 
+    @Column(name = "confirmation_required")
+    private boolean confirmationRequired;
+
     public JpaTargetFilterQuery() {
         // Default constructor for JPA.
     }
@@ -161,6 +164,15 @@ public class JpaTargetFilterQuery extends AbstractJpaTenantAwareBaseEntity
     }
 
     @Override
+    public boolean isConfirmationRequired() {
+        return confirmationRequired;
+    }
+
+    public void setConfirmationRequired(final boolean confirmationRequired) {
+        this.confirmationRequired = confirmationRequired;
+    }
+
+    @Override
     public void fireCreateEvent(final DescriptorEvent descriptorEvent) {
         EventPublisherHolder.getInstance().getEventPublisher().publishEvent(
                 new TargetFilterQueryCreatedEvent(this, EventPublisherHolder.getInstance().getApplicationId()));
@@ -177,4 +189,5 @@ public class JpaTargetFilterQuery extends AbstractJpaTenantAwareBaseEntity
         EventPublisherHolder.getInstance().getEventPublisher().publishEvent(new TargetFilterQueryDeletedEvent(
                 getTenant(), getId(), getClass(), EventPublisherHolder.getInstance().getApplicationId()));
     }
+
 }

@@ -22,6 +22,8 @@ public class ProxyTargetFilterQuery extends ProxyNamedEntity implements DsIdAwar
 
     private boolean isAutoAssignmentEnabled;
 
+    private boolean isConfirmationRequired;
+
     private ProxyDistributionSetInfo autoAssignDsInfo;
 
     private ActionType autoAssignActionType;
@@ -147,5 +149,13 @@ public class ProxyTargetFilterQuery extends ProxyNamedEntity implements DsIdAwar
      */
     public ProxyTargetFilterQueryInfo getInfo() {
         return new ProxyTargetFilterQueryInfo(getId(), getName(), getQuery());
+    }
+
+    public boolean isConfirmationRequired() {
+        return isConfirmationRequired;
+    }
+
+    public void setConfirmationRequired(final boolean confirmationRequired) {
+        isConfirmationRequired = confirmationRequired;
     }
 }

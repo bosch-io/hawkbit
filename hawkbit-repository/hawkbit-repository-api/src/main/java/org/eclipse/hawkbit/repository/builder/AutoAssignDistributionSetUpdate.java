@@ -29,6 +29,8 @@ public class AutoAssignDistributionSetUpdate {
     @Max(Action.WEIGHT_MAX)
     private Integer weight;
 
+    private boolean confirmationRequired;
+
     /**
      * Constructor
      * 
@@ -75,6 +77,11 @@ public class AutoAssignDistributionSetUpdate {
         return this;
     }
 
+    public AutoAssignDistributionSetUpdate confirmationRequired(final boolean confirmationRequired) {
+        this.confirmationRequired = confirmationRequired;
+        return this;
+    }
+
     public Long getDsId() {
         return dsId;
     }
@@ -85,6 +92,10 @@ public class AutoAssignDistributionSetUpdate {
 
     public Integer getWeight() {
         return weight;
+    }
+
+    public boolean getConfirmationRequired() {
+        return confirmationRequired;
     }
 
     public long getTargetFilterId() {

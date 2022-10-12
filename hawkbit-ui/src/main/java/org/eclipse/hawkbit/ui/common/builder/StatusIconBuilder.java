@@ -21,11 +21,13 @@ import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.Rollout.RolloutStatus;
 import org.eclipse.hawkbit.repository.model.RolloutGroup;
 import org.eclipse.hawkbit.repository.model.RolloutGroup.RolloutGroupStatus;
+import org.eclipse.hawkbit.repository.model.TargetFilterQuery;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyAction;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyAction.IsActiveDecoration;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyIdentifiableEntity;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTarget;
+import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetFilterQuery;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyUploadProgress.ProgressSatus;
 import org.eclipse.hawkbit.ui.components.SPUIComponentProvider;
 import org.eclipse.hawkbit.ui.rollout.ProxyFontIcon;
@@ -325,6 +327,25 @@ public final class StatusIconBuilder {
                     UIMessageIdProvider.CAPTION_ACTION_SOFT);
             addMapping(ActionType.DOWNLOAD_ONLY, VaadinIcons.DOWNLOAD, SPUIStyleDefinitions.STATUS_ICON_DOWNLOAD_ONLY,
                     UIMessageIdProvider.CAPTION_ACTION_DOWNLOAD_ONLY);
+        }
+    }
+    
+    public static class ConfirmationIconSupplier extends AbstractEntityStatusIconBuilder<ProxyTargetFilterQuery> {
+
+        private static final long serialVersionUID = 1L;
+
+        public ConfirmationIconSupplier(final VaadinMessageSource i18n, final String labelIdPrefix) {
+            super(i18n, labelIdPrefix);
+        }
+
+        @Override
+        public Label getLabel(final ProxyTargetFilterQuery entity) {
+            final ProxyFontIcon icon = entity.isConfirmationRequired()
+                    ? new ProxyFontIcon(VaadinIcons.USER, SPUIStyleDefinitions.STATUS_ICON_NEUTRAL,
+                            i18n.getMessage(UIMessageIdProvider.TOOLTIP_TARGET_FILTER_CONFIRMATION_REQUIRED))
+                    : new ProxyFontIcon(VaadinIcons.INFO_CIRCLE_O, SPUIStyleDefinitions.STATUS_ICON_NEUTRAL,
+                            i18n.getMessage(UIMessageIdProvider.TOOLTIP_TARGET_FILTER_CONFIRMATION_NOT_REQUIRED));
+            return getLabel(entity, icon);
         }
     }
 

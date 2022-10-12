@@ -60,7 +60,7 @@ public class ConfirmationDialog implements Serializable {
      */
     public ConfirmationDialog(final VaadinMessageSource i18n, final String caption, final String question,
             final Consumer<Boolean> callback, final Component tab, final String id) {
-        this(i18n, caption, question, callback, null, id, tab);
+        this(i18n, caption, question, null, callback, null, id, tab);
     }
 
     /**
@@ -79,7 +79,7 @@ public class ConfirmationDialog implements Serializable {
      */
     public ConfirmationDialog(final VaadinMessageSource i18n, final String caption, final String question,
             final Consumer<Boolean> callback, final String id) {
-        this(i18n, caption, question, callback, null, id, null);
+        this(i18n, caption, question, null, callback, null, id, null);
     }
 
     /**
@@ -102,14 +102,18 @@ public class ConfirmationDialog implements Serializable {
      *            action which has to be confirmed, e.g. maintenance window
      */
     public ConfirmationDialog(final VaadinMessageSource i18n, final String caption, final String question,
-            final Consumer<Boolean> callback, final Resource icon, final String id, final Component tab) {
+            final String hint, final Consumer<Boolean> callback, final Resource icon, final String id,
+            final Component tab) {
 
         final VerticalLayout content = new VerticalLayout();
         content.setMargin(false);
         content.setSpacing(false);
 
         if (question != null) {
-            content.addComponent(createConfirmationQuestion(question));
+            content.addComponent(createConfirmationLabel(question));
+        }
+        if (hint != null) {
+            content.addComponent(createConfirmationLabel(hint));
         }
         if (tab != null) {
             content.addComponent(tab);
@@ -147,10 +151,10 @@ public class ConfirmationDialog implements Serializable {
         };
     }
 
-    private static Label createConfirmationQuestion(final String question) {
+    private static Label createConfirmationLabel(final String text) {
         // ContentMode.HTML is used instead of ContentMode.PREFORMATTED here due
         // to no linebreaks if an entity name is very long
-        final String questionHtmlSave = HawkbitCommonUtil.sanitizeHtml(question);
+        final String questionHtmlSave = HawkbitCommonUtil.sanitizeHtml(text);
         final Label questionLbl = new Label(questionHtmlSave, ContentMode.HTML);
         questionLbl.setWidth(100, Unit.PERCENTAGE);
         questionLbl.addStyleName(SPUIStyleDefinitions.CONFIRMBOX_QUESTION_LABEL);
