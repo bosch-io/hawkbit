@@ -8,6 +8,8 @@
  */
 package org.eclipse.hawkbit.repository.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.io.Serializable;
 
 /**
@@ -72,6 +74,11 @@ public class ActionProperties implements Serializable {
         this.actionType = actionType;
     }
 
+    public Action.Status getStatus() {
+        return status;
+    }
+
+    @JsonIgnore
     public boolean isWaitingConfirmation() {
         return status == Action.Status.WAIT_FOR_CONFIRMATION;
     }
