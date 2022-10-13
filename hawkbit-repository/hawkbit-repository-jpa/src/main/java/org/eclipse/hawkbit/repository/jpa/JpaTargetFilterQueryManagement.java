@@ -249,6 +249,7 @@ public class JpaTargetFilterQueryManagement implements TargetFilterQueryManageme
             // set the new query
             targetFilterQuery.setQuery(query);
         });
+        update.getConfirmationRequired().ifPresent(targetFilterQuery::setConfirmationRequired);
 
         return targetFilterQueryRepository.save(targetFilterQuery);
     }

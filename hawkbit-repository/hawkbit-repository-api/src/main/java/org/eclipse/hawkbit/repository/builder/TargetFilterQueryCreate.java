@@ -83,6 +83,8 @@ public interface TargetFilterQueryCreate {
      */
     TargetFilterQueryCreate autoAssignWeight(Integer weight);
 
+    TargetFilterQueryCreate confirmationRequired(boolean confirmationRequired);
+
     /**
      * @return peek on current state of {@link TargetFilterQuery} in the builder
      */

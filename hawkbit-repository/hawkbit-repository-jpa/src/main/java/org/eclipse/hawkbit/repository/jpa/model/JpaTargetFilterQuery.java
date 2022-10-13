@@ -100,14 +100,18 @@ public class JpaTargetFilterQuery extends AbstractJpaTenantAwareBaseEntity
      *            of the {@link TargetFilterQuery}.
      * @param autoAssignWeight
      *            of the {@link TargetFilterQuery}.
+     * @param confirmationRequired
+     *            of the {@link TargetFilterQuery}.
      */
-    public JpaTargetFilterQuery(final String name, final String query, final DistributionSet autoAssignDistributionSet,
-            final ActionType autoAssignActionType, final Integer autoAssignWeight) {
+    public JpaTargetFilterQuery(
+            final String name, final String query, final DistributionSet autoAssignDistributionSet,
+            final ActionType autoAssignActionType, final Integer autoAssignWeight, final boolean confirmationRequired) {
         this.name = name;
         this.query = query;
         this.autoAssignDistributionSet = (JpaDistributionSet) autoAssignDistributionSet;
         this.autoAssignActionType = autoAssignActionType;
         this.autoAssignWeight = autoAssignWeight;
+        this.confirmationRequired = confirmationRequired;
     }
 
     @Override
