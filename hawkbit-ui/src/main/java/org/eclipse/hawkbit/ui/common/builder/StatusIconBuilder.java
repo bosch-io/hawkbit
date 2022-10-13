@@ -21,7 +21,6 @@ import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.Rollout.RolloutStatus;
 import org.eclipse.hawkbit.repository.model.RolloutGroup;
 import org.eclipse.hawkbit.repository.model.RolloutGroup.RolloutGroupStatus;
-import org.eclipse.hawkbit.repository.model.TargetFilterQuery;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyAction;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyAction.IsActiveDecoration;
@@ -88,7 +87,7 @@ public final class StatusIconBuilder {
             addMapping(Status.CANCEL_REJECTED, VaadinIcons.EXCLAMATION_CIRCLE, SPUIStyleDefinitions.STATUS_ICON_ORANGE);
             addMapping(Status.CANCELED, VaadinIcons.CLOSE_CIRCLE, SPUIStyleDefinitions.STATUS_ICON_GREEN);
             addMapping(Status.ERROR, VaadinIcons.EXCLAMATION_CIRCLE, SPUIStyleDefinitions.STATUS_ICON_RED);
-            addMapping(Status.WAIT_FOR_CONFIRMATION, VaadinIcons.USER, SPUIStyleDefinitions.STATUS_ICON_PENDING);
+            addMapping(Status.WAIT_FOR_CONFIRMATION, VaadinIcons.USER_CLOCK, SPUIStyleDefinitions.STATUS_ICON_PENDING);
 
         }
     }
@@ -340,11 +339,18 @@ public final class StatusIconBuilder {
 
         @Override
         public Label getLabel(final ProxyTargetFilterQuery entity) {
-            final ProxyFontIcon icon = entity.isConfirmationRequired()
-                    ? new ProxyFontIcon(VaadinIcons.USER, SPUIStyleDefinitions.STATUS_ICON_NEUTRAL,
-                            i18n.getMessage(UIMessageIdProvider.TOOLTIP_TARGET_FILTER_CONFIRMATION_REQUIRED))
-                    : new ProxyFontIcon(VaadinIcons.INFO_CIRCLE_O, SPUIStyleDefinitions.STATUS_ICON_NEUTRAL,
-                            i18n.getMessage(UIMessageIdProvider.TOOLTIP_TARGET_FILTER_CONFIRMATION_NOT_REQUIRED));
+            final ProxyFontIcon icon;
+            if (entity.isAutoAssignmentEnabled() && entity.getDistributionSetInfo() != null) {
+                icon = entity.isConfirmationRequired()
+                        ? new ProxyFontIcon(VaadinIcons.USER_CLOCK, SPUIStyleDefinitions.STATUS_ICON_GREEN,
+                                i18n.getMessage(UIMessageIdProvider.TOOLTIP_TARGET_FILTER_CONFIRMATION_REQUIRED))
+                        : new ProxyFontIcon(VaadinIcons.USER_CHECK, SPUIStyleDefinitions.STATUS_ICON_RED,
+                                i18n.getMessage(UIMessageIdProvider.TOOLTIP_TARGET_FILTER_CONFIRMATION_NOT_REQUIRED));
+            } else {
+                icon = new ProxyFontIcon(VaadinIcons.MINUS_CIRCLE_O, SPUIStyleDefinitions.STATUS_ICON_NEUTRAL,
+                        i18n.getMessage(UIMessageIdProvider.TOOLTIP_TARGET_FILTER_CONFIRMATION_NOT_CONFIGURED));
+            }
+
             return getLabel(entity, icon);
         }
     }

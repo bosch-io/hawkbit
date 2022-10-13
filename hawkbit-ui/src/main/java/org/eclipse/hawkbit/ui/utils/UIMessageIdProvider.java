@@ -284,6 +284,7 @@ public final class UIMessageIdProvider {
     public static final String TOOLTIP_TARGET_FILTER_CONFIRMATION_REQUIRED = "tooltip.target.filter.confirmation.required";
 
     public static final String TOOLTIP_TARGET_FILTER_CONFIRMATION_NOT_REQUIRED = "tooltip.target.filter.confirmation.not.required";
+    public static final String TOOLTIP_TARGET_FILTER_CONFIRMATION_NOT_CONFIGURED = "tooltip.target.filter.confirmation.not.configured";
 
     public static final String TOOLTIP_DELETE_CUSTOM_FILTER = "tooltip.delete.custom.filter";
 
