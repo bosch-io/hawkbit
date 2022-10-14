@@ -302,9 +302,11 @@ public class UploadArtifactView extends AbstractEventListenersAwareView implemen
     @Override
     public void beforeLeave(final ViewBeforeLeaveEvent event) {
         if (isAnyUploadInUploadQueue()) {
-            final ConfirmationDialog confirmDeleteDialog = new ConfirmationDialog(i18n,
-                    i18n.getMessage(UIMessageIdProvider.CAPTION_CLEAR_FILE_UPLOAD_QUEUE),
-                    i18n.getMessage(UIMessageIdProvider.MESSAGE_CLEAR_FILE_UPLOAD_QUEUE), ok -> {
+            final ConfirmationDialog confirmDeleteDialog = ConfirmationDialog
+                    .newBuilder(i18n, UIComponentIdProvider.UPLOAD_QUEUE_CLEAR_CONFIRMATION_DIALOG)
+                    .caption(i18n.getMessage(UIMessageIdProvider.CAPTION_CLEAR_FILE_UPLOAD_QUEUE))
+                    .question(i18n.getMessage(UIMessageIdProvider.MESSAGE_CLEAR_FILE_UPLOAD_QUEUE))
+                    .onConfirmation(ok -> {
                         if (Boolean.TRUE.equals(ok)) {
                             // Clear all queued file uploads
                             artifactUploadState.clearFileStates();
@@ -317,7 +319,7 @@ public class UploadArtifactView extends AbstractEventListenersAwareView implemen
                             final DashboardMenuItem dashboardMenuItem = dashboardMenu.getByViewName(VIEW_NAME);
                             dashboardMenu.postViewChange(DashboardEvent.createPostViewChangeEvent(dashboardMenuItem));
                         }
-                    }, UIComponentIdProvider.UPLOAD_QUEUE_CLEAR_CONFIRMATION_DIALOG);
+                    });
             UI.getCurrent().addWindow(confirmDeleteDialog.getWindow());
             confirmDeleteDialog.getWindow().bringToFront();
         } else {

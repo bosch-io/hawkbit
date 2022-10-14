@@ -22,9 +22,11 @@ import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetFilterQuery;
 import org.eclipse.hawkbit.ui.utils.UIComponentIdProvider;
 import org.eclipse.hawkbit.ui.utils.UIMessageIdProvider;
 
+import com.vaadin.icons.VaadinIcons;
 import com.vaadin.server.Sizeable;
 import com.vaadin.ui.UI;
 import org.eclipse.hawkbit.utils.TenantConfigHelper;
+import org.springframework.util.StringUtils;
 
 import static org.eclipse.hawkbit.ui.utils.UIMessageIdProvider.MESSAGE_CONFIRM_AUTO_ASSIGN_CONSEQUENCES_CONF_HINT;
 
@@ -130,8 +132,10 @@ public class AutoAssignmentWindowController extends
     private void showConsequencesDialog(final String confirmationCaption, final String confirmationQuestion,
             final String confirmationHint, final Long targetFilterId, final Long autoAssignDsId,
             final ActionType autoAssignActionType, final boolean confirmationRequired) {
-        final ConfirmationDialog confirmDialog = new ConfirmationDialog(getI18n(), confirmationCaption,
-                confirmationQuestion, confirmationHint, ok -> {
+        final ConfirmationDialog confirmDialog = ConfirmationDialog
+                .newBuilder(getI18n(), UIComponentIdProvider.DIST_SET_SELECT_CONS_WINDOW_ID)
+                .caption(confirmationCaption).question(confirmationQuestion).hint(confirmationHint)
+                .icon(StringUtils.hasText(confirmationHint) ? VaadinIcons.WARNING : null).onConfirmation(ok -> {
                     if (ok) {
                         final TargetFilterQuery targetFilterQuery = targetFilterQueryManagement
                                 .updateAutoAssignDS(getEntityFactory().targetFilterQuery()
@@ -139,7 +143,7 @@ public class AutoAssignmentWindowController extends
                                         .actionType(autoAssignActionType).confirmationRequired(confirmationRequired));
                         publishModifiedEvent(createModifiedEventPayload(targetFilterQuery));
                     }
-                }, null, UIComponentIdProvider.DIST_SET_SELECT_CONS_WINDOW_ID, null);
+                });
 
         confirmDialog.getWindow().setWidth(40.0F, Sizeable.Unit.PERCENTAGE);
 

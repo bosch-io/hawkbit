@@ -19,6 +19,7 @@ import org.eclipse.hawkbit.ui.utils.HawkbitCommonUtil;
 import org.eclipse.hawkbit.ui.utils.SPUIDefinitions;
 import org.eclipse.hawkbit.ui.utils.SPUIStyleDefinitions;
 import org.eclipse.hawkbit.ui.utils.VaadinMessageSource;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import com.vaadin.server.Resource;
@@ -41,45 +42,8 @@ public class ConfirmationDialog implements Serializable {
 
     private final CommonDialogWindow window;
 
-    /**
-     * Constructor for configuring confirmation dialog.
-     * 
-     * @param i18n
-     *            internationalization
-     * @param caption
-     *            the dialog caption.
-     * @param question
-     *            the question.
-     * @param callback
-     *            the callback.
-     * @param tab
-     *            ConfirmationTab which contains more information about the
-     *            action which has to be confirmed, e.g. maintenance window
-     * @param id
-     *            the id of the confirmation window
-     */
-    public ConfirmationDialog(final VaadinMessageSource i18n, final String caption, final String question,
-            final Consumer<Boolean> callback, final Component tab, final String id) {
-        this(i18n, caption, question, null, callback, null, id, tab);
-    }
-
-    /**
-     * Constructor for configuring confirmation dialog.
-     *
-     * @param i18n
-     *            internationalization
-     * @param caption
-     *            the dialog caption.
-     * @param question
-     *            the question.
-     * @param callback
-     *            the callback.
-     * @param id
-     *            the id of the confirmation dialog
-     */
-    public ConfirmationDialog(final VaadinMessageSource i18n, final String caption, final String question,
-            final Consumer<Boolean> callback, final String id) {
-        this(i18n, caption, question, null, callback, null, id, null);
+    public static Builder newBuilder(final VaadinMessageSource i18n, final String id) {
+        return new Builder(i18n, id);
     }
 
     /**
@@ -98,10 +62,10 @@ public class ConfirmationDialog implements Serializable {
      * @param id
      *            the id of the confirmation dialog
      * @param tab
-     *            ConfirmationTab which contains more information about the
-     *            action which has to be confirmed, e.g. maintenance window
+     *            ConfirmationTab which contains more information about the action
+     *            which has to be confirmed, e.g. maintenance window
      */
-    public ConfirmationDialog(final VaadinMessageSource i18n, final String caption, final String question,
+    private ConfirmationDialog(final VaadinMessageSource i18n, final String caption, final String question,
             final String hint, final Consumer<Boolean> callback, final Resource icon, final String id,
             final Component tab) {
 
@@ -179,4 +143,61 @@ public class ConfirmationDialog implements Serializable {
         return window;
     }
 
+    /**
+     * Builder for a confirmation dialog
+     */
+    public static class Builder {
+
+        private final VaadinMessageSource i18n;
+        private final String id;
+        private String caption;
+        private String question;
+        private String hint;
+        private Resource icon;
+        private Component tab;
+
+        /**
+         * private constructor
+         * 
+         * @param i18n
+         *            required field
+         * @param id
+         *            required field
+         */
+        Builder(final VaadinMessageSource i18n, final String id) {
+            this.i18n = i18n;
+            this.id = id;
+        }
+
+        public Builder caption(final String caption) {
+            this.caption = caption;
+            return this;
+        }
+
+        public Builder question(final String question) {
+            this.question = question;
+            return this;
+        }
+
+        public Builder hint(final String hint) {
+            this.hint = hint;
+            return this;
+        }
+
+        public Builder icon(final Resource icon) {
+            this.icon = icon;
+            return this;
+        }
+
+        public Builder tab(final Component tab) {
+            this.tab = tab;
+            return this;
+        }
+
+        public ConfirmationDialog onConfirmation(final Consumer<Boolean> callback) {
+            Assert.isTrue(callback != null, "Callback cannot be null.");
+            Assert.isTrue(StringUtils.hasText(caption), "Caption cannot be null.");
+            return new ConfirmationDialog(i18n, caption, question, hint, callback, icon, id, tab);
+        }
+    }
 }

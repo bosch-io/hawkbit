@@ -238,13 +238,14 @@ public class ActionHistoryGrid extends AbstractGrid<ProxyAction, String> {
      *            as Id if the action needs to be cancelled.
      */
     private void confirmAndCancelAction(final Long actionId) {
-        final ConfirmationDialog confirmDialog = new ConfirmationDialog(i18n,
-                i18n.getMessage("caption.cancel.action.confirmbox"), i18n.getMessage("message.cancel.action.confirm"),
-                ok -> {
+        final ConfirmationDialog confirmDialog = ConfirmationDialog
+                .newBuilder(i18n, UIComponentIdProvider.CONFIRMATION_POPUP_ID)
+                .caption(i18n.getMessage("caption.cancel.action.confirmbox"))
+                .question(i18n.getMessage("message.cancel.action.confirm")).onConfirmation(ok -> {
                     if (ok) {
                         cancelActiveAction(actionId);
                     }
-                }, UIComponentIdProvider.CONFIRMATION_POPUP_ID);
+                });
         UI.getCurrent().addWindow(confirmDialog.getWindow());
         confirmDialog.getWindow().bringToFront();
     }
@@ -286,13 +287,14 @@ public class ActionHistoryGrid extends AbstractGrid<ProxyAction, String> {
      *            as Id if the action needs to be forced.
      */
     private void confirmAndForceAction(final Long actionId) {
-        final ConfirmationDialog confirmDialog = new ConfirmationDialog(i18n,
-                i18n.getMessage("caption.force.action.confirmbox"), i18n.getMessage("message.force.action.confirm"),
-                ok -> {
-                    if (ok) {
-                        forceActiveAction(actionId);
-                    }
-                }, UIComponentIdProvider.CONFIRMATION_POPUP_ID);
+        final ConfirmationDialog confirmDialog = ConfirmationDialog
+              .newBuilder(i18n, UIComponentIdProvider.CONFIRMATION_POPUP_ID)
+              .caption(i18n.getMessage("caption.force.action.confirmbox"))
+              .question(i18n.getMessage("message.force.action.confirm")).onConfirmation(ok -> {
+                  if (ok) {
+                      forceActiveAction(actionId);
+                  }
+              });
         UI.getCurrent().addWindow(confirmDialog.getWindow());
 
         confirmDialog.getWindow().bringToFront();
@@ -326,13 +328,15 @@ public class ActionHistoryGrid extends AbstractGrid<ProxyAction, String> {
      *            as Id if the action needs to be forced.
      */
     private void confirmAndForceQuitAction(final Long actionId) {
-        final ConfirmationDialog confirmDialog = new ConfirmationDialog(i18n,
-                i18n.getMessage("caption.forcequit.action.confirmbox"),
-                i18n.getMessage("message.forcequit.action.confirm"), null, ok -> {
+        final ConfirmationDialog confirmDialog = ConfirmationDialog
+                .newBuilder(i18n, UIComponentIdProvider.CONFIRMATION_POPUP_ID)
+                .caption(i18n.getMessage("caption.forcequit.action.confirmbox"))
+                .question(i18n.getMessage("message.forcequit.action.confirm")).icon(VaadinIcons.WARNING)
+                .onConfirmation(ok -> {
                     if (ok) {
                         forceQuitActiveAction(actionId);
                     }
-                }, VaadinIcons.WARNING, UIComponentIdProvider.CONFIRMATION_POPUP_ID, null);
+                });
         UI.getCurrent().addWindow(confirmDialog.getWindow());
 
         confirmDialog.getWindow().bringToFront();
