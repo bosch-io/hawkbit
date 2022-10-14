@@ -109,6 +109,10 @@ public interface RolloutGroup extends NamedEntity {
      */
     float getTargetPercentage();
 
+    /**
+     * @return if a confirmation is required for the resulting actions (considered
+     *         with user consent flow active only)
+     */
     boolean isConfirmationRequired();
 
     /**

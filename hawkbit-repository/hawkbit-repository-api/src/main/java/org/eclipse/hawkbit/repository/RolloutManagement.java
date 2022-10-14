@@ -146,18 +146,18 @@ public interface RolloutManagement {
 
     /**
      * Persists a new rollout entity. The filter within the
-     * {@link Rollout#getTargetFilterQuery()} is used to filter the targets
-     * which are affected by this rollout. The given groups will be used to
-     * create the groups.
+     * {@link Rollout#getTargetFilterQuery()} is used to filter the targets which
+     * are affected by this rollout. The given groups will be used to create the
+     * groups.
      *
      * The rollout is not started. Only the preparation of the rollout is done,
-     * creating and persisting all the necessary groups. The Rollout and the
-     * groups are persisted in {@link RolloutStatus#CREATING} and
+     * creating and persisting all the necessary groups. The Rollout and the groups
+     * are persisted in {@link RolloutStatus#CREATING} and
      * {@link RolloutGroupStatus#CREATING}.
      *
      * The RolloutScheduler will start to assign targets to the groups. Once all
-     * targets have been assigned to the groups, the rollout status is changed
-     * to {@link RolloutStatus#READY} so it can be started with
+     * targets have been assigned to the groups, the rollout status is changed to
+     * {@link RolloutStatus#READY} so it can be started with
      * {@link #start(Rollout)}.
      *
      * @param rollout
@@ -165,9 +165,9 @@ public interface RolloutManagement {
      * @param groups
      *            optional definition of groups
      * @param conditions
-     *            the rollout group conditions and actions which should be
-     *            applied for each {@link RolloutGroup} if not defined by the
-     *            RolloutGroup itself
+     *            the rollout group conditions and actions which should be applied
+     *            for each {@link RolloutGroup} if not defined by the RolloutGroup
+     *            itself
      * @return the persisted rollout.
      *
      * @throws EntityNotFoundException

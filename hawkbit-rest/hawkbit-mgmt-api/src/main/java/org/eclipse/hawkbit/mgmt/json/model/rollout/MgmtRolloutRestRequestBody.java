@@ -38,6 +38,9 @@ public class MgmtRolloutRestRequestBody extends AbstractMgmtRolloutConditionsEnt
     @JsonProperty(required = false)
     private Integer weight;
 
+    @JsonProperty(required = false)
+    private boolean confirmationRequired;
+
     private MgmtActionType type;
 
     private List<MgmtRolloutGroup> groups;
@@ -160,5 +163,22 @@ public class MgmtRolloutRestRequestBody extends AbstractMgmtRolloutConditionsEnt
      */
     public void setWeight(final Integer weight) {
         this.weight = weight;
+    }
+
+    /**
+     * Only considered if user consent flow active
+     * 
+     * @return if the confirmation is required for this rollout
+     */
+    public boolean getConfirmationRequired() {
+        return confirmationRequired;
+    }
+
+    /**
+     * @param confirmationRequired
+     *            if the confirmation is required for this rollout
+     */
+    public void setConfirmationRequired(final boolean confirmationRequired) {
+        this.confirmationRequired = confirmationRequired;
     }
 }

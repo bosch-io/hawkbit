@@ -271,7 +271,8 @@ public class SimpleGroupsLayout extends ValidatableLayout {
     }
 
     public Link createConfirmationHelpLink(final UiProperties uiProperties) {
-        final String confirmationFlowHelpUrl = uiProperties.getLinks().getDocumentation().getConfirmationFlow();
+        final String confirmationFlowHelpUrl = uiProperties.getLinks().getDocumentation()
+                .getUserConsentAndConfirmationGuide();
         final Link confirmationHelpLink = new Link("", new ExternalResource(confirmationFlowHelpUrl));
 
         confirmationHelpLink.setTargetName("_blank");
@@ -281,12 +282,12 @@ public class SimpleGroupsLayout extends ValidatableLayout {
         return confirmationHelpLink;
     }
 
-    private GridLayout buildLayout(final boolean isConsentFlowActive) {
+    private GridLayout buildLayout(final boolean isUserConsentEnabled) {
         final GridLayout gridLayout = new GridLayout();
         gridLayout.setMargin(false);
         gridLayout.setSpacing(true);
         gridLayout.setSizeUndefined();
-        if (isConsentFlowActive) {
+        if (isUserConsentEnabled) {
             gridLayout.setRows(5);
         } else {
             gridLayout.setRows(4);
@@ -309,11 +310,11 @@ public class SimpleGroupsLayout extends ValidatableLayout {
         gridLayout.addComponent(errorThreshold.getComponent(), 1, 3);
         gridLayout.addComponent(errorThresholdOptionGroup, 2, 3);
 
-        if (isConsentFlowActive) {
+        if (isUserConsentEnabled) {
             gridLayout.addComponent(SPUIComponentProvider.generateLabel(i18n, "prompt.confirmation.required"), 0, 4);
             final HorizontalLayout confirmationLayout = initializeConfirmationElements();
             gridLayout.addComponent(confirmationLayout, 1, 4);
-            gridLayout.setComponentAlignment(confirmationLayout, Alignment.MIDDLE_CENTER);
+            gridLayout.setComponentAlignment(confirmationLayout, Alignment.MIDDLE_LEFT);
         }
 
         return gridLayout;

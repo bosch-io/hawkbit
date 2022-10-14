@@ -27,6 +27,7 @@ import org.eclipse.hawkbit.ui.common.layout.listener.SelectionChangedListener;
 import org.eclipse.hawkbit.ui.common.layout.listener.support.EntityModifiedGridRefreshAwareSupport;
 import org.eclipse.hawkbit.ui.common.layout.listener.support.EntityModifiedSelectionAwareSupport;
 import org.eclipse.hawkbit.ui.rollout.RolloutManagementUIState;
+import org.eclipse.hawkbit.utils.TenantConfigHelper;
 
 /**
  * Groups List View.
@@ -40,6 +41,7 @@ public class RolloutGroupGridLayout extends AbstractGridComponentLayout {
     private final transient SelectionChangedListener<ProxyRollout> masterEntityChangedListener;
     private final transient EntityModifiedListener<ProxyRolloutGroup> entityModifiedListener;
 
+
     /**
      * Constructor for RolloutGroupsListView
      *
@@ -49,13 +51,15 @@ public class RolloutGroupGridLayout extends AbstractGridComponentLayout {
      *            RolloutGroupManagement
      * @param rolloutManagementUIState
      *            UIState
+     * @param tenantConfigHelper
+     *            TenantConfigHelper
      */
     public RolloutGroupGridLayout(final CommonUiDependencies uiDependencies,
             final RolloutGroupManagement rolloutGroupManagement,
-            final RolloutManagementUIState rolloutManagementUIState) {
+            final RolloutManagementUIState rolloutManagementUIState, final TenantConfigHelper tenantConfigHelper) {
         this.rolloutGroupsListHeader = new RolloutGroupGridHeader(uiDependencies, rolloutManagementUIState);
         this.rolloutGroupListGrid = new RolloutGroupGrid(uiDependencies, rolloutGroupManagement,
-                rolloutManagementUIState);
+                rolloutManagementUIState, tenantConfigHelper);
 
         final EventLayoutViewAware masterLayoutView = new EventLayoutViewAware(EventLayout.ROLLOUT_LIST,
                 EventView.ROLLOUT);

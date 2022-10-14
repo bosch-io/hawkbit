@@ -190,6 +190,9 @@ public final class SPUILabelDefinitions {
      */
     public static final String ROLLOUT_GROUP_ERROR_THRESHOLD = "errorConditionExp";
 
+    /**
+     * Rollout group confirmation required column property.
+     */
     public static final String ROLLOUT_GROUP_CONFIRMATION_REQUIRED = "confirmationRequired";
 
     /**

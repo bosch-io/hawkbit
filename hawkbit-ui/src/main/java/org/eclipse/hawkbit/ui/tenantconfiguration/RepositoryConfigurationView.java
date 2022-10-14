@@ -41,13 +41,13 @@ import java.util.stream.Collectors;
 
 import static org.eclipse.hawkbit.tenancy.configuration.TenantConfigurationProperties.TenantConfigurationKey.ACTION_CLEANUP_ACTION_EXPIRY;
 import static org.eclipse.hawkbit.tenancy.configuration.TenantConfigurationProperties.TenantConfigurationKey.ACTION_CLEANUP_ACTION_STATUS;
+import static org.eclipse.hawkbit.ui.utils.SPUIStyleDefinitions.DIST_CHECKBOX_STYLE;
 
 /**
  * View to configure the authentication mode.
  */
 public class RepositoryConfigurationView extends BaseConfigurationView<ProxySystemConfigRepository> {
 
-    private static final String DIST_CHECKBOX_STYLE = "dist-checkbox-style";
     private static final Set<Action.Status> EMPTY_STATUS_SET = EnumSet.noneOf(Action.Status.class);
 
     private static final long serialVersionUID = 1L;

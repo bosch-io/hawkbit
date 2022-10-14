@@ -1172,6 +1172,9 @@ public class TestdataFactory {
      *            the type of the Rollout
      * @param weight
      *            weight of the Rollout
+     * @param confirmationRequired
+     *            if the confirmation is required (considered with user consent flow
+     *            active)
      * @return created {@link Rollout}
      */
     public Rollout createRolloutByVariables(final String rolloutName, final String rolloutDescription,

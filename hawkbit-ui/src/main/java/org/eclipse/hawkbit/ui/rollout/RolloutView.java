@@ -36,6 +36,7 @@ import org.eclipse.hawkbit.ui.rollout.rolloutgroup.RolloutGroupGridLayout;
 import org.eclipse.hawkbit.ui.rollout.rolloutgrouptargets.RolloutGroupTargetGridLayout;
 import org.eclipse.hawkbit.ui.utils.UINotification;
 import org.eclipse.hawkbit.ui.utils.VaadinMessageSource;
+import org.eclipse.hawkbit.utils.TenantConfigHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.vaadin.spring.events.EventBus.UIEventBus;
 
@@ -78,7 +79,8 @@ public class RolloutView extends AbstractEventListenersAwareView {
                 targetManagement, uiProperties, targetFilterQueryManagement, rolloutGroupManagement, quotaManagement,
                 tenantConfigManagement, distributionSetManagement, systemSecurityContext);
         this.rolloutGroupsLayout = new RolloutGroupGridLayout(uiDependencies, rolloutGroupManagement,
-                rolloutManagementUIState);
+                rolloutManagementUIState,
+                TenantConfigHelper.usingContext(systemSecurityContext, tenantConfigManagement));
         this.rolloutGroupTargetsLayout = new RolloutGroupTargetGridLayout(uiDependencies, rolloutGroupManagement,
                 rolloutManagementUIState);
 
