@@ -328,11 +328,22 @@ public final class StatusIconBuilder {
                     UIMessageIdProvider.CAPTION_ACTION_DOWNLOAD_ONLY);
         }
     }
-    
+
+    /**
+     * Generate labels with confirmation icons according to entity' {@link ProxyTargetFilterQuery}
+     */
     public static class ConfirmationIconSupplier extends AbstractEntityStatusIconBuilder<ProxyTargetFilterQuery> {
 
         private static final long serialVersionUID = 1L;
 
+        /**
+         * constructor
+         *
+         * @param i18n
+         *            message source for internationalization
+         * @param labelIdPrefix
+         *            to generate the label ID
+         */
         public ConfirmationIconSupplier(final VaadinMessageSource i18n, final String labelIdPrefix) {
             super(i18n, labelIdPrefix);
         }

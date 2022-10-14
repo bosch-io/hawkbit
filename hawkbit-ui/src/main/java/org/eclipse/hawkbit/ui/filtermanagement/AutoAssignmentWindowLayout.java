@@ -46,6 +46,8 @@ public class AutoAssignmentWindowLayout extends AbstractEntityWindowLayout<Proxy
      *            VaadinMessageSource
      * @param dsManagement
      *            DistributionSetManagement
+     * @param configHelper
+     *            TenantConfigHelper
      */
     public AutoAssignmentWindowLayout(final VaadinMessageSource i18n, final DistributionSetManagement dsManagement,
             final TenantConfigHelper configHelper) {

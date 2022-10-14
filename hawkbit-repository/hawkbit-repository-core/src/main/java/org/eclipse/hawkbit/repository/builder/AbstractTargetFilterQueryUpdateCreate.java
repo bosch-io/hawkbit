@@ -123,6 +123,12 @@ public abstract class AbstractTargetFilterQueryUpdateCreate<T> extends AbstractB
         return Optional.ofNullable(query);
     }
 
+    /**
+     * @param confirmationRequired
+     *            if confirmation is required for configured auto assignment
+     *            (considered with user consent flow active)
+     * @return updated builder instance
+     */
     public T confirmationRequired(final boolean confirmationRequired) {
         this.confirmationRequired = confirmationRequired;
         return (T) this;

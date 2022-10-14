@@ -77,6 +77,14 @@ public class AutoAssignDistributionSetUpdate {
         return this;
     }
 
+    /**
+     * Specify initial confirmation state of resulting {@link Action}
+     *
+     * @param confirmationRequired
+     *            if confirmation is required for this auto assignment (considered
+     *            with user consent flow active)
+     * @return updated builder instance
+     */
     public AutoAssignDistributionSetUpdate confirmationRequired(final boolean confirmationRequired) {
         this.confirmationRequired = confirmationRequired;
         return this;

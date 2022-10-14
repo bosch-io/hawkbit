@@ -83,8 +83,11 @@ public class TargetFilterGrid extends AbstractGrid<ProxyTargetFilterQuery, Strin
      *            TargetFilterQueryManagement
      * @param autoAssignmentWindowBuilder
      *            AutoAssignmentWindowBuilder
+     * @param tenantConfigHelper
+     *            TenantConfigHelper
      */
-    public TargetFilterGrid(final CommonUiDependencies uiDependencies, final TargetFilterGridLayoutUiState uiState,
+    public TargetFilterGrid(
+            final CommonUiDependencies uiDependencies, final TargetFilterGridLayoutUiState uiState,
             final TargetFilterQueryManagement targetFilterQueryManagement,
             final AutoAssignmentWindowBuilder autoAssignmentWindowBuilder,
             final TenantConfigHelper tenantConfigHelper) {

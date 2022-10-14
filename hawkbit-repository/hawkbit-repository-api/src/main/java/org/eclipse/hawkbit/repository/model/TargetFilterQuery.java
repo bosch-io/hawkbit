@@ -82,5 +82,9 @@ public interface TargetFilterQuery extends TenantAwareBaseEntity {
      */
     String getAutoAssignInitiatedBy();
 
+    /**
+     * @return if confirmation is required for configured auto assignment
+     *         (considered with user consent flow active)
+     */
     boolean isConfirmationRequired();
 }
