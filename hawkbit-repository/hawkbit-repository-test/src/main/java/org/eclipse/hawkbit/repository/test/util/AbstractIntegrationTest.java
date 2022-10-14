@@ -477,4 +477,14 @@ public abstract class AbstractIntegrationTest {
     protected void disableBatchAssignments() {
         tenantConfigurationManagement.addOrUpdateConfiguration(TenantConfigurationKey.BATCH_ASSIGNMENTS_ENABLED, false);
     }
+
+    protected void enableUserConsentFlow() {
+        tenantConfigurationManagement.addOrUpdateConfiguration(TenantConfigurationKey.USER_CONSENT_ENABLED, true);
+    }
+
+    protected boolean isUserConsentEnabled() {
+        return tenantConfigurationManagement
+                .getConfigurationValue(TenantConfigurationKey.USER_CONSENT_ENABLED, Boolean.class).getValue();
+    }
+
 }
