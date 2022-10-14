@@ -644,6 +644,9 @@ public class JpaControllerManagement extends JpaActionManagement implements Cont
         case DOWNLOADED:
             controllerId = handleDownloadedActionStatus(action);
             break;
+        case RUNNING:
+            action.setStatus(Status.RUNNING);
+            break;
         default:
             break;
         }

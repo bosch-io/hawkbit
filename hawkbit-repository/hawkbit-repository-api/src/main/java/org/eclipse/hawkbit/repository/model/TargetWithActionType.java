@@ -30,7 +30,7 @@ public class TargetWithActionType {
     private String maintenanceSchedule;
     private String maintenanceWindowDuration;
     private String maintenanceWindowTimeZone;
-    private boolean confirmationRequired;
+    private final boolean confirmationRequired;
 
     /**
      * Constructor that uses {@link ActionType#FORCED}
@@ -54,8 +54,12 @@ public class TargetWithActionType {
      *            the type is {@link ActionType#TIMEFORCED}
      * @param weight
      *            the priority of an {@link Action}
+     * @param confirmationRequired
+     *            sets the confirmation required flag when starting the
+     *            {@link Action}
      */
-    public TargetWithActionType(final String controllerId, final ActionType actionType, final long forceTime,
+    public TargetWithActionType(
+            final String controllerId, final ActionType actionType, final long forceTime,
             final Integer weight, final boolean confirmationRequired) {
         this.controllerId = controllerId;
         this.actionType = actionType != null ? actionType : ActionType.FORCED;
@@ -173,8 +177,8 @@ public class TargetWithActionType {
 
     @Override
     public int hashCode() {
-        return Objects.hash(actionType, controllerId, forceTime, weight, maintenanceSchedule, maintenanceWindowDuration,
-                maintenanceWindowTimeZone);
+        return Objects.hash(actionType, controllerId, forceTime, weight, confirmationRequired, maintenanceSchedule,
+                maintenanceWindowDuration, maintenanceWindowTimeZone);
     }
 
     @SuppressWarnings("squid:S1067")
@@ -192,6 +196,7 @@ public class TargetWithActionType {
         final TargetWithActionType other = (TargetWithActionType) obj;
         return Objects.equals(actionType, other.actionType) && Objects.equals(controllerId, other.controllerId)
                 && Objects.equals(forceTime, other.forceTime) && Objects.equals(weight, other.weight)
+                && Objects.equals(confirmationRequired, other.confirmationRequired)
                 && Objects.equals(maintenanceSchedule, other.maintenanceSchedule)
                 && Objects.equals(maintenanceWindowDuration, other.maintenanceWindowDuration)
                 && Objects.equals(maintenanceWindowTimeZone, other.maintenanceWindowTimeZone);

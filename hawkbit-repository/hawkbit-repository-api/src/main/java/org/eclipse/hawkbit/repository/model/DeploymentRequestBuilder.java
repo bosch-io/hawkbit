@@ -101,6 +101,13 @@ public class DeploymentRequestBuilder {
         return this;
     }
 
+    /**
+     * Set if a confirmation is required.
+     * 
+     * @param confirmationRequired
+     *            if a confirmation is required for the {@link Action}
+     * @return builder
+     */
     public DeploymentRequestBuilder setConfirmationRequired(final boolean confirmationRequired) {
         this.confirmationRequired = confirmationRequired;
         return this;

@@ -255,9 +255,9 @@ public class UiProperties implements Serializable {
             private String maintenanceWindowView = "";
 
             /**
-             * Link to documentation of the confirmation flow.
+             * Link to documentation of the user consent and confirmation flow.
              */
-            private String confirmationFlow = "";
+            private String userConsentAndConfirmationGuide = "";
 
             /**
              * Link to documentation of system configuration view.
@@ -359,10 +359,10 @@ public class UiProperties implements Serializable {
             }
 
             /**
-             * @return Link to documentation of the confirmation flow
+             * @return Link to documentation of the user consent and confirmation flow.
              */
-            public String getConfirmationFlow(){
-                return confirmationFlow;
+            public String getUserConsentAndConfirmationGuide() {
+                return userConsentAndConfirmationGuide;
             }
 
             /**
@@ -437,8 +437,8 @@ public class UiProperties implements Serializable {
                 this.maintenanceWindowView = maintenanceWindowView;
             }
 
-            public void setConfirmationFlow(final String confirmationFlow) {
-                this.confirmationFlow = confirmationFlow;
+            public void setUserConsentAndConfirmationGuide(final String userConsentAndConfirmationGuide) {
+                this.userConsentAndConfirmationGuide = userConsentAndConfirmationGuide;
             }
 
             public void setProvisioningStateMachine(final String provisioningStateMachine) {
