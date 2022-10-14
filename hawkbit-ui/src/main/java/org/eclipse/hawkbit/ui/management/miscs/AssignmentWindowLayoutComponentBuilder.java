@@ -223,7 +223,7 @@ public class AssignmentWindowLayoutComponentBuilder {
     }
 
     public Link createConfirmationHelpLink(final UiProperties uiProperties) {
-        final String confirmationFlowHelpUrl = uiProperties.getLinks().getDocumentation().getConfirmationFlow();
+        final String confirmationFlowHelpUrl = uiProperties.getLinks().getDocumentation().getUserConsentAndConfirmationGuide();
         final Link confirmationHelpLink = new Link("", new ExternalResource(confirmationFlowHelpUrl));
 
         confirmationHelpLink.setTargetName("_blank");
