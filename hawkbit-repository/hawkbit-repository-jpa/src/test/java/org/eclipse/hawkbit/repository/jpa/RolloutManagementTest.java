@@ -146,7 +146,7 @@ class RolloutManagementTest extends AbstractJpaIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("simpleRolloutsPossibilities")
-    @Description("Verifies that action states are correctly after starting a rollout with different options in regard to the confirmation.")
+    @Description("Verifies that action states are correctly initialized after starting a rollout with different options in regard to the confirmation.")
     void runRolloutWithConfirmationFlagAndConsentFlowOptions(final boolean consentFlowActive,
             final boolean confirmationRequired, final Status expectedStatus) {
         // manually assign distribution set to target
@@ -1406,7 +1406,7 @@ class RolloutManagementTest extends AbstractJpaIntegrationTest {
                 .targetFilterQuery("controllerId==" + targetPrefixName + "-*").set(distributionSet);
 
         assertThatExceptionOfType(AssignmentQuotaExceededException.class)
-                .isThrownBy(() -> rolloutManagement.create(rollout, amountGroups, false, conditions)); //TODO
+                .isThrownBy(() -> rolloutManagement.create(rollout, amountGroups, false, conditions));
     }
 
     @Test
@@ -1741,7 +1741,7 @@ class RolloutManagementTest extends AbstractJpaIntegrationTest {
         final RolloutCreate rollout = generateTargetsAndRollout(rolloutName, targets);
 
         assertThatExceptionOfType(AssignmentQuotaExceededException.class)
-                .isThrownBy(() -> rolloutManagement.create(rollout, maxGroups + 1, false, conditions)) //TODO
+                .isThrownBy(() -> rolloutManagement.create(rollout, maxGroups + 1, false, conditions))
                 .withMessageContaining("not be greater than " + maxGroups);
 
     }
@@ -1764,7 +1764,7 @@ class RolloutManagementTest extends AbstractJpaIntegrationTest {
         final RolloutCreate rolloutToCreate = entityFactory.rollout().create().name(rolloutName)
                 .description("some description").targetFilterQuery("id==" + rolloutName + "-*").set(distributionSet);
 
-        Rollout myRollout = rolloutManagement.create(rolloutToCreate, amountGroups, false, conditions); //TODO
+        Rollout myRollout = rolloutManagement.create(rolloutToCreate, amountGroups, false, conditions);
         myRollout = getRollout(myRollout.getId());
 
         assertThat(myRollout.getStatus()).isEqualTo(RolloutStatus.CREATING);
@@ -2098,7 +2098,7 @@ class RolloutManagementTest extends AbstractJpaIntegrationTest {
         final RolloutCreate rolloutToCreate = entityFactory.rollout().create().name(rolloutName)
                 .targetFilterQuery("name==*").set(testDs);
 
-        final Rollout createdRollout = rolloutManagement.create(rolloutToCreate, 1, false, conditions); //TODO
+        final Rollout createdRollout = rolloutManagement.create(rolloutToCreate, 1, false, conditions);
 
         // Let the executor handle created Rollout
         rolloutManagement.handleRollouts();

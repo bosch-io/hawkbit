@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
@@ -48,6 +49,9 @@ import org.eclipse.hawkbit.repository.test.util.WithUser;
 import org.eclipse.hawkbit.rest.util.JsonBuilder;
 import org.eclipse.hawkbit.rest.util.MockMvcResultPrinter;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
@@ -291,11 +295,10 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
         final DistributionSet dsA = testdataFactory.createDistributionSet("");
 
         // create rollout including the created targets with prefix 'rollout'
-        final Rollout rollout = rolloutManagement.create(entityFactory.rollout()
-                .create()
-                .name("rollout1")
-                .set(dsA.getId()).targetFilterQuery("controllerId==rollout*"), 4, false, //TODO
-                new RolloutGroupConditionBuilder().withDefaults()
+        final Rollout rollout = rolloutManagement.create(
+                entityFactory.rollout().create().name("rollout1").set(dsA.getId())
+                        .targetFilterQuery("controllerId==rollout*"),
+                4, false, new RolloutGroupConditionBuilder().withDefaults()
                         .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
 
         retrieveAndVerifyRolloutInCreating(dsA, rollout);
@@ -451,16 +454,22 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
                 .andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.total", equalTo(2)));
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("confirmationOptions")
     @Description("Testing that rollout paged list is limited by the query param limit")
-    void retrieveRolloutGroupsForSpecificRollout() throws Exception {
+    void retrieveRolloutGroupsForSpecificRollout(final boolean userConsentEnabled, final boolean confirmationRequired) throws Exception {
         // setup
         final int amountTargets = 20;
         testdataFactory.createTargets(amountTargets, "rollout", "rollout");
         final DistributionSet dsA = testdataFactory.createDistributionSet("");
 
+        if (userConsentEnabled) {
+            enableUserConsentFlow();
+        }
+
         // create rollout including the created targets with prefix 'rollout'
-        final Rollout rollout = createRollout("rollout1", 4, dsA.getId(), "controllerId==rollout*");
+        final Rollout rollout = createRollout("rollout1", 4, dsA.getId(), "controllerId==rollout*",
+                confirmationRequired);
 
         // retrieve rollout groups from created rollout
         mvc.perform(
@@ -471,7 +480,19 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
                 .andExpect(jsonPath("$.content[0].status", equalTo("ready")))
                 .andExpect(jsonPath("$.content[1].status", equalTo("ready")))
                 .andExpect(jsonPath("$.content[2].status", equalTo("ready")))
-                .andExpect(jsonPath("$.content[3].status", equalTo("ready")));
+                .andExpect(jsonPath("$.content[3].status", equalTo("ready")))
+                .andExpect(isUserConsentEnabled()
+                        ? jsonPath("$.content[0].confirmationRequired", equalTo(confirmationRequired))
+                        : jsonPath("confirmationRequired").doesNotExist())
+                .andExpect(isUserConsentEnabled()
+                        ? jsonPath("$.content[1].confirmationRequired", equalTo(confirmationRequired))
+                        : jsonPath("confirmationRequired").doesNotExist())
+                .andExpect(isUserConsentEnabled()
+                        ? jsonPath("$.content[2].confirmationRequired", equalTo(confirmationRequired))
+                        : jsonPath("confirmationRequired").doesNotExist())
+                .andExpect(isUserConsentEnabled()
+                        ? jsonPath("$.content[3].confirmationRequired", equalTo(confirmationRequired))
+                        : jsonPath("confirmationRequired").doesNotExist());
     }
 
     @Test
@@ -640,20 +661,25 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
                 .andExpect(jsonPath("$.content[1].status", equalTo("scheduled")));
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("confirmationOptions")
     @Description("Testing that a single rollout group can be retrieved")
-    void retrieveSingleRolloutGroup() throws Exception {
+    void retrieveSingleRolloutGroup(final boolean userConsentEnabled, final boolean confirmationRequired)
+            throws Exception {
         // setup
         final int amountTargets = 20;
         testdataFactory.createTargets(amountTargets, "rollout", "rollout");
         final DistributionSet dsA = testdataFactory.createDistributionSet("");
 
+        if (userConsentEnabled) {
+            enableUserConsentFlow();
+        }
+        
         // create rollout including the created targets with prefix 'rollout'
-        final Rollout rollout = rolloutManagement.create(entityFactory.rollout()
-                .create()
-                .name("rollout1")
-                .set(dsA.getId())
-                .targetFilterQuery("controllerId==rollout*"), 4, false, new RolloutGroupConditionBuilder().withDefaults() //TODO
+        final Rollout rollout = rolloutManagement.create(
+                entityFactory.rollout().create().name("rollout1").set(dsA.getId())
+                        .targetFilterQuery("controllerId==rollout*"),
+                4, confirmationRequired, new RolloutGroupConditionBuilder().withDefaults()
                         .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
 
         final RolloutGroup firstGroup = rolloutGroupManagement
@@ -663,12 +689,18 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
 
         retrieveAndVerifyRolloutGroupInCreating(rollout, firstGroup);
         retrieveAndVerifyRolloutGroupInReady(rollout, firstGroup);
-        retrieveAndVerifyRolloutGroupInRunningAndScheduled(rollout, firstGroup, secondGroup);
+        retrieveAndVerifyRolloutGroupInRunningAndScheduled(rollout, firstGroup, secondGroup, userConsentEnabled,
+                confirmationRequired);
+    }
+
+    private static Stream<Arguments> confirmationOptions() {
+        return Stream.of(Arguments.of(true, false), Arguments.of(true, true), Arguments.of(false, true));
     }
 
     @Step
     private void retrieveAndVerifyRolloutGroupInRunningAndScheduled(final Rollout rollout,
-            final RolloutGroup firstGroup, final RolloutGroup secondGroup) throws Exception {
+            final RolloutGroup firstGroup, final RolloutGroup secondGroup, final boolean userConsentEnabled,
+            final boolean confirmationRequired) throws Exception {
         rolloutManagement.start(rollout.getId());
         rolloutManagement.handleRollouts();
         mvc.perform(get("/rest/v1/rollouts/{rolloutId}/deploygroups/{groupId}", rollout.getId(), firstGroup.getId())
@@ -680,7 +712,9 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
                 .andExpect(jsonPath("$.totalTargetsPerStatus.scheduled", equalTo(0)))
                 .andExpect(jsonPath("$.totalTargetsPerStatus.cancelled", equalTo(0)))
                 .andExpect(jsonPath("$.totalTargetsPerStatus.finished", equalTo(0)))
-                .andExpect(jsonPath("$.totalTargetsPerStatus.error", equalTo(0)));
+                .andExpect(jsonPath("$.totalTargetsPerStatus.error", equalTo(0)))
+                .andExpect(isUserConsentEnabled() ? jsonPath("confirmationRequired", equalTo(confirmationRequired))
+                        : jsonPath("confirmationRequired").doesNotExist());
 
         mvc.perform(get("/rest/v1/rollouts/{rolloutId}/deploygroups/{groupId}", rollout.getId(), secondGroup.getId())
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
@@ -691,7 +725,10 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
                 .andExpect(jsonPath("$.totalTargetsPerStatus.scheduled", equalTo(5)))
                 .andExpect(jsonPath("$.totalTargetsPerStatus.cancelled", equalTo(0)))
                 .andExpect(jsonPath("$.totalTargetsPerStatus.finished", equalTo(0)))
-                .andExpect(jsonPath("$.totalTargetsPerStatus.error", equalTo(0)));
+                .andExpect(jsonPath("$.totalTargetsPerStatus.error", equalTo(0)))
+                .andExpect(isUserConsentEnabled() ? jsonPath("confirmationRequired", equalTo(confirmationRequired))
+                        : jsonPath("confirmationRequired").doesNotExist());
+        ;
     }
 
     @Step
@@ -710,7 +747,10 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
                 .andExpect(jsonPath("$.totalTargetsPerStatus.scheduled", equalTo(0)))
                 .andExpect(jsonPath("$.totalTargetsPerStatus.cancelled", equalTo(0)))
                 .andExpect(jsonPath("$.totalTargetsPerStatus.finished", equalTo(0)))
-                .andExpect(jsonPath("$.totalTargetsPerStatus.error", equalTo(0)));
+                .andExpect(jsonPath("$.totalTargetsPerStatus.error", equalTo(0)))
+                .andExpect(isUserConsentEnabled() ? jsonPath("confirmationRequired").exists()
+                        : jsonPath("confirmationRequired").doesNotExist());
+        ;
     }
 
     @Step
@@ -721,6 +761,8 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("id", equalTo(firstGroup.getId().intValue())))
+                .andExpect(isUserConsentEnabled() ? jsonPath("confirmationRequired").exists()
+                        : jsonPath("confirmationRequired").doesNotExist())
                 .andExpect(jsonPath("status", equalTo("creating"))).andExpect(jsonPath("name", endsWith("1")))
                 .andExpect(jsonPath("description", endsWith("1")))
                 .andExpect(jsonPath("$.targetFilterQuery", equalTo("")))
@@ -1032,9 +1074,14 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
 
     private Rollout createRollout(final String name, final int amountGroups, final long distributionSetId,
             final String targetFilterQuery) {
+        return createRollout(name, amountGroups, distributionSetId, targetFilterQuery, false);
+    }
+
+    private Rollout createRollout(final String name, final int amountGroups, final long distributionSetId,
+            final String targetFilterQuery, final boolean confirmationRequired) {
         final Rollout rollout = rolloutManagement.create(
                 entityFactory.rollout().create().name(name).set(distributionSetId).targetFilterQuery(targetFilterQuery),
-                amountGroups, false, new RolloutGroupConditionBuilder().withDefaults() //TODO
+                amountGroups, confirmationRequired, new RolloutGroupConditionBuilder().withDefaults()
                         .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
 
         // Run here, because Scheduler is disabled during tests

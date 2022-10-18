@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -737,12 +738,12 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
     @Description("Assignments with user consent flow active will result in actions in 'WAIT_FOR_CONFIRMATION' state")
     void assignmentWithUserConsentFlowActive(final boolean confirmationRequired) {
         final List<String> controllerIds = testdataFactory.createTargets(1).stream().map(Target::getControllerId)
-                .collect(Collectors.toList());
+              .collect(Collectors.toList());
         final DistributionSet distributionSet = testdataFactory.createDistributionSet();
 
         enableUserConsentFlow();
         List<DistributionSetAssignmentResult> results = assignDistributionSetToTargets(distributionSet, controllerIds,
-                confirmationRequired);
+              confirmationRequired);
 
         assertThat(getResultingActionCount(results)).isEqualTo(controllerIds.size());
 
@@ -750,7 +751,7 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
             actionRepository.findByTargetControllerId(PAGE, controllerId).forEach(action -> {
                 assertThat(action.getDistributionSet().getId()).isIn(distributionSet.getId());
                 assertThat(action.getInitiatedBy()).as("Should be Initiated by current user")
-                        .isEqualTo(tenantAware.getCurrentUsername());
+                      .isEqualTo(tenantAware.getCurrentUsername());
                 if (confirmationRequired) {
                     assertThat(action.getStatus()).isEqualTo(Status.WAIT_FOR_CONFIRMATION);
                 } else {
@@ -758,6 +759,42 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
                 }
             });
         });
+    }
+
+    @Test
+    @Description("Multiple assignments with user consent flow active will result in correct cancel behaviour")
+    void multipleAssignmentWithUserConsentFlowActiveVerifyCancelBehaviour() {
+        final Target target = testdataFactory.createTarget("firstDevice");
+        final DistributionSet firstDs = testdataFactory.createDistributionSet();
+        final DistributionSet secondDs = testdataFactory.createDistributionSet();
+
+        enableUserConsentFlow();
+        final List<Action> resultActions = assignDistributionSet(firstDs.getId(), target.getControllerId())
+                .getAssignedEntity();
+        assertThat(resultActions).hasSize(1);
+
+        assertThat(resultActions.get(0)).satisfies(action -> {
+            assertThat(action.getDistributionSet().getId()).isEqualTo(firstDs.getId());
+            assertThat(action.getStatus()).isEqualTo(Status.WAIT_FOR_CONFIRMATION);
+        });
+
+        final List<Action> resultActions2 = assignDistributionSet(secondDs.getId(), target.getControllerId())
+                .getAssignedEntity();
+
+        assertThat(resultActions2).hasSize(1);
+        assertThat(resultActions2.get(0)).satisfies(action -> {
+            assertThat(action.getDistributionSet().getId()).isEqualTo(secondDs.getId());
+            assertThat(action.getStatus()).isEqualTo(Status.WAIT_FOR_CONFIRMATION);
+        });
+
+        final List<Action> actions = actionRepository.findByTargetControllerId(PAGE, target.getControllerId())
+                .getContent();
+        assertThat(actions).hasSize(2)
+                .anyMatch(action -> Objects.equals(action.getDistributionSet().getId(), firstDs.getId())
+                        && action.getStatus() == Status.CANCELING)
+                .anyMatch(action -> Objects.equals(action.getDistributionSet().getId(), secondDs.getId())
+                        && action.getStatus() == Status.WAIT_FOR_CONFIRMATION);
+
     }
 
     @Test

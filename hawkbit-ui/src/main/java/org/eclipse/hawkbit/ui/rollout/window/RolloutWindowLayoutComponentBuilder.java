@@ -96,7 +96,7 @@ public final class RolloutWindowLayoutComponentBuilder {
             final Component advancedGroupDefinitionTab) {
         final TabSheet groupsDefinitionTabs = new TabSheet();
         groupsDefinitionTabs.setId(UIComponentIdProvider.ROLLOUT_GROUPS);
-        groupsDefinitionTabs.setWidth(850, Unit.PIXELS);
+        groupsDefinitionTabs.setWidth(900, Unit.PIXELS);
         groupsDefinitionTabs.setHeight(300, Unit.PIXELS);
         groupsDefinitionTabs.setStyleName(SPUIStyleDefinitions.ROLLOUT_GROUPS);
 

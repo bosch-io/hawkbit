@@ -31,12 +31,12 @@ import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.themes.ValoTheme;
 
+import static org.eclipse.hawkbit.ui.utils.SPUIStyleDefinitions.DIST_CHECKBOX_STYLE;
+
 /**
  * Advance group row component
  */
 public class AdvancedGroupRow {
-    
-    private static final String DIST_CHECKBOX_STYLE = "dist-checkbox-style";
 
     private final VaadinMessageSource i18n;
     private final TargetFilterQueryDataProvider targetFilterQueryDataProvider;
@@ -49,7 +49,7 @@ public class AdvancedGroupRow {
     private final TextField triggerThreshold;
     private final TextField errorThreshold;
     private final CheckBox requireConfirmationToggle;
-    private final boolean showConsentOption;
+    private final boolean isUserConsentEnabled;
 
     /**
      * Constructor for AdvancedGroupRow
@@ -61,10 +61,10 @@ public class AdvancedGroupRow {
      */
     public AdvancedGroupRow(final VaadinMessageSource i18n,
             final TargetFilterQueryDataProvider targetFilterQueryDataProvider,
-            final boolean showConsentOption) {
+            final boolean isUserConsentEnabled) {
         this.i18n = i18n;
         this.targetFilterQueryDataProvider = targetFilterQueryDataProvider;
-        this.showConsentOption = showConsentOption;
+        this.isUserConsentEnabled = isUserConsentEnabled;
 
         this.binder = new Binder<>();
 
@@ -162,7 +162,7 @@ public class AdvancedGroupRow {
         layout.addComponent(targetPercentage, 2, index);
         layout.addComponent(triggerThreshold, 3, index);
         layout.addComponent(errorThreshold, 4, index);
-        if (showConsentOption) {
+        if (isUserConsentEnabled) {
             layout.addComponent(requireConfirmationToggle, 5, index);
         }
     }

@@ -42,6 +42,7 @@ import com.vaadin.shared.ui.ContentMode;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.renderers.HtmlRenderer;
+import org.eclipse.hawkbit.utils.TenantConfigHelper;
 
 /**
  * Rollout group list grid component.
@@ -54,18 +55,22 @@ public class RolloutGroupGrid extends AbstractGrid<ProxyRolloutGroup, Long> {
     private final RolloutManagementUIState rolloutManagementUIState;
     private final transient RolloutGroupManagement rolloutGroupManagement;
     private final transient RolloutGroupToProxyRolloutGroupMapper rolloutGroupMapper;
+    
+    private final transient TenantConfigHelper tenantConfigHelper;
 
     private final RolloutGroupStatusIconSupplier<ProxyRolloutGroup> rolloutGroupStatusIconSupplier;
 
     private final transient MasterEntitySupport<ProxyRollout> masterEntitySupport;
+    
 
     RolloutGroupGrid(final CommonUiDependencies uiDependencies, final RolloutGroupManagement rolloutGroupManagement,
-            final RolloutManagementUIState rolloutManagementUIState) {
+            final RolloutManagementUIState rolloutManagementUIState, final TenantConfigHelper tenantConfigHelper) {
         super(uiDependencies.getI18n(), uiDependencies.getEventBus(), uiDependencies.getPermChecker());
 
         this.rolloutManagementUIState = rolloutManagementUIState;
         this.rolloutGroupManagement = rolloutGroupManagement;
         this.rolloutGroupMapper = new RolloutGroupToProxyRolloutGroupMapper();
+        this.tenantConfigHelper = tenantConfigHelper;
 
         setSelectionSupport(new SelectionSupport<>(this, eventBus, EventLayout.ROLLOUT_GROUP_LIST, EventView.ROLLOUT,
                 this::mapIdToProxyEntity, this::getSelectedEntityIdFromUiState, this::setSelectedEntityIdToUiState));
@@ -144,18 +149,20 @@ public class RolloutGroupGrid extends AbstractGrid<ProxyRolloutGroup, Long> {
                 .setCaption(i18n.getMessage("header.rolloutgroup.installed.percentage")).setHidable(true);
 
         GridComponentBuilder.addColumn(this, group -> group.getErrorConditionExp() + "%")
-              .setId(SPUILabelDefinitions.ROLLOUT_GROUP_ERROR_THRESHOLD)
+                .setId(SPUILabelDefinitions.ROLLOUT_GROUP_ERROR_THRESHOLD)
                 .setCaption(i18n.getMessage("header.rolloutgroup.threshold.error")).setHidable(true);
-
-        GridComponentBuilder.addColumn(this, group -> group.isConfirmationRequired() ? "required" : "not required")
-                .setId(SPUILabelDefinitions.ROLLOUT_GROUP_CONFIRMATION_REQUIRED)
-                .setCaption(i18n.getMessage("header.rolloutgroup.confirmation")).setHidable(true);
 
         GridComponentBuilder.addColumn(this, group -> group
                 .getSuccessConditionExp() + "%")
                 .setId(SPUILabelDefinitions.ROLLOUT_GROUP_THRESHOLD)
                 .setCaption(i18n.getMessage("header.rolloutgroup.threshold")).setHidable(true);
 
+        if (tenantConfigHelper.isUserConsentEnabled()) {
+            GridComponentBuilder.addColumn(this, group -> group.isConfirmationRequired() ? "required" : "not required")
+                  .setId(SPUILabelDefinitions.ROLLOUT_GROUP_CONFIRMATION_REQUIRED)
+                  .setCaption(i18n.getMessage("header.rolloutgroup.confirmation")).setHidable(true);
+        }
+        
         GridComponentBuilder.addCreatedAndModifiedColumns(this, i18n)
                 .forEach(col -> col.setHidable(true).setHidden(true));
     }
@@ -203,10 +210,27 @@ public class RolloutGroupGrid extends AbstractGrid<ProxyRolloutGroup, Long> {
         }
     }
 
+    public void alignWithConsentFlowState() {
+        alignWithConsentFlowState(tenantConfigHelper.isUserConsentEnabled());
+    }
+
+    public void alignWithConsentFlowState(final boolean active) {
+        final boolean columnPresent = GridComponentBuilder.isColumnPresent(this,
+                SPUILabelDefinitions.ROLLOUT_GROUP_CONFIRMATION_REQUIRED);
+        if (active && !columnPresent) {
+            GridComponentBuilder.addColumn(this, group -> group.isConfirmationRequired() ? "required" : "not required")
+                    .setId(SPUILabelDefinitions.ROLLOUT_GROUP_CONFIRMATION_REQUIRED)
+                    .setCaption(i18n.getMessage("header.rolloutgroup.confirmation")).setHidable(true);
+        } else if (!active && columnPresent) {
+            GridComponentBuilder.removeColumn(this, SPUILabelDefinitions.ROLLOUT_GROUP_CONFIRMATION_REQUIRED);
+        }
+    }
+
     /**
      * @return Rollout master entity support
      */
     public MasterEntitySupport<ProxyRollout> getMasterEntitySupport() {
         return masterEntitySupport;
     }
+    
 }
