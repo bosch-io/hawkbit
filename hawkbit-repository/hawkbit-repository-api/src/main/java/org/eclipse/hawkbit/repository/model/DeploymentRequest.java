@@ -55,7 +55,7 @@ public class DeploymentRequest {
      * @param confirmationRequired
      *            is a flag whether the confirmation should be required for the
      *            resulting {@link Action} or not. In case the confirmation is not
-     *            required, the action will be automatically confirmed and putted in
+     *            required, the action will be automatically confirmed and put in
      *            the
      *            {@link org.eclipse.hawkbit.repository.model.Action.Status#RUNNING
      *            state. Otherwise the normal confirmation flow will be triggered
