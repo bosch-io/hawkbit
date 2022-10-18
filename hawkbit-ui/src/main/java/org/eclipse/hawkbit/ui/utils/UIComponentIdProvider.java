@@ -386,6 +386,11 @@ public final class UIComponentIdProvider {
     public static final String MAINTENANCE_WINDOW_TIME_ZONE_ID = "maintenance.window.time.zone";
 
     /**
+     * Id for the confirmation required checkbox
+     */
+    public static final String ASSIGNMENT_CONFIRMATION_REQUIRED = "deployment.assignment.action.confirmation.required";
+
+    /**
      * Id for maintenance window - label schedule translator
      */
     public static final String MAINTENANCE_WINDOW_SCHEDULE_TRANSLATOR_ID = "maintenance.window.schedule.translator";

@@ -235,9 +235,12 @@ public abstract class AbstractIntegrationTest {
 
     protected DistributionSetAssignmentResult assignDistributionSet(final long dsID, final List<String> controllerIds,
             final ActionType actionType, final long forcedTime, final Integer weight) {
+        final boolean userConsentFlowActive = isUserConsentFlowActive();
+
         final List<DeploymentRequest> deploymentRequests = controllerIds.stream()
                 .map(id -> DeploymentManagement.deploymentRequest(id, dsID).setActionType(actionType)
-                        .setForceTime(forcedTime).setWeight(weight).build())
+                        .setForceTime(forcedTime).setWeight(weight).setConfirmationRequired(userConsentFlowActive)
+                        .build())
                 .collect(Collectors.toList());
         final List<DistributionSetAssignmentResult> results = deploymentManagement
                 .assignDistributionSets(deploymentRequests);
@@ -310,6 +313,15 @@ public abstract class AbstractIntegrationTest {
 
     protected void enableMultiAssignments() {
         tenantConfigurationManagement.addOrUpdateConfiguration(TenantConfigurationKey.MULTI_ASSIGNMENTS_ENABLED, true);
+    }
+
+    protected void enableUserConsentFlow() {
+        tenantConfigurationManagement.addOrUpdateConfiguration(TenantConfigurationKey.USER_CONSENT_ENABLED, true);
+    }    
+    
+    protected boolean isUserConsentFlowActive() {
+        return tenantConfigurationManagement.getConfigurationValue(TenantConfigurationKey.USER_CONSENT_ENABLED,
+                Boolean.class).getValue();
     }
 
     protected DistributionSetMetadata createDistributionSetMetadata(final long dsId, final MetaData md) {
@@ -472,10 +484,6 @@ public abstract class AbstractIntegrationTest {
 
     protected void disableBatchAssignments() {
         tenantConfigurationManagement.addOrUpdateConfiguration(TenantConfigurationKey.BATCH_ASSIGNMENTS_ENABLED, false);
-    }
-
-    protected void enableUserConsentFlow() {
-        tenantConfigurationManagement.addOrUpdateConfiguration(TenantConfigurationKey.USER_CONSENT_ENABLED, true);
     }
 
     protected boolean isUserConsentEnabled() {

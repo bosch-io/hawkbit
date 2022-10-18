@@ -19,8 +19,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.validation.ConstraintViolationException;
 
@@ -70,6 +72,8 @@ import org.eclipse.hawkbit.repository.test.matcher.Expect;
 import org.eclipse.hawkbit.repository.test.matcher.ExpectEvents;
 import org.eclipse.hawkbit.tenancy.configuration.TenantConfigurationProperties.TenantConfigurationKey;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -651,7 +655,8 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
     void cancelMultiAssignmentActions() {
         final List<Target> targets = testdataFactory.createTargets(1);
         final List<DistributionSet> distributionSets = testdataFactory.createDistributionSets(4);
-        final List<DeploymentRequest> deploymentRequests = createAssignmentRequests(distributionSets, targets, 34);
+        final List<DeploymentRequest> deploymentRequests = createAssignmentRequests(distributionSets, targets, 34,
+                false);
 
         enableMultiAssignments();
         final List<DistributionSetAssignmentResult> results = deploymentManagement
@@ -672,9 +677,15 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
 
     protected List<DeploymentRequest> createAssignmentRequests(final Collection<DistributionSet> distributionSets,
             final Collection<Target> targets, final int weight) {
+        return createAssignmentRequests(distributionSets, targets, weight, false);
+    }
+
+    protected List<DeploymentRequest> createAssignmentRequests(final Collection<DistributionSet> distributionSets,
+            final Collection<Target> targets, final int weight, final boolean confirmationRequired) {
         final List<DeploymentRequest> deploymentRequests = new ArrayList<>();
-        distributionSets.forEach(ds -> targets.forEach(target -> deploymentRequests.add(DeploymentManagement
-                .deploymentRequest(target.getControllerId(), ds.getId()).setWeight(weight).build())));
+        distributionSets.forEach(ds -> targets.forEach(target -> deploymentRequests
+                .add(DeploymentManagement.deploymentRequest(target.getControllerId(), ds.getId()).setWeight(weight)
+                        .setConfirmationRequired(confirmationRequired).build())));
         return deploymentRequests;
     }
 
@@ -713,7 +724,7 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
         knownTargetIds.add(notExistingId);
 
         final List<DistributionSetAssignmentResult> assignDistributionSetsResults = assignDistributionSetToTargets(
-                createdDs, knownTargetIds);
+                createdDs, knownTargetIds, false);
 
         for (final DistributionSetAssignmentResult assignDistributionSetsResult : assignDistributionSetsResults) {
             assertThat(assignDistributionSetsResult.getAlreadyAssigned()).isZero();
@@ -722,12 +733,105 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @Description("Assignments with user consent flow active will result in actions in 'WAIT_FOR_CONFIRMATION' state")
+    void assignmentWithUserConsentFlowActive(final boolean confirmationRequired) {
+        final List<String> controllerIds = testdataFactory.createTargets(1).stream().map(Target::getControllerId)
+              .collect(Collectors.toList());
+        final DistributionSet distributionSet = testdataFactory.createDistributionSet();
+
+        enableUserConsentFlow();
+        List<DistributionSetAssignmentResult> results = assignDistributionSetToTargets(distributionSet, controllerIds,
+              confirmationRequired);
+
+        assertThat(getResultingActionCount(results)).isEqualTo(controllerIds.size());
+
+        controllerIds.forEach(controllerId -> {
+            actionRepository.findByTargetControllerId(PAGE, controllerId).forEach(action -> {
+                assertThat(action.getDistributionSet().getId()).isIn(distributionSet.getId());
+                assertThat(action.getInitiatedBy()).as("Should be Initiated by current user")
+                      .isEqualTo(tenantAware.getCurrentUsername());
+                if (confirmationRequired) {
+                    assertThat(action.getStatus()).isEqualTo(Status.WAIT_FOR_CONFIRMATION);
+                } else {
+                    assertThat(action.getStatus()).isEqualTo(Status.RUNNING);
+                }
+            });
+        });
+    }
+
+    @Test
+    @Description("Multiple assignments with user consent flow active will result in correct cancel behaviour")
+    void multipleAssignmentWithUserConsentFlowActiveVerifyCancelBehaviour() {
+        final Target target = testdataFactory.createTarget("firstDevice");
+        final DistributionSet firstDs = testdataFactory.createDistributionSet();
+        final DistributionSet secondDs = testdataFactory.createDistributionSet();
+
+        enableUserConsentFlow();
+        final List<Action> resultActions = assignDistributionSet(firstDs.getId(), target.getControllerId())
+                .getAssignedEntity();
+        assertThat(resultActions).hasSize(1);
+
+        assertThat(resultActions.get(0)).satisfies(action -> {
+            assertThat(action.getDistributionSet().getId()).isEqualTo(firstDs.getId());
+            assertThat(action.getStatus()).isEqualTo(Status.WAIT_FOR_CONFIRMATION);
+        });
+
+        final List<Action> resultActions2 = assignDistributionSet(secondDs.getId(), target.getControllerId())
+                .getAssignedEntity();
+
+        assertThat(resultActions2).hasSize(1);
+        assertThat(resultActions2.get(0)).satisfies(action -> {
+            assertThat(action.getDistributionSet().getId()).isEqualTo(secondDs.getId());
+            assertThat(action.getStatus()).isEqualTo(Status.WAIT_FOR_CONFIRMATION);
+        });
+
+        final List<Action> actions = actionRepository.findByTargetControllerId(PAGE, target.getControllerId())
+                .getContent();
+        assertThat(actions).hasSize(2)
+                .anyMatch(action -> Objects.equals(action.getDistributionSet().getId(), firstDs.getId())
+                        && action.getStatus() == Status.CANCELING)
+                .anyMatch(action -> Objects.equals(action.getDistributionSet().getId(), secondDs.getId())
+                        && action.getStatus() == Status.WAIT_FOR_CONFIRMATION);
+
+    }
+
+    @Test
+    @Description("Assignments with user consent flow deactivated will result in actions in only in 'RUNNING' state")
+    void verifyConfirmationRequiredFlagHaveNoInfluenceIfFlowIsDeactivated() {
+        final List<String> targets1 = testdataFactory.createTargets("group1", 1).stream().map(Target::getControllerId)
+                .collect(Collectors.toList());
+        final List<String> targets2 = testdataFactory.createTargets("group2", 1).stream().map(Target::getControllerId)
+                .collect(Collectors.toList());
+        final DistributionSet distributionSet = testdataFactory.createDistributionSet();
+
+        final List<DistributionSetAssignmentResult> results = Stream
+                .concat(assignDistributionSetToTargets(distributionSet, targets1, true).stream(), //
+                        assignDistributionSetToTargets(distributionSet, targets2, false).stream()) //
+                .collect(Collectors.toList());
+
+        final List<String> controllerIds = Stream.concat(targets1.stream(), targets2.stream())
+                .collect(Collectors.toList());
+
+        assertThat(getResultingActionCount(results)).isEqualTo(controllerIds.size());
+
+        controllerIds.forEach(controllerId -> {
+            actionRepository.findByTargetControllerId(PAGE, controllerId).forEach(action -> {
+                assertThat(action.getDistributionSet().getId()).isIn(distributionSet.getId());
+                assertThat(action.getInitiatedBy()).as("Should be Initiated by current user")
+                        .isEqualTo(tenantAware.getCurrentUsername());
+                assertThat(action.getStatus()).isEqualTo(Status.RUNNING);
+            });
+        });
+    }
+
     private List<DistributionSetAssignmentResult> assignDistributionSetToTargets(final DistributionSet distributionSet,
-            final Iterable<String> targetIds) {
+            final Iterable<String> targetIds, final boolean confirmationRequired) {
         final List<DeploymentRequest> deploymentRequests = new ArrayList<>();
         for (final String controllerId : targetIds) {
             deploymentRequests.add(new DeploymentRequest(controllerId, distributionSet.getId(), ActionType.FORCED, 0,
-                    null, null, null, null));
+                    null, null, null, null, confirmationRequired));
         }
         return deploymentManagement.assignDistributionSets(deploymentRequests);
     }
