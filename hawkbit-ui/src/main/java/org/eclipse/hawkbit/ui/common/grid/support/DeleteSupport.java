@@ -147,11 +147,9 @@ public class DeleteSupport<T extends ProxyIdentifiableEntity> {
             final String confirmationCaption, final String confirmationQuestion, final String successNotificationText,
             final String failureNotificationText) {
         return ConfirmationDialog.newBuilder(i18n, deletionWindowId).caption(confirmationCaption)
-                .question(confirmationQuestion).onConfirmation(ok -> {
-                    if (ok) {
-                        handleOkDelete(itemsToBeDeleted, successNotificationText, failureNotificationText);
-                    }
-                });
+                .question(confirmationQuestion).onSaveOrUpdate(() -> {
+                    handleOkDelete(itemsToBeDeleted, successNotificationText, failureNotificationText);
+                }).build();
     }
 
     private void handleOkDelete(final Set<T> itemsToBeDeleted, final String successNotificationText,
