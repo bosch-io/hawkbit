@@ -241,11 +241,8 @@ public class ActionHistoryGrid extends AbstractGrid<ProxyAction, String> {
         final ConfirmationDialog confirmDialog = ConfirmationDialog
                 .newBuilder(i18n, UIComponentIdProvider.CONFIRMATION_POPUP_ID)
                 .caption(i18n.getMessage("caption.cancel.action.confirmbox"))
-                .question(i18n.getMessage("message.cancel.action.confirm")).onConfirmation(ok -> {
-                    if (ok) {
-                        cancelActiveAction(actionId);
-                    }
-                });
+                .question(i18n.getMessage("message.cancel.action.confirm"))
+                .onSaveOrUpdate(() -> cancelActiveAction(actionId)).build();
         UI.getCurrent().addWindow(confirmDialog.getWindow());
         confirmDialog.getWindow().bringToFront();
     }
@@ -288,13 +285,10 @@ public class ActionHistoryGrid extends AbstractGrid<ProxyAction, String> {
      */
     private void confirmAndForceAction(final Long actionId) {
         final ConfirmationDialog confirmDialog = ConfirmationDialog
-              .newBuilder(i18n, UIComponentIdProvider.CONFIRMATION_POPUP_ID)
-              .caption(i18n.getMessage("caption.force.action.confirmbox"))
-              .question(i18n.getMessage("message.force.action.confirm")).onConfirmation(ok -> {
-                  if (ok) {
-                      forceActiveAction(actionId);
-                  }
-              });
+                .newBuilder(i18n, UIComponentIdProvider.CONFIRMATION_POPUP_ID)
+                .caption(i18n.getMessage("caption.force.action.confirmbox"))
+                .question(i18n.getMessage("message.force.action.confirm"))
+                .onSaveOrUpdate(() -> forceActiveAction(actionId)).build();
         UI.getCurrent().addWindow(confirmDialog.getWindow());
 
         confirmDialog.getWindow().bringToFront();
@@ -332,11 +326,7 @@ public class ActionHistoryGrid extends AbstractGrid<ProxyAction, String> {
                 .newBuilder(i18n, UIComponentIdProvider.CONFIRMATION_POPUP_ID)
                 .caption(i18n.getMessage("caption.forcequit.action.confirmbox"))
                 .question(i18n.getMessage("message.forcequit.action.confirm")).icon(VaadinIcons.WARNING)
-                .onConfirmation(ok -> {
-                    if (ok) {
-                        forceQuitActiveAction(actionId);
-                    }
-                });
+                .onSaveOrUpdate(() -> forceQuitActiveAction(actionId)).build();
         UI.getCurrent().addWindow(confirmDialog.getWindow());
 
         confirmDialog.getWindow().bringToFront();

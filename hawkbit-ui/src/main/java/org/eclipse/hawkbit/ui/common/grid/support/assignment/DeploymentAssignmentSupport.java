@@ -67,11 +67,11 @@ public abstract class DeploymentAssignmentSupport<S extends ProxyNamedEntity, T 
         final String caption = i18n.getMessage(UIMessageIdProvider.CAPTION_ENTITY_ASSIGN_ACTION_CONFIRMBOX);
 
         return ConfirmationDialog.newBuilder(i18n, confirmationWindowId()).caption(caption)
-                .question(confirmationMessage).tab(content).onConfirmation(ok -> {
-                    if (ok && canWindowSave.getAsBoolean()) {
+                .question(confirmationMessage).tab(content).onSaveOrUpdate(() -> {
+                    if (canWindowSave.getAsBoolean()) {
                         assignmentExecutor.run();
                     }
-                });
+                }).build();
     }
 
     protected abstract String sourceEntityTypeSing();

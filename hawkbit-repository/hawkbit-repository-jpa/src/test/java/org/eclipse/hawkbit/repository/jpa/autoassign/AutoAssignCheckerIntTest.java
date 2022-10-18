@@ -162,9 +162,9 @@ class AutoAssignCheckerIntTest extends AbstractJpaIntegrationTest {
 
         // target filter query that matches all targets
         targetFilterQueryManagement.updateAutoAssignDS(entityFactory.targetFilterQuery()
-              .updateAutoAssign(targetFilterQueryManagement
-                    .create(entityFactory.targetFilterQuery().create().name("filterA").query("name==*")).getId())
-              .ds(toAssignDs.getId()));
+                .updateAutoAssign(targetFilterQueryManagement
+                        .create(entityFactory.targetFilterQuery().create().name("filterA").query("name==*")).getId())
+                .ds(toAssignDs.getId()));
 
         final List<Target> targets = testdataFactory.createTargets(25);
         final int targetsCount = targets.size();
@@ -204,7 +204,7 @@ class AutoAssignCheckerIntTest extends AbstractJpaIntegrationTest {
 
         verifyThatTargetsHaveDistributionSetAssignedAndActionStatus(distributionSet, targets, expectedStatus);
     }
-    
+
     @ParameterizedTest
     @MethodSource("confirmationOptions")
     @Description("Test auto assignment of a DS for a specific device with different confirmation options")
@@ -216,11 +216,11 @@ class AutoAssignCheckerIntTest extends AbstractJpaIntegrationTest {
         if (consentFlowActive) {
             enableUserConsentFlow();
         }
-        
+
         // target filter query that matches all targets
         targetFilterQueryManagement.updateAutoAssignDS(entityFactory.targetFilterQuery()
-                .updateAutoAssign(targetFilterQueryManagement.create(entityFactory.targetFilterQuery().create()
-                        .name("filterA").query("name==*")).getId())
+                .updateAutoAssign(targetFilterQueryManagement
+                        .create(entityFactory.targetFilterQuery().create().name("filterA").query("name==*")).getId())
                 .ds(toAssignDs.getId()).confirmationRequired(confirmationRequired));
 
         final List<Target> targets = testdataFactory.createTargets(25);
@@ -306,11 +306,11 @@ class AutoAssignCheckerIntTest extends AbstractJpaIntegrationTest {
         for (final Target target : targetsAll) {
             if (targetIds.contains(target.getId())) {
                 assertThat(deploymentManagement.getAssignedDistributionSet(target.getControllerId()).get())
-                      .as("assigned DS").isEqualTo(set);
+                        .as("assigned DS").isEqualTo(set);
             }
         }
 
-    }    
+    }
 
     @Step
     private void verifyThatTargetsHaveDistributionSetAssignedAndActionStatus(final DistributionSet set,

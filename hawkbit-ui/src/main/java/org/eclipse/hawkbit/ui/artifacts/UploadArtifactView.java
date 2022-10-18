@@ -306,20 +306,18 @@ public class UploadArtifactView extends AbstractEventListenersAwareView implemen
                     .newBuilder(i18n, UIComponentIdProvider.UPLOAD_QUEUE_CLEAR_CONFIRMATION_DIALOG)
                     .caption(i18n.getMessage(UIMessageIdProvider.CAPTION_CLEAR_FILE_UPLOAD_QUEUE))
                     .question(i18n.getMessage(UIMessageIdProvider.MESSAGE_CLEAR_FILE_UPLOAD_QUEUE))
-                    .onConfirmation(ok -> {
-                        if (Boolean.TRUE.equals(ok)) {
-                            // Clear all queued file uploads
-                            artifactUploadState.clearFileStates();
-                            super.beforeLeave(event);
-                        } else {
-                            // Send a PostViewChangeEvent to the DashboardMenu
-                            // as if the navigation actually
-                            // happened to prevent the DashboardMenu navigation
-                            // from getting stuck
-                            final DashboardMenuItem dashboardMenuItem = dashboardMenu.getByViewName(VIEW_NAME);
-                            dashboardMenu.postViewChange(DashboardEvent.createPostViewChangeEvent(dashboardMenuItem));
-                        }
-                    });
+                    .onSaveOrUpdate(() -> {
+                        // Clear all queued file uploads
+                        artifactUploadState.clearFileStates();
+                        super.beforeLeave(event);
+                    }).onCancel(() -> {
+                        // Send a PostViewChangeEvent to the DashboardMenu
+                        // as if the navigation actually
+                        // happened to prevent the DashboardMenu navigation
+                        // from getting stuck
+                        final DashboardMenuItem dashboardMenuItem = dashboardMenu.getByViewName(VIEW_NAME);
+                        dashboardMenu.postViewChange(DashboardEvent.createPostViewChangeEvent(dashboardMenuItem));
+                    }).build();
             UI.getCurrent().addWindow(confirmDeleteDialog.getWindow());
             confirmDeleteDialog.getWindow().bringToFront();
         } else {

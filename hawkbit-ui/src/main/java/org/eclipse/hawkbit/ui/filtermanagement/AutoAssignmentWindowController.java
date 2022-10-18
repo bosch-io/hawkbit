@@ -135,15 +135,12 @@ public class AutoAssignmentWindowController extends
         final ConfirmationDialog confirmDialog = ConfirmationDialog
                 .newBuilder(getI18n(), UIComponentIdProvider.DIST_SET_SELECT_CONS_WINDOW_ID)
                 .caption(confirmationCaption).question(confirmationQuestion).hint(confirmationHint)
-                .icon(StringUtils.hasText(confirmationHint) ? VaadinIcons.WARNING : null).onConfirmation(ok -> {
-                    if (ok) {
-                        final TargetFilterQuery targetFilterQuery = targetFilterQueryManagement
-                                .updateAutoAssignDS(getEntityFactory().targetFilterQuery()
-                                        .updateAutoAssign(targetFilterId).ds(autoAssignDsId)
-                                        .actionType(autoAssignActionType).confirmationRequired(confirmationRequired));
-                        publishModifiedEvent(createModifiedEventPayload(targetFilterQuery));
-                    }
-                });
+                .icon(StringUtils.hasText(confirmationHint) ? VaadinIcons.WARNING : null).onSaveOrUpdate(() -> {
+                    final TargetFilterQuery targetFilterQuery = targetFilterQueryManagement.updateAutoAssignDS(
+                            getEntityFactory().targetFilterQuery().updateAutoAssign(targetFilterId).ds(autoAssignDsId)
+                                    .actionType(autoAssignActionType).confirmationRequired(confirmationRequired));
+                    publishModifiedEvent(createModifiedEventPayload(targetFilterQuery));
+                }).build();
 
         confirmDialog.getWindow().setWidth(40.0F, Sizeable.Unit.PERCENTAGE);
 

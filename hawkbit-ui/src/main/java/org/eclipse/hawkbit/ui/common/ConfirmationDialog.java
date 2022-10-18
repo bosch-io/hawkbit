@@ -38,7 +38,7 @@ public class ConfirmationDialog implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private final transient Consumer<Boolean> callback;
+    private final transient Runnable callback;
 
     private final CommonDialogWindow window;
 
@@ -55,8 +55,12 @@ public class ConfirmationDialog implements Serializable {
      *            the dialog caption.
      * @param question
      *            the question.
-     * @param callback
-     *            the callback.
+     * @param hint
+     *            added in the dialog
+     * @param onSaveOrUpdate
+     *            the callback onSaveOrUpdate.
+     * @param onCancel
+     *            the callback on cancel.
      * @param icon
      *            the icon of the dialog
      * @param id
@@ -66,8 +70,8 @@ public class ConfirmationDialog implements Serializable {
      *            which has to be confirmed, e.g. maintenance window
      */
     private ConfirmationDialog(final VaadinMessageSource i18n, final String caption, final String question,
-            final String hint, final Consumer<Boolean> callback, final Resource icon, final String id,
-            final Component tab) {
+            final String hint, final Runnable onSaveOrUpdate, final Runnable onCancel, final Resource icon,
+            final String id, final Component tab) {
 
         final VerticalLayout content = new VerticalLayout();
         content.setMargin(false);
@@ -83,8 +87,11 @@ public class ConfirmationDialog implements Serializable {
             content.addComponent(tab);
         }
         final WindowBuilder windowBuilder = new WindowBuilder(SPUIDefinitions.CONFIRMATION_WINDOW).caption(caption)
-                .content(content).cancelButtonClickListener(e -> callback.accept(false))
-                .saveDialogCloseListener(getSaveDialogCloseListener()).hideMandatoryExplanation()
+                .content(content).cancelButtonClickListener(e -> {
+                    if (onCancel != null) {
+                        onCancel.run();
+                    }
+                }).saveDialogCloseListener(getSaveDialogCloseListener()).hideMandatoryExplanation()
                 .buttonDecorator(SPUIButtonStyleTiny.class).confirmStyle(ConfirmStyle.OK).i18n(i18n);
 
         if (!StringUtils.isEmpty(id)) {
@@ -92,7 +99,7 @@ public class ConfirmationDialog implements Serializable {
         }
         this.window = windowBuilder.buildCommonDialogWindow();
         window.setSaveButtonEnabled(true);
-        this.callback = callback;
+        this.callback = onSaveOrUpdate;
 
         if (icon != null) {
             window.setIcon(icon);
@@ -105,7 +112,9 @@ public class ConfirmationDialog implements Serializable {
         return new SaveDialogCloseListener() {
             @Override
             public void saveOrUpdate() {
-                callback.accept(true);
+                if (callback != null) {
+                    callback.run();
+                }
             }
 
             @Override
@@ -156,6 +165,10 @@ public class ConfirmationDialog implements Serializable {
         private Resource icon;
         private Component tab;
 
+        private Runnable callbackOnSaveOrUpdate;
+
+        private Runnable callbackOnCancel;
+
         /**
          * private constructor
          * 
@@ -194,10 +207,20 @@ public class ConfirmationDialog implements Serializable {
             return this;
         }
 
-        public ConfirmationDialog onConfirmation(final Consumer<Boolean> callback) {
-            Assert.isTrue(callback != null, "Callback cannot be null.");
+        public Builder onSaveOrUpdate(final Runnable callback) {
+            this.callbackOnSaveOrUpdate = callback;
+            return this;
+        }
+
+        public Builder onCancel(final Runnable callback) {
+            this.callbackOnCancel = callback;
+            return this;
+        }
+
+        public ConfirmationDialog build() {
             Assert.isTrue(StringUtils.hasText(caption), "Caption cannot be null.");
-            return new ConfirmationDialog(i18n, caption, question, hint, callback, icon, id, tab);
+            return new ConfirmationDialog(i18n, caption, question, hint, callbackOnSaveOrUpdate, callbackOnCancel, icon,
+                    id, tab);
         }
     }
 }
