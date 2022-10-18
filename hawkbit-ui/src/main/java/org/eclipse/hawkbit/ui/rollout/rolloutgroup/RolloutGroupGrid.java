@@ -61,6 +61,7 @@ public class RolloutGroupGrid extends AbstractGrid<ProxyRolloutGroup, Long> {
     private final RolloutGroupStatusIconSupplier<ProxyRolloutGroup> rolloutGroupStatusIconSupplier;
 
     private final transient MasterEntitySupport<ProxyRollout> masterEntitySupport;
+    
 
     RolloutGroupGrid(final CommonUiDependencies uiDependencies, final RolloutGroupManagement rolloutGroupManagement,
             final RolloutManagementUIState rolloutManagementUIState, final TenantConfigHelper tenantConfigHelper) {
@@ -151,17 +152,17 @@ public class RolloutGroupGrid extends AbstractGrid<ProxyRolloutGroup, Long> {
                 .setId(SPUILabelDefinitions.ROLLOUT_GROUP_ERROR_THRESHOLD)
                 .setCaption(i18n.getMessage("header.rolloutgroup.threshold.error")).setHidable(true);
 
-        if (tenantConfigHelper.isUserConsentEnabled()) {
-            GridComponentBuilder.addColumn(this, group -> group.isConfirmationRequired() ? "required" : "not required")
-                    .setId(SPUILabelDefinitions.ROLLOUT_GROUP_CONFIRMATION_REQUIRED)
-                    .setCaption(i18n.getMessage("header.rolloutgroup.confirmation")).setHidable(true);
-        }
-
         GridComponentBuilder.addColumn(this, group -> group
                 .getSuccessConditionExp() + "%")
                 .setId(SPUILabelDefinitions.ROLLOUT_GROUP_THRESHOLD)
                 .setCaption(i18n.getMessage("header.rolloutgroup.threshold")).setHidable(true);
 
+        if (tenantConfigHelper.isUserConsentEnabled()) {
+            GridComponentBuilder.addColumn(this, group -> group.isConfirmationRequired() ? "required" : "not required")
+                  .setId(SPUILabelDefinitions.ROLLOUT_GROUP_CONFIRMATION_REQUIRED)
+                  .setCaption(i18n.getMessage("header.rolloutgroup.confirmation")).setHidable(true);
+        }
+        
         GridComponentBuilder.addCreatedAndModifiedColumns(this, i18n)
                 .forEach(col -> col.setHidable(true).setHidden(true));
     }
@@ -209,10 +210,27 @@ public class RolloutGroupGrid extends AbstractGrid<ProxyRolloutGroup, Long> {
         }
     }
 
+    public void alignWithConsentFlowState() {
+        alignWithConsentFlowState(tenantConfigHelper.isUserConsentEnabled());
+    }
+
+    public void alignWithConsentFlowState(final boolean active) {
+        final boolean columnPresent = GridComponentBuilder.isColumnPresent(this,
+                SPUILabelDefinitions.ROLLOUT_GROUP_CONFIRMATION_REQUIRED);
+        if (active && !columnPresent) {
+            GridComponentBuilder.addColumn(this, group -> group.isConfirmationRequired() ? "required" : "not required")
+                    .setId(SPUILabelDefinitions.ROLLOUT_GROUP_CONFIRMATION_REQUIRED)
+                    .setCaption(i18n.getMessage("header.rolloutgroup.confirmation")).setHidable(true);
+        } else if (!active && columnPresent) {
+            GridComponentBuilder.removeColumn(this, SPUILabelDefinitions.ROLLOUT_GROUP_CONFIRMATION_REQUIRED);
+        }
+    }
+
     /**
      * @return Rollout master entity support
      */
     public MasterEntitySupport<ProxyRollout> getMasterEntitySupport() {
         return masterEntitySupport;
     }
+    
 }

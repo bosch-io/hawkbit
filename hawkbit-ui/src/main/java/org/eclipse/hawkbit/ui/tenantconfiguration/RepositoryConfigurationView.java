@@ -11,10 +11,13 @@ package org.eclipse.hawkbit.ui.tenantconfiguration;
 import org.eclipse.hawkbit.repository.TenantConfigurationManagement;
 import org.eclipse.hawkbit.repository.model.Action;
 import org.eclipse.hawkbit.repository.model.TenantConfigurationValue;
+import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.tenancy.configuration.TenantConfigurationProperties.TenantConfigurationKey;
 import org.eclipse.hawkbit.ui.UiProperties;
 import org.eclipse.hawkbit.ui.common.builder.FormComponentBuilder;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxySystemConfigRepository;
+import org.eclipse.hawkbit.ui.common.event.EventTopics;
+import org.eclipse.hawkbit.ui.common.event.TenantConfigChangedEventPayload;
 import org.eclipse.hawkbit.ui.components.SPUIComponentProvider;
 import org.eclipse.hawkbit.ui.tenantconfiguration.repository.ActionAutoCleanupConfigurationItem;
 import org.eclipse.hawkbit.ui.tenantconfiguration.repository.ActionAutoCloseConfigurationItem;
@@ -30,6 +33,7 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.Link;
 import com.vaadin.ui.Panel;
 import com.vaadin.ui.VerticalLayout;
+import org.vaadin.spring.events.EventBus;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -55,6 +59,9 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
     private final VaadinMessageSource i18n;
     private final UiProperties uiProperties;
 
+    private final transient EventBus.ApplicationEventBus eventBus;
+    private final transient TenantAware tenantAware;
+
     private ActionAutoCloseConfigurationItem actionAutocloseConfigurationItem;
     private ActionAutoCleanupConfigurationItem actionAutocleanupConfigurationItem;
     private MultiAssignmentsConfigurationItem multiAssignmentsConfigurationItem;
@@ -63,13 +70,14 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
 
     private UserConsentConfigurationItem userConsentConfigurationItem;
 
-    private CheckBox userConsentCheckBox;
-
     RepositoryConfigurationView(final VaadinMessageSource i18n, final UiProperties uiProperties,
-            final TenantConfigurationManagement tenantConfigurationManagement) {
+            final TenantConfigurationManagement tenantConfigurationManagement,
+            final EventBus.ApplicationEventBus eventBus, final TenantAware tenantAware) {
         super(tenantConfigurationManagement);
         this.i18n = i18n;
         this.uiProperties = uiProperties;
+        this.eventBus = eventBus;
+        this.tenantAware = tenantAware;
     }
 
     @Override
@@ -131,9 +139,9 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
         gridLayout.addComponent(multiAssignmentsCheckBox, 0, 1);
         gridLayout.addComponent(multiAssignmentsConfigurationItem, 1, 1);
 
-        userConsentCheckBox = FormComponentBuilder.createCheckBox(
-            UIComponentIdProvider.REPOSITORY_USER_CONSENT_CHECKBOX, getBinder(),
-            ProxySystemConfigRepository::isUserConsent, ProxySystemConfigRepository::setUserConsent);
+        final CheckBox userConsentCheckBox = FormComponentBuilder.createCheckBox(
+              UIComponentIdProvider.REPOSITORY_USER_CONSENT_CHECKBOX, getBinder(),
+              ProxySystemConfigRepository::isUserConsent, ProxySystemConfigRepository::setUserConsent);
         userConsentCheckBox.setStyleName(DIST_CHECKBOX_STYLE);
         gridLayout.addComponent(userConsentCheckBox, 0, 2);
         gridLayout.addComponent(userConsentConfigurationItem, 1, 2);
@@ -172,25 +180,34 @@ public class RepositoryConfigurationView extends BaseConfigurationView<ProxySyst
 
     @Override
     public void save() {
-        writeConfigOption(TenantConfigurationKey.ACTION_CLEANUP_ENABLED, getBinderBean().isActionAutocleanup());
+        if (getBinderBean().isActionAutocleanup() != readConfigOption(TenantConfigurationKey.ACTION_CLEANUP_ENABLED)) {
+            setConfig(TenantConfigurationKey.ACTION_CLEANUP_ENABLED, getBinderBean().isActionAutocleanup());
+        }
         if (getBinderBean().isActionAutocleanup()) {
-            writeConfigOption(ACTION_CLEANUP_ACTION_STATUS, getBinderBean().getActionCleanupStatus().getStatus()
+            setConfig(ACTION_CLEANUP_ACTION_STATUS, getBinderBean().getActionCleanupStatus().getStatus()
                     .stream().map(Action.Status::name).collect(Collectors.joining(",")));
 
-            writeConfigOption(TenantConfigurationKey.ACTION_CLEANUP_ACTION_EXPIRY,
+            setConfig(TenantConfigurationKey.ACTION_CLEANUP_ACTION_EXPIRY,
                     TimeUnit.DAYS.toMillis(Long.parseLong(getBinderBean().getActionExpiryDays())));
         }
         if (!readConfigOption(TenantConfigurationKey.MULTI_ASSIGNMENTS_ENABLED)) {
-            writeConfigOption(TenantConfigurationKey.REPOSITORY_ACTIONS_AUTOCLOSE_ENABLED,
+            setConfig(TenantConfigurationKey.REPOSITORY_ACTIONS_AUTOCLOSE_ENABLED,
                     getBinderBean().isActionAutoclose());
         }
         if (getBinderBean().isMultiAssignments()
                 && !readConfigOption(TenantConfigurationKey.MULTI_ASSIGNMENTS_ENABLED)) {
-            writeConfigOption(TenantConfigurationKey.MULTI_ASSIGNMENTS_ENABLED, getBinderBean().isMultiAssignments());
+            setConfig(TenantConfigurationKey.MULTI_ASSIGNMENTS_ENABLED, getBinderBean().isMultiAssignments());
             this.disableMultipleAssignmentOption();
         }
+        if (getBinderBean().isUserConsent() != readConfigOption(TenantConfigurationKey.USER_CONSENT_ENABLED)) {
+            setConfig(TenantConfigurationKey.USER_CONSENT_ENABLED, getBinderBean().isUserConsent());
+        }
+    }
 
-        writeConfigOption(TenantConfigurationKey.USER_CONSENT_ENABLED, getBinderBean().isUserConsent());
+    private <T extends Serializable> void setConfig(final String key, final T value) {
+        final TenantConfigurationValue<T> config = writeConfigOption(key, value);
+        eventBus.publish(EventTopics.TENANT_CONFIG_CHANGED, this,
+                new TenantConfigChangedEventPayload(tenantAware.getCurrentTenant(), key, config));
     }
 
     @Override

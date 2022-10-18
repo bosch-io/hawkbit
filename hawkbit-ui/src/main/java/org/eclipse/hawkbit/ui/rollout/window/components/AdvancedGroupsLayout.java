@@ -126,7 +126,7 @@ public class AdvancedGroupsLayout extends ValidatableLayout {
         final List<String> headerColumns = new ArrayList<>(Arrays.asList("header.name", "header.target.filter.query",
                 "header.target.percentage", "header.rolloutgroup.threshold", "header.rolloutgroup.threshold.error"));
         if (tenantConfigHelper.isUserConsentEnabled()) {
-            headerColumns.add("prompt.confirmation.required");
+            headerColumns.add("header.rolloutgroup.confirmation");
         }
         for (int i = 0; i < headerColumns.size(); i++) {
             final Label label = SPUIComponentProvider.generateLabel(i18n, headerColumns.get(i));
