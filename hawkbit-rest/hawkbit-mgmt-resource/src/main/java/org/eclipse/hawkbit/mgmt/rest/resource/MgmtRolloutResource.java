@@ -128,18 +128,22 @@ public class MgmtRolloutResource implements MgmtRolloutRestApi {
 
         final RolloutCreate create = MgmtRolloutMapper.fromRequest(entityFactory, rolloutRequestBody, distributionSet);
 
-        final boolean confirmationRequired = rolloutRequestBody.getConfirmationRequired()
-                ? tenantConfigHelper.isUserConsentEnabled()
-                : false;
-
         Rollout rollout;
         if (rolloutRequestBody.getGroups() != null) {
             final List<RolloutGroupCreate> rolloutGroups = rolloutRequestBody.getGroups().stream()
-                    .map(mgmtRolloutGroup -> MgmtRolloutMapper.fromRequest(entityFactory, mgmtRolloutGroup))
-                    .collect(Collectors.toList());
+                    .map(mgmtRolloutGroup -> {
+                        final boolean confirmationRequired = mgmtRolloutGroup.isConfirmationRequired() == null
+                                ? tenantConfigHelper.isUserConsentEnabled()
+                                : mgmtRolloutGroup.isConfirmationRequired();
+                        return MgmtRolloutMapper.fromRequest(entityFactory, mgmtRolloutGroup)
+                                .confirmationRequired(confirmationRequired);
+                    }).collect(Collectors.toList());
             rollout = rolloutManagement.create(create, rolloutGroups, rolloutGroupConditions);
 
         } else if (rolloutRequestBody.getAmountGroups() != null) {
+            final boolean confirmationRequired = rolloutRequestBody.isConfirmationRequired() == null
+                    ? tenantConfigHelper.isUserConsentEnabled()
+                    : rolloutRequestBody.isConfirmationRequired();
             rollout = rolloutManagement.create(create, rolloutRequestBody.getAmountGroups(), confirmationRequired,
                     rolloutGroupConditions);
 

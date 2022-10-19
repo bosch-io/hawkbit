@@ -69,6 +69,7 @@ import org.eclipse.hawkbit.repository.model.helper.EventPublisherHolder;
 import org.eclipse.hawkbit.repository.rsql.VirtualPropertyReplacer;
 import org.eclipse.hawkbit.security.SystemSecurityContext;
 import org.eclipse.hawkbit.tenancy.TenantAware;
+import org.eclipse.hawkbit.utils.TenantConfigHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -251,6 +252,11 @@ public class JpaRolloutManagement implements RolloutManagement {
         return rolloutRepository.save(savedRollout);
     }
 
+    private boolean isUserConsentEnabled() {
+        return TenantConfigHelper.usingContext(systemSecurityContext, tenantConfigurationManagement)
+                .isUserConsentEnabled();
+    }
+    
     private Rollout createRolloutGroups(final List<RolloutGroupCreate> groupList,
             final RolloutGroupConditions conditions, final Rollout rollout) {
         RolloutHelper.verifyRolloutInStatus(rollout, RolloutStatus.CREATING);

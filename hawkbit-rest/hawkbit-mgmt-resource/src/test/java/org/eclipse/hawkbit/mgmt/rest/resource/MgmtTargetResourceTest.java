@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.validation.ConstraintViolationException;
 
@@ -73,6 +74,9 @@ import org.hamcrest.Matchers;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.data.domain.PageRequest;
@@ -764,9 +768,10 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
         final Target test1 = entityFactory.target().create().controllerId("id1")
                 .name(RandomStringUtils.randomAlphanumeric(NamedEntity.NAME_MAX_SIZE + 1)).build();
 
-        final MvcResult mvcResult = mvc.perform(post(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING)
-                .content(JsonBuilder.targets(Collections.singletonList(test1), true))
-                .contentType(MediaType.APPLICATION_JSON))
+        final MvcResult mvcResult = mvc
+                .perform(post(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING)
+                        .content(JsonBuilder.targets(Collections.singletonList(test1), true))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isBadRequest()).andReturn();
 
         assertThat(targetManagement.count()).isZero();
@@ -1253,8 +1258,7 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
         // Update
         if (schedule == null) {
             final List<Target> updatedTargets = assignDistributionSet(one, Collections.singletonList(target))
-                    .getAssignedEntity()
-                    .stream().map(Action::getTarget).collect(Collectors.toList());
+                    .getAssignedEntity().stream().map(Action::getTarget).collect(Collectors.toList());
             // 2nd update
             // sleep 10ms to ensure that we can sort by reportedAt
             Awaitility.await().atMost(Duration.ONE_HUNDRED_MILLISECONDS).atLeast(5, TimeUnit.MILLISECONDS)
@@ -1334,6 +1338,48 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
 
         // ...but does not change the target
         assertThat(targetManagement.getByControllerID(target.getControllerId()).get()).isEqualTo(target);
+    }
+
+    @ParameterizedTest
+    @MethodSource("confirmationOptions")
+    @Description("Ensures that confirmation option is considered in assignment request.")
+    void assignDistributionSetToTargetWithConfirmationOptions(final boolean consentFlowActive,
+            final Boolean confirmationRequired) throws Exception {
+
+        final Target target = testdataFactory.createTarget();
+        final DistributionSet set = testdataFactory.createDistributionSet("one");
+
+        if (consentFlowActive) {
+            enableUserConsentFlow();
+        }
+
+        final JSONObject jsonPayload = new JSONObject();
+        jsonPayload.put("id", set.getId());
+        if (confirmationRequired != null) {
+            jsonPayload.put("confirmationRequired", confirmationRequired);
+        }
+
+        mvc.perform(post(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/" + target.getControllerId() + "/assignedDS")
+                .content(jsonPayload.toString()).contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(jsonPath("assigned", equalTo(1))).andExpect(jsonPath("alreadyAssigned", equalTo(0)))
+                .andExpect(jsonPath("total", equalTo(1)));
+
+        assertThat(deploymentManagement.getAssignedDistributionSet(target.getControllerId()).get()).isEqualTo(set);
+
+        assertThat(deploymentManagement.findActionsByDistributionSet(PAGE, set.getId()).getContent()).hasSize(1)
+                .allMatch(action -> {
+                    if (!consentFlowActive) {
+                        return !action.isWaitingConfirmation();
+                    }
+                    return confirmationRequired == null ? action.isWaitingConfirmation()
+                            : confirmationRequired == action.isWaitingConfirmation();
+                });
+    }
+
+    private static Stream<Arguments> confirmationOptions() {
+        return Stream.of(Arguments.of(true, true), Arguments.of(true, false), Arguments.of(false, true),
+                Arguments.of(false, false), Arguments.of(true, null), Arguments.of(false, null));
     }
 
     @Test
@@ -2057,7 +2103,7 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
         }
 
     }
-    
+
     @Test
     @Description("An action provides information of the rollout it was created for (if any).")
     void getActionWithRolloutInfo() throws Exception {
@@ -2094,8 +2140,10 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
     @Test
     @Description("Ensures that a post request for creating targets with target type works.")
     void createTargetsWithTargetType() throws Exception {
-        final TargetType type1 = testdataFactory.createTargetType("typeWithDs", Collections.singletonList(standardDsType));
-        final TargetType type2 = testdataFactory.createTargetType("typeWithOutDs", Collections.singletonList(standardDsType));
+        final TargetType type1 = testdataFactory.createTargetType("typeWithDs",
+                Collections.singletonList(standardDsType));
+        final TargetType type2 = testdataFactory.createTargetType("typeWithOutDs",
+                Collections.singletonList(standardDsType));
 
         final Target test1 = entityFactory.target().create().controllerId("id1").name("targetWithoutType")
                 .securityToken("token").address("amqp://test123/foobar").description("testid1").build();
@@ -2132,8 +2180,7 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
                 .andExpect(jsonPath("[2].description", equalTo("testid3")))
                 .andExpect(jsonPath("[2].createdAt", not(equalTo(0))))
                 .andExpect(jsonPath("[2].createdBy", equalTo("bumlux")))
-                .andExpect(jsonPath("[2].targetType", equalTo(type2.getId().intValue())))
-                .andReturn();
+                .andExpect(jsonPath("[2].targetType", equalTo(type2.getId().intValue()))).andReturn();
 
         mvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/" + test2.getControllerId()))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
@@ -2159,10 +2206,11 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
     @Description("Ensures that a post request for creating target with target type works.")
     void createTargetWithExistingTargetType() throws Exception {
         // create target type
-        List<TargetType> targetTypes = testdataFactory.createTargetTypes("targettype",1);
+        List<TargetType> targetTypes = testdataFactory.createTargetTypes("targettype", 1);
         assertThat(targetTypes).hasSize(1);
 
-        final Target target = entityFactory.target().create().controllerId("targetcontroller").name("testtarget").targetType(targetTypes.get(0).getId()).build();
+        final Target target = entityFactory.target().create().controllerId("targetcontroller").name("testtarget")
+                .targetType(targetTypes.get(0).getId()).build();
 
         final String targetList = JsonBuilder.targets(Collections.singletonList(target), false);
 
@@ -2172,14 +2220,15 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
                 .andExpect(jsonPath("[0].controllerId", equalTo("targetcontroller")))
                 .andExpect(jsonPath("[0].targetType", equalTo(targetTypes.get(0).getId().intValue())));
 
-        assertThat(targetManagement.getByControllerID("targetcontroller").get().getTargetType().getId()).isEqualTo(targetTypes.get(0).getId());
+        assertThat(targetManagement.getByControllerID("targetcontroller").get().getTargetType().getId())
+                .isEqualTo(targetTypes.get(0).getId());
     }
 
     @Test
     @Description("Ensures that a put request for updating targets with target type works.")
     void updateTargetTypeInTarget() throws Exception {
         // create target type
-        List<TargetType> targetTypes = testdataFactory.createTargetTypes("targettype",2);
+        List<TargetType> targetTypes = testdataFactory.createTargetTypes("targettype", 2);
         assertThat(targetTypes).hasSize(2);
 
         String controllerId = "targetcontroller";
@@ -2234,7 +2283,8 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
                 .content("{\"id\":" + targetType.getId() + "}").contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk());
 
-        assertThat(targetManagement.getByControllerID(targetControllerId).get().getTargetType().getId()).isEqualTo(targetType.getId());
+        assertThat(targetManagement.getByControllerID(targetControllerId).get().getTargetType().getId())
+                .isEqualTo(targetType.getId());
     }
 
     @Test
@@ -2254,8 +2304,10 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isNotFound());
 
         // verify response json exception message if body does not include id field
-        final MvcResult mvcResult = mvc.perform(post(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/" + targetControllerId + "/targettype")
-                        .content("{\"unknownfield\":" + invalidTargetTypeId + "}").contentType(MediaType.APPLICATION_JSON))
+        final MvcResult mvcResult = mvc
+                .perform(post(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/" + targetControllerId + "/targettype")
+                        .content("{\"unknownfield\":" + invalidTargetTypeId + "}")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isBadRequest()).andReturn();
         final ExceptionInfo exceptionInfo = ResourceUtility
                 .convertException(mvcResult.getResponse().getContentAsString());
@@ -2268,7 +2320,7 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
     @Description("Ensures that a delete request for unassign target type from target works.")
     void unassignTargetTypeFromTarget() throws Exception {
         // create target type
-        List<TargetType> targetTypes = testdataFactory.createTargetTypes("targettype",1);
+        List<TargetType> targetTypes = testdataFactory.createTargetTypes("targettype", 1);
         assertThat(targetTypes).hasSize(1);
 
         String targetControllerId = "targetcontroller";
@@ -2296,24 +2348,24 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
                 knownTargetId)).andDo(MockMvcResultPrinter.print()).andExpect(status().isMethodNotAllowed());
 
         // PUT is not allowed
-        mvc.perform(put(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING
-                        + MgmtRestConstants.TARGET_TARGET_TYPE_V1_REQUEST_MAPPING, knownTargetId))
-                .andDo(MockMvcResultPrinter.print()).andExpect(status().isMethodNotAllowed());
+        mvc.perform(put(
+                MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + MgmtRestConstants.TARGET_TARGET_TYPE_V1_REQUEST_MAPPING,
+                knownTargetId)).andDo(MockMvcResultPrinter.print()).andExpect(status().isMethodNotAllowed());
 
         // POST does not exist with path parameter targettype
         mvc.perform(post(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING
                 + MgmtRestConstants.TARGET_TARGET_TYPE_V1_REQUEST_MAPPING + "/123", knownTargetId))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isNotFound());
 
-        // DELETE does not exist  with path parameter targettype
+        // DELETE does not exist with path parameter targettype
         mvc.perform(delete(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING
                 + MgmtRestConstants.TARGET_TARGET_TYPE_V1_REQUEST_MAPPING + "/123", knownTargetId))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isNotFound());
 
         // Invalid content
-        mvc.perform(post(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + MgmtRestConstants.TARGET_TARGET_TYPE_V1_REQUEST_MAPPING,
-                        knownTargetId)).andDo(MockMvcResultPrinter.print())
-                .andExpect(status().isUnsupportedMediaType());
+        mvc.perform(post(
+                MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + MgmtRestConstants.TARGET_TARGET_TYPE_V1_REQUEST_MAPPING,
+                knownTargetId)).andDo(MockMvcResultPrinter.print()).andExpect(status().isUnsupportedMediaType());
 
         // Bad request if id field is missing
         mvc.perform(post(

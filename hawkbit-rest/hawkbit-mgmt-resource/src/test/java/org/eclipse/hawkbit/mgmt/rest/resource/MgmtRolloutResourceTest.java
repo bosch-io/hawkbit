@@ -52,6 +52,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
@@ -296,15 +297,62 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
 
         // create rollout including the created targets with prefix 'rollout'
         final Rollout rollout = rolloutManagement.create(
-                entityFactory.rollout().create().name("rollout1").set(dsA.getId())
-                        .targetFilterQuery("controllerId==rollout*"),
-                4, false, new RolloutGroupConditionBuilder().withDefaults()
-                        .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
+              entityFactory.rollout().create().name("rollout1").set(dsA.getId())
+                    .targetFilterQuery("controllerId==rollout*"),
+              4, false, new RolloutGroupConditionBuilder().withDefaults()
+                    .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
 
         retrieveAndVerifyRolloutInCreating(dsA, rollout);
         retrieveAndVerifyRolloutInReady(rollout);
         retrieveAndVerifyRolloutInStarting(rollout);
         retrieveAndVerifyRolloutInRunning(rollout);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @Description("Verify the confirmation required flag is not part of the rollout parent entity")
+    void verifyConfirmationFlagIsNeverPartOfRolloutEntity(final boolean userConsentFlowActive) throws Exception {
+        testdataFactory.createTargets(20, "rollout", "rollout");
+        final DistributionSet dsA = testdataFactory.createDistributionSet("");
+
+        if (userConsentFlowActive) {
+            enableUserConsentFlow();
+        }
+
+        // create rollout including the created targets with prefix 'rollout'
+        final Rollout rollout = rolloutManagement.create(
+                entityFactory.rollout().create().name("rollout1").set(dsA.getId())
+                        .targetFilterQuery("controllerId==rollout*"),
+                4, false, new RolloutGroupConditionBuilder().withDefaults()
+                        .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
+
+        mvc.perform(get("/rest/v1/rollouts/" + rollout.getId()).accept(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.id", equalTo(rollout.getId().intValue())))
+                .andExpect(jsonPath("$.confirmationRequired").doesNotExist());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @Description("Verify the confirmation required flag will be set based on the feature state")
+    void verifyConfirmationStateIfNotProvided(final boolean userConsentFlowActive) throws Exception {
+        if (userConsentFlowActive) {
+            enableUserConsentFlow();
+        }
+
+        testdataFactory.createTargets(20, "target", "rollout");
+
+        final DistributionSet dsA = testdataFactory.createDistributionSet("");
+        postRollout("rollout1", 5, dsA.getId(), "id==target*", 20, Action.ActionType.FORCED);
+
+
+        List<Rollout> content = rolloutManagement.findAll(PAGE, false).getContent();
+        assertThat(content).hasSizeGreaterThan(0).allSatisfy(rollout -> {
+            assertThat(rolloutGroupManagement.findByRollout(PAGE, rollout.getId()))
+                .describedAs("Confirmation required flag depends on feature active.")
+                  .allMatch(group -> group.isConfirmationRequired() == userConsentFlowActive);
+        });
     }
 
     @Step
