@@ -8,6 +8,7 @@
  */
 package org.eclipse.hawkbit.ui.rollout.window.components;
 
+import com.vaadin.ui.Alignment;
 import com.vaadin.ui.CheckBox;
 import org.eclipse.hawkbit.repository.model.RolloutGroup;
 import org.eclipse.hawkbit.ui.common.builder.BoundComponent;
@@ -164,6 +165,7 @@ public class AdvancedGroupRow {
         layout.addComponent(errorThreshold, 4, index);
         if (isUserConsentEnabled) {
             layout.addComponent(requireConfirmationToggle, 5, index);
+            layout.setComponentAlignment(requireConfirmationToggle, Alignment.MIDDLE_LEFT);
         }
     }
 

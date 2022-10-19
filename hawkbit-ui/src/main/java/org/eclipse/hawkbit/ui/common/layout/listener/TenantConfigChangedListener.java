@@ -57,6 +57,13 @@ public class TenantConfigChangedListener extends TopicEventListener {
         this.onUiScope = onUiScope;
     }
 
+    /**
+     * Get a builder instance to define the {@link TenantConfigChangedListener}
+     * 
+     * @param eventBus
+     *            is required
+     * @return an the empty {@link Builder}
+     */
     public static Builder newBuilder(final UIEventBus eventBus) {
         return new Builder(eventBus);
     }
@@ -108,16 +115,25 @@ public class TenantConfigChangedListener extends TopicEventListener {
             this.eventBus = eventBus;
         }
 
+        /**
+         * To filter for event for a specific tenant.
+         */
         public Builder tenantFilter(final String tenantFilter) {
             this.tenantFilter = tenantFilter;
             return this;
         }
 
+        /**
+         * Set filter for events for specific tenant configuration.
+         */
         public Builder setConfigFilter(final Collection<String> configFilter) {
             this.tenantConfigFilter = configFilter;
             return this;
         }
 
+        /**
+         * Add filter for events for specific tenant configuration.
+         */
         public Builder addConfigFilter(final String configFilter) {
             if (this.tenantConfigFilter == null) {
                 this.tenantConfigFilter = new ArrayList<>();
@@ -126,17 +142,28 @@ public class TenantConfigChangedListener extends TopicEventListener {
             return this;
         }
 
+        /**
+         * Set consumer in case of an event with scope {@link EventScope#APPLICATION}.
+         */
         public Builder applicationEventConsumer(
                 final Consumer<TenantConfigChangedEventPayload> applicationEventConsumer) {
             this.onApplicationScope = applicationEventConsumer;
             return this;
         }
 
+        /**
+         * Set consumer in case of an event with scope {@link EventScope#UI}.
+         */
         public Builder uiEventConsumer(final Consumer<TenantConfigChangedEventPayload> uiEventConsumer) {
             this.onUiScope = uiEventConsumer;
             return this;
         }
 
+        /**
+         * Build the instance based on provided values.
+         * 
+         * @return an instance of {@link TenantConfigChangedListener}
+         */
         public TenantConfigChangedListener build() {
             return new TenantConfigChangedListener(eventBus, tenantFilter,
                     tenantConfigFilter == null ? Collections.emptyList() : tenantConfigFilter, onApplicationScope,
