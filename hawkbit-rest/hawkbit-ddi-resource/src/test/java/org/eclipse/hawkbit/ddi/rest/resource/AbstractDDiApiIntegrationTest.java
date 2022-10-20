@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.hawkbit.ddi.json.model.DdiActionFeedback;
+import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationFeedback;
 import org.eclipse.hawkbit.ddi.json.model.DdiProgress;
 import org.eclipse.hawkbit.ddi.json.model.DdiResult;
 import org.eclipse.hawkbit.ddi.json.model.DdiStatus;
@@ -67,6 +68,10 @@ public abstract class AbstractDDiApiIntegrationTest extends AbstractRestIntegrat
     protected static final String INSTALLED_BASE = CONTROLLER_BASE + "/installedBase/{actionId}";
     protected static final String DEPLOYMENT_FEEDBACK = DEPLOYMENT_BASE + "/feedback";
     protected static final String CANCEL_FEEDBACK = CANCEL_ACTION + "/feedback";
+
+    protected static final String CONFIRMATION_BASE = CONTROLLER_BASE + "/confirmationBase/{actionId}";
+
+    protected static final String CONFIRMNATION_FEEDBACK = CONFIRMATION_BASE + "/feedback";
 
     protected static final int ARTIFACT_SIZE = 5 * 1024;
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -337,5 +342,19 @@ public abstract class AbstractDDiApiIntegrationTest extends AbstractRestIntegrat
         final DdiStatus ddiStatus = new DdiStatus(executionStatus, new DdiResult(finalResult, new DdiProgress(2, 5)), code,
                 messages);
         return objectMapper.writeValueAsString(new DdiActionFeedback(Instant.now().toString(), ddiStatus));
+    }
+
+    protected String getJsonConfirmationFeedback(final DdiConfirmationFeedback.Confirmation confirmation,
+             final Integer code, final List<String> messages) throws JsonProcessingException {
+        return objectMapper.writeValueAsString(new DdiConfirmationFeedback(confirmation, code, messages));
+    }
+
+    protected ResultActions getAndVerifyConfirmationBasePayload(final String controllerId, final MediaType mediaType,
+            final DistributionSet ds, final Artifact artifact, final Artifact artifactSignature, final Long actionId,
+            final Long osModuleId, final String downloadType, final String updateType) throws Exception {
+        final ResultActions resultActions = performGet(CONFIRMATION_BASE, mediaType, status().isOk(),
+                tenantAware.getCurrentTenant(), controllerId, actionId.toString());
+        return verifyBasePayload(resultActions, controllerId, ds, artifact, artifactSignature, actionId, osModuleId,
+                downloadType, updateType);
     }
 }

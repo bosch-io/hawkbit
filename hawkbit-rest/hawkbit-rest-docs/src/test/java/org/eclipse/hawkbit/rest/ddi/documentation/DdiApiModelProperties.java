@@ -137,4 +137,10 @@ final class DdiApiModelProperties {
     static final String UPDATE_MODE = "Optional parameter to specify the update mode that should be applied when updating target attributes. "
             + "Valid values are 'merge', 'replace', and 'remove'. Defaults to 'merge'.";
 
+    static final String TARGET_CONFIRMATION_STATE = "action confirmation state";
+
+    static final String TARGET_CONFIRMATION_CODE = "optional individual confirmation code";
+
+    static final String TARGET_CONFIRMATION_DETAILS = "List of details message information";
+
 }

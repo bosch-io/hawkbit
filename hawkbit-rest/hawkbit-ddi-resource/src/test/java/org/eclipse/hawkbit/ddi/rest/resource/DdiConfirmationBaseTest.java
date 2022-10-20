@@ -1,0 +1,232 @@
+/**
+ * Copyright (c) 2022 Bosch.IO GmbH and others.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
+package org.eclipse.hawkbit.ddi.rest.resource;
+
+import io.qameta.allure.Description;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Story;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
+import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationFeedback;
+import org.eclipse.hawkbit.ddi.rest.api.DdiRestConstants;
+import org.eclipse.hawkbit.repository.event.remote.TargetAssignDistributionSetEvent;
+import org.eclipse.hawkbit.repository.event.remote.TargetPollEvent;
+import org.eclipse.hawkbit.repository.event.remote.entity.ActionCreatedEvent;
+import org.eclipse.hawkbit.repository.event.remote.entity.ActionUpdatedEvent;
+import org.eclipse.hawkbit.repository.event.remote.entity.DistributionSetCreatedEvent;
+import org.eclipse.hawkbit.repository.event.remote.entity.SoftwareModuleCreatedEvent;
+import org.eclipse.hawkbit.repository.event.remote.entity.TargetCreatedEvent;
+import org.eclipse.hawkbit.repository.event.remote.entity.TargetUpdatedEvent;
+import org.eclipse.hawkbit.repository.event.remote.entity.TenantConfigurationCreatedEvent;
+import org.eclipse.hawkbit.repository.model.Action;
+import org.eclipse.hawkbit.repository.model.ActionStatus;
+import org.eclipse.hawkbit.repository.model.Artifact;
+import org.eclipse.hawkbit.repository.model.DistributionSet;
+import org.eclipse.hawkbit.repository.model.Target;
+import org.eclipse.hawkbit.repository.test.matcher.Expect;
+import org.eclipse.hawkbit.repository.test.matcher.ExpectEvents;
+import org.eclipse.hawkbit.rest.util.MockMvcResultPrinter;
+import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.hateoas.MediaTypes;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.ResultActions;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * Test confirmation base from the controller.
+ */
+@Feature("Component Tests - Direct Device Integration API")
+@Story("Confirmation Action Resource")
+public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
+
+    private static final String DEFAULT_CONTROLLER_ID = "4747";
+
+    @Test
+    @Description("Forced deployment to a controller. Checks if the confirmation resource response payload for a given" +
+            " deployment is as expected.")
+    public void deploymentForceAction() throws Exception {
+        enableUserConsentFlow();
+        // Prepare test data
+        final DistributionSet ds = testdataFactory.createDistributionSet("", true);
+        final DistributionSet ds2 = testdataFactory.createDistributionSet("2", true);
+        final Artifact artifact = testdataFactory.createArtifact(RandomUtils.nextBytes(ARTIFACT_SIZE), getOsModule(ds),
+                "test1", ARTIFACT_SIZE);
+        final Artifact artifactSignature = testdataFactory.createArtifact(RandomUtils.nextBytes(ARTIFACT_SIZE),
+                getOsModule(ds), "test1.signature", ARTIFACT_SIZE);
+
+        final Target savedTarget = testdataFactory.createTarget(DdiConfirmationBaseTest.DEFAULT_CONTROLLER_ID);
+        assertThat(deploymentManagement.findActiveActionsByTarget(PAGE, savedTarget.getControllerId())).isEmpty();
+
+
+        final List<Target> targetsAssignedToDs = assignDistributionSet(ds.getId(), savedTarget.getControllerId(),
+                Action.ActionType.FORCED).getAssignedEntity().stream().map(Action::getTarget).collect(Collectors.toList());
+
+        assertThat(deploymentManagement.findActiveActionsByTarget(PAGE, savedTarget.getControllerId())).hasSize(1);
+
+        final Action action = deploymentManagement.findActiveActionsByTarget(PAGE, savedTarget.getControllerId())
+                .getContent().get(0);
+        assertThat(deploymentManagement.countActionsAll()).isEqualTo(1);
+
+        assignDistributionSet(ds2, targetsAssignedToDs).getAssignedEntity();
+        assertThat(deploymentManagement.findActiveActionsByTarget(PAGE, savedTarget.getControllerId())).hasSize(2);
+        assertThat(deploymentManagement.countActionsAll()).isEqualTo(2);
+
+        final Action uaction = deploymentManagement.findActiveActionsByTarget(PAGE, savedTarget.getControllerId())
+                .getContent().get(0);
+        assertThat(uaction.getDistributionSet()).isEqualTo(ds);
+        assertThat(deploymentManagement.findActiveActionsByTarget(PAGE, savedTarget.getControllerId())).hasSize(2);
+
+        // Run test
+        final long current = System.currentTimeMillis();
+        final String expectedConfirmationBaseLink = String.format("/%s/controller/v1/%s/confirmationBase/%d",
+                tenantAware.getCurrentTenant(), DEFAULT_CONTROLLER_ID, uaction.getId());
+
+        performGet(CONTROLLER_BASE, MediaTypes.HAL_JSON, status().isOk(), tenantAware.getCurrentTenant(),
+                DEFAULT_CONTROLLER_ID).andExpect(jsonPath("$.config.polling.sleep", equalTo("00:01:00")))
+                .andExpect(jsonPath("$._links.confirmationBase.href", containsString(expectedConfirmationBaseLink)))
+                .andExpect(jsonPath("$._links.deploymentBase.href").doesNotExist());
+
+        assertThat(targetManagement.getByControllerID(DEFAULT_CONTROLLER_ID).get().getLastTargetQuery())
+                .isGreaterThanOrEqualTo(current);
+        assertThat(targetManagement.getByControllerID(DEFAULT_CONTROLLER_ID).get().getLastTargetQuery())
+                .isLessThanOrEqualTo(System.currentTimeMillis());
+        assertThat(deploymentManagement.countActionStatusAll()).isEqualTo(2);
+
+        final DistributionSet findDistributionSetByAction = distributionSetManagement.getByAction(action.getId()).get();
+
+        getAndVerifyConfirmationBasePayload(DEFAULT_CONTROLLER_ID, MediaType.APPLICATION_JSON, ds, artifact,
+                artifactSignature, action.getId(),
+                findDistributionSetByAction.findFirstModuleByType(osType).get().getId(), "forced", "forced");
+
+        // Retrieved is reported
+        final Iterable<ActionStatus> actionStatusMessages = deploymentManagement
+                .findActionStatusByAction(PageRequest.of(0, 100, Sort.Direction.DESC, "id"), uaction.getId());
+        assertThat(actionStatusMessages).hasSize(2);
+        final ActionStatus actionStatusMessage = actionStatusMessages.iterator().next();
+        assertThat(actionStatusMessage.getStatus()).isEqualTo(Action.Status.RETRIEVED);
+    }
+
+
+    @Test
+    @Description("Ensure that the deployment resource is available as CBOR")
+    public void confirmationResourceCbor() throws Exception {
+        final Target target = testdataFactory.createTarget();
+        final DistributionSet distributionSet = testdataFactory.createDistributionSet("");
+
+        assignDistributionSet(distributionSet.getId(), target.getName());
+        final Action action = deploymentManagement.findActiveActionsByTarget(PAGE, target.getControllerId())
+                .getContent().get(0);
+
+        // get confirmation base
+        performGet(CONFIRMATION_BASE, MediaType.parseMediaType(DdiRestConstants.MEDIA_TYPE_CBOR), status().isOk(),
+                tenantAware.getCurrentTenant(), target.getControllerId(), action.getId().toString());
+
+        final Long softwareModuleId = distributionSet.getModules().stream().findAny().get().getId();
+        testdataFactory.createArtifacts(softwareModuleId);
+        // get artifacts
+        performGet(SOFTWARE_MODULE_ARTIFACTS, MediaType.parseMediaType(DdiRestConstants.MEDIA_TYPE_CBOR),
+                status().isOk(), tenantAware.getCurrentTenant(), target.getControllerId(),
+                String.valueOf(softwareModuleId));
+
+    }
+
+
+    @Test
+    @Description("Controller sends a confirmed action state.")
+    @ExpectEvents({ @Expect(type = TargetCreatedEvent.class, count = 1),
+            @Expect(type = DistributionSetCreatedEvent.class, count = 1),
+            @Expect(type = TargetAssignDistributionSetEvent.class, count = 1),
+            @Expect(type = ActionCreatedEvent.class, count = 1),
+            @Expect(type = ActionUpdatedEvent.class, count = 1),
+            @Expect(type = TargetUpdatedEvent.class, count = 1),
+            @Expect(type = SoftwareModuleCreatedEvent.class, count = 3),
+            @Expect(type = TargetUpdatedEvent.class, count = 1),
+            @Expect(type = TargetPollEvent.class, count = 1),
+            @Expect(type = TenantConfigurationCreatedEvent.class, count = 1)})
+    void sendConfirmedActionStateFeedbackTest() throws Exception {
+        enableUserConsentFlow();
+
+        final DistributionSet ds = testdataFactory.createDistributionSet("");
+        Target savedTarget = testdataFactory.createTarget("988");
+        savedTarget = getFirstAssignedTarget(assignDistributionSet(ds.getId(), savedTarget.getControllerId()));
+        final Action savedAction = deploymentManagement.findActiveActionsByTarget(PAGE, savedTarget.getControllerId())
+                .getContent().get(0);
+
+        sendConfirmationFeedback(savedTarget, savedAction, DdiConfirmationFeedback.Confirmation.CONFIRMED, 10,
+                "Action confirmed message.").andExpect(status().isOk());
+
+        //assert deployment link is exposed to the target
+        final String expectedDeploymentBaseLink = String.format("/%s/controller/v1/%s/deploymentBase/%d",
+                tenantAware.getCurrentTenant(), savedTarget.getControllerId(), savedAction.getId());
+
+        mvc.perform(get(CONTROLLER_BASE, tenantAware.getCurrentTenant(), savedTarget.getControllerId())
+                        .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(jsonPath("$._links.deploymentBase.href", containsString(expectedDeploymentBaseLink)));
+
+    }
+
+    @Test
+    @Description("Controller sends a denied action state.")
+    @ExpectEvents({ @Expect(type = TargetCreatedEvent.class, count = 1),
+            @Expect(type = DistributionSetCreatedEvent.class, count = 1),
+            @Expect(type = TargetAssignDistributionSetEvent.class, count = 1),
+            @Expect(type = ActionCreatedEvent.class, count = 1),
+            @Expect(type = ActionUpdatedEvent.class, count = 0),
+            @Expect(type = TargetUpdatedEvent.class, count = 1),
+            @Expect(type = SoftwareModuleCreatedEvent.class, count = 3),
+            @Expect(type = TargetUpdatedEvent.class, count = 1),
+            @Expect(type = TargetPollEvent.class, count = 1),
+            @Expect(type = TenantConfigurationCreatedEvent.class, count = 1)})
+    void sendDeniedActionStateFeedbackTest() throws Exception {
+        enableUserConsentFlow();
+
+        final DistributionSet ds = testdataFactory.createDistributionSet("");
+        Target savedTarget = testdataFactory.createTarget("988");
+        savedTarget = getFirstAssignedTarget(assignDistributionSet(ds.getId(), savedTarget.getControllerId()));
+        String controllerId = savedTarget.getControllerId();
+        final Action savedAction = deploymentManagement.findActiveActionsByTarget(PAGE, controllerId)
+                .getContent().get(0);
+
+        sendConfirmationFeedback(savedTarget, savedAction, DdiConfirmationFeedback.Confirmation.DENIED, 10,
+                "Action denied message.").andExpect(status().isOk());
+
+        //asserts that deployment link is not available
+        mvc.perform(
+                get(CONTROLLER_BASE, tenantAware.getCurrentTenant(), controllerId).accept(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(jsonPath("$._links.deploymentBase.href").doesNotExist());
+    }
+
+    private ResultActions sendConfirmationFeedback(final Target target, final Action action,
+            final DdiConfirmationFeedback.Confirmation confirmation, Integer code, String message) throws Exception {
+
+        if (message == null) {
+            message = RandomStringUtils.randomAlphanumeric(1000);
+        }
+
+        final String feedback = getJsonConfirmationFeedback(confirmation, code, Collections.singletonList(message));
+        return mvc.perform(
+                post(CONFIRMNATION_FEEDBACK, tenantAware.getCurrentTenant(), target.getControllerId(), action.getId())
+                        .content(feedback).contentType(MediaType.APPLICATION_JSON));
+    }
+
+}
