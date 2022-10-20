@@ -1352,7 +1352,7 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
         if (consentFlowActive) {
             enableUserConsentFlow();
         }
-
+        
         final JSONObject jsonPayload = new JSONObject();
         jsonPayload.put("id", set.getId());
         if (confirmationRequired != null) {
@@ -2049,9 +2049,9 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
         final JSONObject bodyValid = getAssignmentObject(dsId, MgmtActionType.FORCED, 98);
 
         mvc.perform(post("/rest/v1/targets/{targetId}/assignedDS", targetId).content(bodyValid.toString())
-                .contentType(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode", equalTo("hawkbit.server.error.multiassignmentNotEnabled")));
+                    .contentType(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
+              .andExpect(status().isBadRequest())
+              .andExpect(jsonPath("$.errorCode", equalTo("hawkbit.server.error.multiassignmentNotEnabled")));
     }
 
     @Test

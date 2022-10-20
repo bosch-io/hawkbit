@@ -484,10 +484,11 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
                                         .description(MgmtApiModelProperties.ACTION_STATUS_REPORTED_AT).type("String"),
                                 optionalRequestFieldWithPath("content[].code")
                                         .description(MgmtApiModelProperties.ACTION_STATUS_CODE).type("Integer"),
-                                fieldWithPath(
-                                        "content[].type").description(MgmtApiModelProperties.ACTION_STATUS_TYPE)
+                                fieldWithPath("content[].type").description(MgmtApiModelProperties.ACTION_STATUS_TYPE)
                                         .attributes(key("value").value(
-                                                "['finished', 'error', 'warning', 'pending', 'running', 'canceled', 'retrieved', 'canceling']")))));
+                                                "['finished', 'error', 'warning', 'running', 'canceled', 'canceling', " //
+                                                        + "'retrieved', 'download', 'scheduled', 'cancel_rejected', " //
+                                                        + "'downloaded', 'wait_for_confirmation']")))));
     }
 
     @Test
@@ -537,18 +538,20 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
 
         mockMvc.perform(post(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}/"
                 + MgmtRestConstants.TARGET_V1_ASSIGNED_DISTRIBUTION_SET, targetId).content(body)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
                 .andDo(this.document.document(
                         pathParameters(parameterWithName("targetId").description(ApiModelPropertiesGeneric.ITEM_ID)),
                         requestParameters(parameterWithName("offline")
                                 .description(MgmtApiModelProperties.OFFLINE_UPDATE).optional()),
-                        requestFields(
-                                requestFieldWithPath("id").description(ApiModelPropertiesGeneric.ITEM_ID),
+                        requestFields(requestFieldWithPath("id").description(ApiModelPropertiesGeneric.ITEM_ID),
                                 requestFieldWithPathMandatoryInMultiAssignMode("weight")
                                         .description(MgmtApiModelProperties.ASSIGNMENT_WEIGHT)
                                         .type(JsonFieldType.NUMBER).attributes(key("value").value("0 - 1000")),
                                 optionalRequestFieldWithPath("forcetime").description(MgmtApiModelProperties.FORCETIME),
+                                optionalRequestFieldWithPath("[].confirmationRequired")
+                                        .description(MgmtApiModelProperties.ASSIGNMENT_CONFIRMATION_REQUIRED)
+                                        .type(JsonFieldType.BOOLEAN.toString()),
                                 optionalRequestFieldWithPath("maintenanceWindow")
                                         .description(MgmtApiModelProperties.MAINTENANCE_WINDOW),
                                 optionalRequestFieldWithPath("maintenanceWindow.schedule")
@@ -558,7 +561,8 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
                                 optionalRequestFieldWithPath("maintenanceWindow.timezone")
                                         .description(MgmtApiModelProperties.MAINTENANCE_WINDOW_TIMEZONE),
                                 optionalRequestFieldWithPath("type").description(MgmtApiModelProperties.ASSIGNMENT_TYPE)
-                                        .attributes(key("value").value("['soft', 'forced','timeforced', 'downloadonly']"))),
+                                        .attributes(
+                                                key("value").value("['soft', 'forced','timeforced', 'downloadonly']"))),
                         responseFields(getDsAssignmentResponseFieldDescriptors())));
     }
 
@@ -576,7 +580,8 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
                 .put("maintenanceWindow", new JSONObject().put("schedule", getTestSchedule(100))
                         .put("duration", getTestDuration(10)).put("timezone", getTestTimeZone())))
                 .toString();
-        body.put(new JSONObject().put("id", sets.get(0).getId()).put("type", "forced").put("weight", 800));
+        body.put(new JSONObject().put("id", sets.get(0).getId()).put("type", "forced").put("weight", 800)
+                .put("confirmationRequired", true));
 
         enableMultiAssignments();
         mockMvc.perform(post(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}/"
@@ -587,13 +592,15 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
                         pathParameters(parameterWithName("targetId").description(ApiModelPropertiesGeneric.ITEM_ID)),
                         requestParameters(parameterWithName("offline")
                                 .description(MgmtApiModelProperties.OFFLINE_UPDATE).optional()),
-                        requestFields(
-                                requestFieldWithPath("[].id").description(ApiModelPropertiesGeneric.ITEM_ID),
+                        requestFields(requestFieldWithPath("[].id").description(ApiModelPropertiesGeneric.ITEM_ID),
                                 requestFieldWithPathMandatoryInMultiAssignMode("[].weight")
                                         .description(MgmtApiModelProperties.ASSIGNMENT_WEIGHT)
                                         .attributes(key("value").value("0 - 1000")),
                                 optionalRequestFieldWithPath("[].forcetime")
                                         .description(MgmtApiModelProperties.FORCETIME),
+                                optionalRequestFieldWithPath("[].confirmationRequired")
+                                        .description(MgmtApiModelProperties.ASSIGNMENT_CONFIRMATION_REQUIRED)
+                                        .type(JsonFieldType.BOOLEAN.toString()),
                                 optionalRequestFieldWithPath("[].maintenanceWindow")
                                         .description(MgmtApiModelProperties.MAINTENANCE_WINDOW),
                                 optionalRequestFieldWithPath("[].maintenanceWindow.schedule")

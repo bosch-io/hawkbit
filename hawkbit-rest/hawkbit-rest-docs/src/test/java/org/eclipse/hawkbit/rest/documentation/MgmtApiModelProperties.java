@@ -221,6 +221,7 @@ public final class MgmtApiModelProperties {
     public static final String FORCETIME = "Forcetime in milliseconds.";
     public static final String FORCE = "Force as boolean.";
     public static final String ASSIGNMENT_WEIGHT = "Importance of the assignment.";
+    public static final String ASSIGNMENT_CONFIRMATION_REQUIRED = "(Available with user consent flow active) Specifies if the confirmation by the device is required for this action.";
     public static final String ASSIGNMENT_TYPE = "The type of the assignment.";
     public static final String TARGET_ASSIGNED = "The number of targets that have been assigned as part of this operation.";
     public static final String TARGET_ASSIGNED_ALREADY = "The number of targets which already had been the assignment.";

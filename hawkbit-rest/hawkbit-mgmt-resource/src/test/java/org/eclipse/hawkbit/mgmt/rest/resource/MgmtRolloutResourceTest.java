@@ -396,7 +396,7 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
     }
 
     @Test
-    @Description("Confirmation required flag will be read from the Rollout, if specified.")
+    @Description("Confirmation required flag will be read from the tenant config (user consent flow state), if never specified.")
     void verifyRolloutGroupWillUseConfigIfNotProvidedWithRollout() throws Exception {
         enableUserConsentFlow();
 
