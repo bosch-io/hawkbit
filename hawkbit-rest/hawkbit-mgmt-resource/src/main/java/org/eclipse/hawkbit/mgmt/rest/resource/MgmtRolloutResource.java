@@ -16,6 +16,7 @@ import javax.validation.ValidationException;
 import org.eclipse.hawkbit.mgmt.json.model.PagedList;
 import org.eclipse.hawkbit.mgmt.json.model.rollout.MgmtRolloutResponseBody;
 import org.eclipse.hawkbit.mgmt.json.model.rollout.MgmtRolloutRestRequestBody;
+import org.eclipse.hawkbit.mgmt.json.model.rolloutgroup.MgmtRolloutGroup;
 import org.eclipse.hawkbit.mgmt.json.model.rolloutgroup.MgmtRolloutGroupResponseBody;
 import org.eclipse.hawkbit.mgmt.json.model.target.MgmtTarget;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants;
@@ -132,9 +133,8 @@ public class MgmtRolloutResource implements MgmtRolloutRestApi {
         if (rolloutRequestBody.getGroups() != null) {
             final List<RolloutGroupCreate> rolloutGroups = rolloutRequestBody.getGroups().stream()
                     .map(mgmtRolloutGroup -> {
-                        final boolean confirmationRequired = mgmtRolloutGroup.isConfirmationRequired() == null
-                                ? tenantConfigHelper.isUserConsentEnabled()
-                                : mgmtRolloutGroup.isConfirmationRequired();
+                        final boolean confirmationRequired = isConfirmationRequiredForGroup(mgmtRolloutGroup,
+                                rolloutRequestBody);
                         return MgmtRolloutMapper.fromRequest(entityFactory, mgmtRolloutGroup)
                                 .confirmationRequired(confirmationRequired);
                     }).collect(Collectors.toList());
@@ -152,6 +152,16 @@ public class MgmtRolloutResource implements MgmtRolloutRestApi {
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(MgmtRolloutMapper.toResponseRollout(rollout, true));
+    }
+    
+    private boolean isConfirmationRequiredForGroup(final MgmtRolloutGroup group,
+            final MgmtRolloutRestRequestBody request) {
+        if (group.isConfirmationRequired() != null) {
+            return group.isConfirmationRequired();
+        } else if (request.isConfirmationRequired() != null) {
+            return request.isConfirmationRequired();
+        }
+        return tenantConfigHelper.isUserConsentEnabled();
     }
 
     @Override
