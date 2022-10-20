@@ -499,6 +499,8 @@ public interface DeploymentManagement {
      *
      * @param rolloutId
      *            the rollout the actions belong to
+     * @param distributionSetId
+     *            to assign
      * @param rolloutGroupParentId
      *            the parent rollout group the actions should reference. null
      *            references the first group

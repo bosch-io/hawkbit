@@ -1,0 +1,1 @@
+ALTER TABLE sp_rolloutgroup ADD confirmation_required BIT DEFAULT 0;

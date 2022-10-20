@@ -1141,7 +1141,14 @@ public class TestdataFactory {
             final int groupSize, final String filterQuery, final DistributionSet distributionSet,
             final String successCondition, final String errorCondition) {
         return createRolloutByVariables(rolloutName, rolloutDescription, groupSize, filterQuery, distributionSet,
-                successCondition, errorCondition, Action.ActionType.FORCED, null);
+                successCondition, errorCondition, Action.ActionType.FORCED, null, false);
+    }
+
+    public Rollout createRolloutByVariables(final String rolloutName, final String rolloutDescription,
+            final int groupSize, final String filterQuery, final DistributionSet distributionSet,
+            final String successCondition, final String errorCondition, final boolean confirmationRequired) {
+        return createRolloutByVariables(rolloutName, rolloutDescription, groupSize, filterQuery, distributionSet,
+                successCondition, errorCondition, Action.ActionType.FORCED, null, confirmationRequired);
     }
 
     /**
@@ -1165,12 +1172,15 @@ public class TestdataFactory {
      *            the type of the Rollout
      * @param weight
      *            weight of the Rollout
+     * @param confirmationRequired
+     *            if the confirmation is required (considered with user consent flow
+     *            active)
      * @return created {@link Rollout}
      */
     public Rollout createRolloutByVariables(final String rolloutName, final String rolloutDescription,
             final int groupSize, final String filterQuery, final DistributionSet distributionSet,
             final String successCondition, final String errorCondition, final Action.ActionType actionType,
-            final Integer weight) {
+            final Integer weight, final boolean confirmationRequired) {
         final RolloutGroupConditions conditions = new RolloutGroupConditionBuilder().withDefaults()
                 .successCondition(RolloutGroupSuccessCondition.THRESHOLD, successCondition)
                 .errorCondition(RolloutGroupErrorCondition.THRESHOLD, errorCondition)
@@ -1179,7 +1189,7 @@ public class TestdataFactory {
         final Rollout rollout = rolloutManagement.create(
                 entityFactory.rollout().create().name(rolloutName).description(rolloutDescription)
                         .targetFilterQuery(filterQuery).set(distributionSet).actionType(actionType).weight(weight),
-                groupSize, conditions);
+                groupSize, confirmationRequired, conditions);
 
         // Run here, because Scheduler is disabled during tests
         rolloutManagement.handleRollouts();
