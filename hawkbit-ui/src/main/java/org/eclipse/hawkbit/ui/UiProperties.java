@@ -259,6 +259,10 @@ public class UiProperties implements Serializable {
              */
             private String userConsentAndConfirmationGuide = "";
 
+            public String getAutoConfirmationView() {
+                return autoConfirmationView;
+            }
+
             /**
              * Link to documentation of system configuration view.
              */
@@ -283,6 +287,11 @@ public class UiProperties implements Serializable {
              * Link to documentation of rollout view.
              */
             private String rolloutView = "";
+
+            /**
+             * Link to documentation of auto confirmation view.
+             */
+            private String autoConfirmationView = "";
 
             /**
              * Link to documentation of state machine

@@ -26,6 +26,7 @@ import org.eclipse.hawkbit.repository.exception.EntityAlreadyExistsException;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
 import org.eclipse.hawkbit.repository.exception.RSQLParameterSyntaxException;
 import org.eclipse.hawkbit.repository.exception.RSQLParameterUnsupportedFieldException;
+import org.eclipse.hawkbit.repository.model.AutoConfirmationStatus;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.MetaData;
@@ -39,6 +40,7 @@ import org.eclipse.hawkbit.repository.model.TargetTagAssignmentResult;
 import org.eclipse.hawkbit.repository.model.TargetType;
 import org.eclipse.hawkbit.repository.model.TargetTypeAssignmentResult;
 import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
+import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -893,5 +895,29 @@ public interface TargetManagement {
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_UPDATE_REPOSITORY)
     TargetMetadata updateMetadata(@NotEmpty String controllerId, @NotNull MetaData metadata);
+
+    /**
+     * Activate auto confirmation for a given controller ID. In case auto
+     * confirmation is active already, this method will fail with an exception.
+     *
+     * @param controllerId
+     *            to activate the feature for
+     * @param initiator
+     *            who initiated this operation. If 'null' we will take the current
+     *            user from {@link TenantAware#getCurrentUsername()}
+     * @param remark
+     *            optional field to set a remark
+     * @return the persisted {@link AutoConfirmationStatus}
+     */
+    AutoConfirmationStatus activeAutoConfirmation(@NotEmpty String controllerId, final String initiator,
+            final String remark);
+
+    /**
+     * Disable auto conformation for a specific controller id
+     * 
+     * @param controllerId
+     *            to disable auto confirmation for
+     */
+    void disableAutoConfirmation(@NotEmpty String controllerId);
 
 }

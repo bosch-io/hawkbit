@@ -21,6 +21,7 @@ import org.eclipse.hawkbit.repository.TargetTagManagement;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.repository.TenantConfigurationManagement;
 import org.eclipse.hawkbit.security.SystemSecurityContext;
+import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.ui.UiProperties;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyDistributionSet;
@@ -51,6 +52,7 @@ import org.eclipse.hawkbit.ui.management.bulkupload.BulkUploadWindowBuilder;
 import org.eclipse.hawkbit.ui.management.bulkupload.TargetBulkUploadUiState;
 import org.eclipse.hawkbit.ui.management.dstable.DistributionGridLayoutUiState;
 import org.eclipse.hawkbit.ui.management.targettag.filter.TargetTagFilterLayoutUiState;
+import org.eclipse.hawkbit.utils.TenantConfigHelper;
 
 /**
  * Target table layout.
@@ -119,7 +121,7 @@ public class TargetGridLayout extends AbstractGridComponentLayout {
             final TargetTagFilterLayoutUiState targetTagFilterLayoutUiState,
             final TargetGridLayoutUiState targetGridLayoutUiState,
             final TargetBulkUploadUiState targetBulkUploadUiState,
-            final DistributionGridLayoutUiState distributionGridLayoutUiState) {
+            final DistributionGridLayoutUiState distributionGridLayoutUiState, final TenantAware tenantAware) {
         final TargetWindowBuilder targetWindowBuilder = new TargetWindowBuilder(uiDependencies, targetManagement,
                 targetTypeManagement, EventView.DEPLOYMENT);
         final TargetMetaDataWindowBuilder targetMetaDataWindowBuilder = new TargetMetaDataWindowBuilder(uiDependencies,
@@ -139,7 +141,8 @@ public class TargetGridLayout extends AbstractGridComponentLayout {
         this.targetDetailsHeader = new TargetDetailsHeader(uiDependencies, targetWindowBuilder,
                 targetMetaDataWindowBuilder);
         this.targetDetails = new TargetDetails(uiDependencies, targetTagManagement, targetManagement,
-                deploymentManagement, targetMetaDataWindowBuilder);
+                deploymentManagement, targetMetaDataWindowBuilder,
+                TenantConfigHelper.usingContext(systemSecurityContext, configManagement), uiProperties, tenantAware);
 
         this.countMessageLabel = new TargetCountMessageLabel(uiDependencies.getI18n(),
                 uiDependencies.getUiNotification(), targetManagement, targetGrid.getFilterSupport());
@@ -265,6 +268,7 @@ public class TargetGridLayout extends AbstractGridComponentLayout {
         targetGrid.getSelectionSupport().reselectCurrentEntity();
         countMessageLabel.updateTotalAndFilteredCount();
         countMessageLabel.updatePinningDetails();
+        targetDetails.alignWithConsentFlowState();
     }
 
     @Override

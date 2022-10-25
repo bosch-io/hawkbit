@@ -40,12 +40,14 @@ import org.eclipse.hawkbit.repository.builder.TargetUpdate;
 import org.eclipse.hawkbit.repository.event.remote.TargetAttributesRequestedEvent;
 import org.eclipse.hawkbit.repository.event.remote.TargetDeletedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.TargetUpdatedEvent;
+import org.eclipse.hawkbit.repository.exception.AutoConfirmationAlreadyActiveException;
 import org.eclipse.hawkbit.repository.exception.EntityAlreadyExistsException;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaTargetCreate;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaTargetUpdate;
 import org.eclipse.hawkbit.repository.jpa.configuration.Constants;
 import org.eclipse.hawkbit.repository.jpa.executor.AfterTransactionCommitExecutor;
+import org.eclipse.hawkbit.repository.jpa.model.JpaAutoConfirmationStatus;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTarget;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetMetadata;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetMetadata_;
@@ -57,6 +59,7 @@ import org.eclipse.hawkbit.repository.jpa.rsql.RSQLUtility;
 import org.eclipse.hawkbit.repository.jpa.specifications.SpecificationsBuilder;
 import org.eclipse.hawkbit.repository.jpa.specifications.TargetSpecifications;
 import org.eclipse.hawkbit.repository.jpa.utils.QuotaHelper;
+import org.eclipse.hawkbit.repository.model.AutoConfirmationStatus;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.MetaData;
@@ -234,6 +237,26 @@ public class JpaTargetManagement implements TargetManagement {
         eventPublisherHolder.getEventPublisher()
                 .publishEvent(new TargetUpdatedEvent(target, eventPublisherHolder.getApplicationId()));
         return metadata;
+    }
+
+    @Override
+    public AutoConfirmationStatus activeAutoConfirmation(final String controllerId, final String initiator,
+            final String remark) {
+        final JpaTarget target = getByControllerIdAndThrowIfNotFound(controllerId);
+        if (target.getAutoConfirmationStatus() != null) {
+            throw new AutoConfirmationAlreadyActiveException(controllerId);
+        }
+        final String currentUser = StringUtils.isEmpty(initiator) ? tenantAware.getCurrentUsername() : initiator;
+        final JpaAutoConfirmationStatus confirmationStatus = new JpaAutoConfirmationStatus(currentUser, remark, target);
+        target.setAutoConfirmationStatus(confirmationStatus);
+        return targetRepository.save(target).getAutoConfirmationStatus();
+    }
+
+    @Override
+    public void disableAutoConfirmation(String controllerId) {
+        final JpaTarget target = getByControllerIdAndThrowIfNotFound(controllerId);
+        target.setAutoConfirmationStatus(null);
+        targetRepository.save(target);
     }
 
     @Override
