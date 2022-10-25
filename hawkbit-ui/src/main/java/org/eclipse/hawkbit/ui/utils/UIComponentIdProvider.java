@@ -1009,6 +1009,8 @@ public final class UIComponentIdProvider {
      */
     public static final String TARGET_FILTER_TABLE_TYPE_LABEL_ID = "target.query.filter.table.typeId";
 
+    public static final String TARGET_FILTER_TABLE_CONFIRMATION_LABEL_ID = "target.query.filter.table.confirmationId";
+
     /**
      * create or update target filter query - name label id.
      */
