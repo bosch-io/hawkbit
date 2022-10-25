@@ -112,6 +112,7 @@ public final class UIMessageIdProvider {
     public static final String LABEL_AUTO_ASSIGNMENT_DESC = "label.auto.assign.description";
 
     public static final String LABEL_AUTO_ASSIGNMENT_ENABLE = "label.auto.assign.enable";
+
     public static final String LABEL_AUTO_ASSIGNMENT_CONFIRMATION_REQUIRED = "label.auto.assign.confirmation.required";
 
     public static final String LABEL_INVALIDATE_DS_STOP_ROLLOUTS = "label.invalidate.distributionset.stop.rollouts";
@@ -137,6 +138,7 @@ public final class UIMessageIdProvider {
     public static final String MESSAGE_CONFIRM_AUTO_ASSIGN_CONSEQUENCES_TEXT = "message.confirm.assign.consequences.text";
 
     public static final String MESSAGE_CONFIRM_AUTO_ASSIGN_CONSEQUENCES_CONF_HINT = "message.confirm.assign.consequences.confirmation.hint";
+
     public static final String MESSAGE_CONFIRM_ASSIGN_MULTIPLE_ENTITIES_TO_ENTITY = "message.confirm.assign.multiple.entities.to.entity";
 
     public static final String MESSAGE_CONFIRM_DELETE_ENTITY = "message.confirm.delete.entity";
@@ -284,6 +286,7 @@ public final class UIMessageIdProvider {
     public static final String TOOLTIP_TARGET_FILTER_CONFIRMATION_REQUIRED = "tooltip.target.filter.confirmation.required";
 
     public static final String TOOLTIP_TARGET_FILTER_CONFIRMATION_NOT_REQUIRED = "tooltip.target.filter.confirmation.not.required";
+
     public static final String TOOLTIP_TARGET_FILTER_CONFIRMATION_NOT_CONFIGURED = "tooltip.target.filter.confirmation.not.configured";
 
     public static final String TOOLTIP_DELETE_CUSTOM_FILTER = "tooltip.delete.custom.filter";
