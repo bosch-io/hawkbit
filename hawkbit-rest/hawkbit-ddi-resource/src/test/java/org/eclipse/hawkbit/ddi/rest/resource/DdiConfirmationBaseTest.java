@@ -44,8 +44,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.eclipse.hawkbit.ddi.rest.resource.DdiRootController.DEVICE_REPORTED_CONFIRMATION_CODE;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -104,6 +106,7 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
                 DEFAULT_CONTROLLER_ID).andExpect(jsonPath("$.config.polling.sleep", equalTo("00:01:00")))
                 .andExpect(jsonPath("$._links.confirmationBase.href", containsString(expectedConfirmationBaseLink)))
                 .andExpect(jsonPath("$._links.deploymentBase.href").doesNotExist());
+
 
         assertThat(targetManagement.getByControllerID(DEFAULT_CONTROLLER_ID).get().getLastTargetQuery())
                 .isGreaterThanOrEqualTo(current);
@@ -168,7 +171,10 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
         final DistributionSet ds = testdataFactory.createDistributionSet("");
         Target savedTarget = testdataFactory.createTarget("988");
         savedTarget = getFirstAssignedTarget(assignDistributionSet(ds.getId(), savedTarget.getControllerId()));
-        final Action savedAction = deploymentManagement.findActiveActionsByTarget(PAGE, savedTarget.getControllerId())
+
+        String controllerId = savedTarget.getControllerId();
+
+        final Action savedAction = deploymentManagement.findActiveActionsByTarget(PAGE, controllerId)
                 .getContent().get(0);
 
         sendConfirmationFeedback(savedTarget, savedAction, DdiConfirmationFeedback.Confirmation.CONFIRMED, 10,
@@ -176,9 +182,9 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
 
         //assert deployment link is exposed to the target
         final String expectedDeploymentBaseLink = String.format("/%s/controller/v1/%s/deploymentBase/%d",
-                tenantAware.getCurrentTenant(), savedTarget.getControllerId(), savedAction.getId());
+                tenantAware.getCurrentTenant(), controllerId, savedAction.getId());
 
-        mvc.perform(get(CONTROLLER_BASE, tenantAware.getCurrentTenant(), savedTarget.getControllerId())
+        mvc.perform(get(CONTROLLER_BASE, tenantAware.getCurrentTenant(), controllerId)
                         .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
                 .andExpect(jsonPath("$._links.deploymentBase.href", containsString(expectedDeploymentBaseLink)));
 
@@ -190,7 +196,6 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
             @Expect(type = DistributionSetCreatedEvent.class, count = 1),
             @Expect(type = TargetAssignDistributionSetEvent.class, count = 1),
             @Expect(type = ActionCreatedEvent.class, count = 1),
-            @Expect(type = ActionUpdatedEvent.class, count = 0),
             @Expect(type = TargetUpdatedEvent.class, count = 1),
             @Expect(type = SoftwareModuleCreatedEvent.class, count = 3),
             @Expect(type = TargetUpdatedEvent.class, count = 1),
@@ -200,7 +205,7 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
         enableUserConsentFlow();
 
         final DistributionSet ds = testdataFactory.createDistributionSet("");
-        Target savedTarget = testdataFactory.createTarget("988");
+        Target savedTarget = testdataFactory.createTarget("989");
         savedTarget = getFirstAssignedTarget(assignDistributionSet(ds.getId(), savedTarget.getControllerId()));
         String controllerId = savedTarget.getControllerId();
         final Action savedAction = deploymentManagement.findActiveActionsByTarget(PAGE, controllerId)
@@ -227,6 +232,41 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
         return mvc.perform(
                 post(CONFIRMNATION_FEEDBACK, tenantAware.getCurrentTenant(), target.getControllerId(), action.getId())
                         .content(feedback).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @Description("Test to verify that only a specific count of messages are returned based on the input actionHistory for getControllerDeploymentActionFeedback endpoint.")
+    @ExpectEvents({ @Expect(type = TargetCreatedEvent.class, count = 1),
+            @Expect(type = DistributionSetCreatedEvent.class, count = 1),
+            @Expect(type = TargetAssignDistributionSetEvent.class, count = 1),
+            @Expect(type = ActionCreatedEvent.class, count = 1), @Expect(type = ActionUpdatedEvent.class, count = 2),
+            @Expect(type = TargetUpdatedEvent.class, count = 1),
+            @Expect(type = SoftwareModuleCreatedEvent.class, count = 3),
+            @Expect(type = TenantConfigurationCreatedEvent.class, count = 1)})
+    void testActionHistoryCount() throws Exception {
+        enableUserConsentFlow();
+
+        final DistributionSet ds = testdataFactory.createDistributionSet("");
+        Target savedTarget = testdataFactory.createTarget("990");
+        savedTarget = getFirstAssignedTarget(assignDistributionSet(ds.getId(), savedTarget.getControllerId()));
+
+        String controllerId = savedTarget.getControllerId();
+
+        final Action savedAction = deploymentManagement.findActiveActionsByTarget(PAGE, controllerId)
+                .getContent().get(0);
+        final String CONFIRMED_MESSAGE = "Action confirmed message.";
+        final Integer CONFIRMED_CODE = 10;
+        sendConfirmationFeedback(savedTarget, savedAction, DdiConfirmationFeedback.Confirmation.CONFIRMED,
+                CONFIRMED_CODE, CONFIRMED_MESSAGE).andExpect(status().isOk());
+
+
+        //assert confirmed message
+        mvc.perform(get(CONFIRMATION_BASE + "?actionHistory=2", tenantAware.getCurrentTenant(), savedTarget.getControllerId(),
+                        savedAction.getId()).contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(jsonPath("$.actionHistory.messages", hasItem(containsString(CONFIRMED_MESSAGE))))
+                .andExpect(jsonPath("$.actionHistory.messages",
+                        hasItem(containsString(String.format(DEVICE_REPORTED_CONFIRMATION_CODE,CONFIRMED_CODE)))));
     }
 
 }

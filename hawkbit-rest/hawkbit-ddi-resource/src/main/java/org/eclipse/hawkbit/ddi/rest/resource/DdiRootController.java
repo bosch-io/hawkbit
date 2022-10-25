@@ -94,6 +94,8 @@ public class DdiRootController implements DdiRootControllerRestApi {
     private static final Logger LOG = LoggerFactory.getLogger(DdiRootController.class);
     private static final String GIVEN_ACTION_IS_NOT_ASSIGNED_TO_GIVEN_TARGET = "given action ({}) is not assigned to given target ({}).";
 
+    protected static final String DEVICE_REPORTED_CONFIRMATION_CODE = "Device reported confirmation code: %d";
+
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
@@ -700,7 +702,7 @@ public class DdiRootController implements DdiRootControllerRestApi {
         final Integer code = feedback.getCode();
         if (code != null) {
             actionStatusCreate.code(code);
-            messages.add("Device reported confirmation code: " + code);
+            messages.add(String.format(DEVICE_REPORTED_CONFIRMATION_CODE, code));
         }
 
         final Status status;
