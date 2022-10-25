@@ -38,6 +38,7 @@ import org.eclipse.hawkbit.repository.DeploymentManagement;
 import org.eclipse.hawkbit.repository.EntityFactory;
 import org.eclipse.hawkbit.repository.OffsetBasedPageRequest;
 import org.eclipse.hawkbit.repository.TargetManagement;
+import org.eclipse.hawkbit.repository.TenantConfigurationManagement;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
 import org.eclipse.hawkbit.repository.model.Action;
 import org.eclipse.hawkbit.repository.model.ActionStatus;
@@ -45,6 +46,8 @@ import org.eclipse.hawkbit.repository.model.DeploymentRequest;
 import org.eclipse.hawkbit.repository.model.DistributionSetAssignmentResult;
 import org.eclipse.hawkbit.repository.model.Target;
 import org.eclipse.hawkbit.repository.model.TargetMetadata;
+import org.eclipse.hawkbit.security.SystemSecurityContext;
+import org.eclipse.hawkbit.utils.TenantConfigHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -72,12 +75,16 @@ public class MgmtTargetResource implements MgmtTargetRestApi {
     private final DeploymentManagement deploymentManagement;
 
     private final EntityFactory entityFactory;
+    
+    private final TenantConfigHelper tenantConfigHelper;
 
     MgmtTargetResource(final TargetManagement targetManagement, final DeploymentManagement deploymentManagement,
-            final EntityFactory entityFactory) {
+            final EntityFactory entityFactory, final SystemSecurityContext systemSecurityContext,
+            final TenantConfigurationManagement tenantConfigurationManagement) {
         this.targetManagement = targetManagement;
         this.deploymentManagement = deploymentManagement;
         this.entityFactory = entityFactory;
+        this.tenantConfigHelper = TenantConfigHelper.usingContext(systemSecurityContext, tenantConfigurationManagement);
     }
 
     @Override
@@ -309,9 +316,13 @@ public class MgmtTargetResource implements MgmtTargetRestApi {
         }
         findTargetWithExceptionIfNotFound(targetId);
 
-        final List<DeploymentRequest> deploymentRequests = dsAssignments.stream()
-                .map(dsAssignment -> MgmtDeploymentRequestMapper.createAssignmentRequest(dsAssignment, targetId))
-                .collect(Collectors.toList());
+        final List<DeploymentRequest> deploymentRequests = dsAssignments.stream().map(dsAssignment -> {
+            final boolean isConfirmationRequired = dsAssignment.isConfirmationRequired() == null
+                    ? tenantConfigHelper.isUserConsentEnabled()
+                    : dsAssignment.isConfirmationRequired();
+            return MgmtDeploymentRequestMapper.createAssignmentRequestBuilder(dsAssignment, targetId)
+                    .setConfirmationRequired(isConfirmationRequired).build();
+        }).collect(Collectors.toList());
 
         final List<DistributionSetAssignmentResult> assignmentResults = deploymentManagement
                 .assignDistributionSets(deploymentRequests);
