@@ -52,6 +52,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
@@ -208,7 +209,7 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
         final RolloutGroupConditions rolloutGroupConditions = new RolloutGroupConditionBuilder().withDefaults().build();
 
         mvc.perform(post("/rest/v1/rollouts")
-                .content(JsonBuilder.rollout("rollout2", "desc", null, dsA.getId(), "id==ro-target*",
+                .content(JsonBuilder.rolloutWithGroups("rollout2", "desc", null, dsA.getId(), "id==ro-target*",
                         rolloutGroupConditions, rolloutGroups))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated()).andReturn();
@@ -238,7 +239,7 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
         final RolloutGroupConditions rolloutGroupConditions = new RolloutGroupConditionBuilder().withDefaults().build();
 
         mvc.perform(post("/rest/v1/rollouts")
-                .content(JsonBuilder.rollout("rollout4", "desc", null, dsA.getId(), "id==ro-target*",
+                .content(JsonBuilder.rolloutWithGroups("rollout4", "desc", null, dsA.getId(), "id==ro-target*",
                         rolloutGroupConditions, rolloutGroups))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isBadRequest())
@@ -269,7 +270,7 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
         final RolloutGroupConditions rolloutGroupConditions = new RolloutGroupConditionBuilder().withDefaults().build();
 
         mvc.perform(post("/rest/v1/rollouts")
-                .content(JsonBuilder.rollout("rollout4", "desc", null, dsA.getId(), "id==ro-target*",
+                .content(JsonBuilder.rolloutWithGroups("rollout4", "desc", null, dsA.getId(), "id==ro-target*",
                         rolloutGroupConditions, rolloutGroups))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isBadRequest())
@@ -296,15 +297,143 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
 
         // create rollout including the created targets with prefix 'rollout'
         final Rollout rollout = rolloutManagement.create(
-                entityFactory.rollout().create().name("rollout1").set(dsA.getId())
-                        .targetFilterQuery("controllerId==rollout*"),
-                4, false, new RolloutGroupConditionBuilder().withDefaults()
-                        .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
+              entityFactory.rollout().create().name("rollout1").set(dsA.getId())
+                    .targetFilterQuery("controllerId==rollout*"),
+              4, false, new RolloutGroupConditionBuilder().withDefaults()
+                    .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
 
         retrieveAndVerifyRolloutInCreating(dsA, rollout);
         retrieveAndVerifyRolloutInReady(rollout);
         retrieveAndVerifyRolloutInStarting(rollout);
         retrieveAndVerifyRolloutInRunning(rollout);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @Description("Verify the confirmation required flag is not part of the rollout parent entity")
+    void verifyConfirmationFlagIsNeverPartOfRolloutEntity(final boolean userConsentFlowActive) throws Exception {
+        testdataFactory.createTargets(20, "rollout", "rollout");
+        final DistributionSet dsA = testdataFactory.createDistributionSet("");
+
+        if (userConsentFlowActive) {
+            enableUserConsentFlow();
+        }
+
+        // create rollout including the created targets with prefix 'rollout'
+        final Rollout rollout = rolloutManagement.create(
+                entityFactory.rollout().create().name("rollout1").set(dsA.getId())
+                        .targetFilterQuery("controllerId==rollout*"),
+                4, false, new RolloutGroupConditionBuilder().withDefaults()
+                        .successCondition(RolloutGroupSuccessCondition.THRESHOLD, "100").build());
+
+        mvc.perform(get("/rest/v1/rollouts/" + rollout.getId()).accept(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.id", equalTo(rollout.getId().intValue())))
+                .andExpect(jsonPath("$.confirmationRequired").doesNotExist());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @Description("Verify the confirmation required flag will be set based on the feature state")
+    void verifyConfirmationStateIfNotProvided(final boolean userConsentFlowActive) throws Exception {
+        if (userConsentFlowActive) {
+            enableUserConsentFlow();
+        }
+
+        testdataFactory.createTargets(20, "target", "rollout");
+
+        final DistributionSet dsA = testdataFactory.createDistributionSet("");
+        postRollout("rollout1", 5, dsA.getId(), "id==target*", 20, Action.ActionType.FORCED);
+
+        final List<Rollout> content = rolloutManagement.findAll(PAGE, false).getContent();
+        assertThat(content).hasSizeGreaterThan(0).allSatisfy(rollout -> {
+            assertThat(rolloutGroupManagement.findByRollout(PAGE, rollout.getId()))
+                .describedAs("Confirmation required flag depends on feature active.")
+                  .allMatch(group -> group.isConfirmationRequired() == userConsentFlowActive);
+        });
+    }
+
+    @Test
+    @Description("Confirmation required flag will be read from the Rollout, if specified.")
+    void verifyRolloutGroupWillUseRolloutPropertyFirst() throws Exception {
+        enableUserConsentFlow();
+
+        final DistributionSet dsA = testdataFactory.createDistributionSet("ro");
+
+        final int amountTargets = 10;
+        testdataFactory.createTargets(amountTargets, "ro-target", "rollout");
+
+        final float percentTargetsInGroup1 = 20;
+        final float percentTargetsInGroup2 = 100;
+
+        final RolloutGroupConditions rolloutGroupConditions = new RolloutGroupConditionBuilder().withDefaults().build();
+
+        final List<String> rolloutGroups = Arrays.asList(
+                JsonBuilder.rolloutGroup("Group1", "Group1desc", null, percentTargetsInGroup1, true,
+                        rolloutGroupConditions),
+                JsonBuilder.rolloutGroup("Group2", "Group1desc", null, percentTargetsInGroup2, null,
+                        rolloutGroupConditions));
+
+        mvc.perform(post("/rest/v1/rollouts")
+                .content(JsonBuilder.rollout("rollout2", "desc", null, dsA.getId(), "id==ro-target*",
+                        rolloutGroupConditions, rolloutGroups, null, null, false))
+                .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated()).andReturn();
+
+        final List<Rollout> content = rolloutManagement.findAll(PAGE, false).getContent();
+        assertThat(content).hasSize(1).allSatisfy(rollout -> {
+            final List<RolloutGroup> groups = rolloutGroupManagement.findByRollout(PAGE, rollout.getId()).getContent();
+            assertThat(groups).hasSize(2).allMatch(group -> {
+                if (group.getName().equals("Group1")) {
+                    return group.isConfirmationRequired();
+                } else if (group.getName().equals("Group2")) {
+                    return !group.isConfirmationRequired();
+                }
+                return false;
+            });
+        });
+    }
+
+    @Test
+    @Description("Confirmation required flag will be read from the tenant config (user consent flow state), if never specified.")
+    void verifyRolloutGroupWillUseConfigIfNotProvidedWithRollout() throws Exception {
+        enableUserConsentFlow();
+
+        final DistributionSet dsA = testdataFactory.createDistributionSet("ro");
+
+        final int amountTargets = 10;
+        testdataFactory.createTargets(amountTargets, "ro-target", "rollout");
+
+        final float percentTargetsInGroup1 = 20;
+        final float percentTargetsInGroup2 = 100;
+        
+        final RolloutGroupConditions rolloutGroupConditions = new RolloutGroupConditionBuilder().withDefaults().build();
+
+        final List<String> rolloutGroups = Arrays.asList(
+              JsonBuilder.rolloutGroup("Group1", "Group1desc", null, percentTargetsInGroup1, false,
+                    rolloutGroupConditions),
+              JsonBuilder.rolloutGroup("Group2", "Group1desc", null, percentTargetsInGroup2, null,
+                    rolloutGroupConditions));
+
+        mvc.perform(post("/rest/v1/rollouts")
+                    .content(JsonBuilder.rollout("rollout2", "desc", null, dsA.getId(), "id==ro-target*",
+                          rolloutGroupConditions, rolloutGroups, null, null, null))
+                    .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
+              .andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated()).andReturn();
+
+        final List<Rollout> content = rolloutManagement.findAll(PAGE, false).getContent();
+        assertThat(content).hasSize(1).allSatisfy(rollout -> {
+            final List<RolloutGroup> groups = rolloutGroupManagement.findByRollout(PAGE, rollout.getId()).getContent();
+            assertThat(groups).hasSize(2).allMatch(group -> {
+                if (group.getName().equals("Group1")) {
+                    return !group.isConfirmationRequired();
+                } else if (group.getName().equals("Group2")) {
+                    return group.isConfirmationRequired();
+                }
+                return false;
+            });
+        });
     }
 
     @Step
@@ -1017,9 +1146,9 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
         final int weight = 66;
 
         final String invalideWeightRequest = JsonBuilder.rollout("withWeight", "d", 2, dsId, "id==rollout*",
-                new RolloutGroupConditionBuilder().withDefaults().build(), null, null, Action.WEIGHT_MIN - 1);
+                new RolloutGroupConditionBuilder().withDefaults().build(), null, null, Action.WEIGHT_MIN - 1, null);
         final String valideWeightRequest = JsonBuilder.rollout("withWeight", "d", 2, dsId, "id==rollout*",
-                new RolloutGroupConditionBuilder().withDefaults().build(), null, null, weight);
+                new RolloutGroupConditionBuilder().withDefaults().build(), null, null, weight, null);
 
         mvc.perform(post("/rest/v1/rollouts").content(valideWeightRequest).contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
@@ -1043,7 +1172,7 @@ class MgmtRolloutResourceTest extends AbstractManagementApiIntegrationTest {
             final String targetFilterQuery, final int targets, final Action.ActionType type) throws Exception {
         final String actionType = MgmtRestModelMapper.convertActionType(type).getName();
         final String rollout = JsonBuilder.rollout(name, "desc", groupSize, distributionSetId, targetFilterQuery,
-                new RolloutGroupConditionBuilder().withDefaults().build(), null, actionType, null);
+                new RolloutGroupConditionBuilder().withDefaults().build(), null, actionType, null, null);
 
         mvc.perform(post("/rest/v1/rollouts").content(rollout).contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isCreated())

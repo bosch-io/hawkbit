@@ -30,9 +30,6 @@ public class MgmtRolloutGroupResponseBody extends MgmtRolloutGroup {
     @JsonProperty(required = true)
     private String status;
 
-    @JsonProperty(required = false)
-    private Boolean confirmationRequired;
-
     private int totalTargets;
 
     private Map<String, Long> totalTargetsPerStatus;
@@ -73,11 +70,4 @@ public class MgmtRolloutGroupResponseBody extends MgmtRolloutGroup {
         totalTargetsPerStatus.put(status, totalTargetCountByStatus);
     }
 
-    public Boolean getConfirmationRequired() {
-        return confirmationRequired;
-    }
-
-    public void setConfirmationRequired(Boolean confirmationRequired) {
-        this.confirmationRequired = confirmationRequired;
-    }
 }

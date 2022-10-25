@@ -29,7 +29,7 @@ public class AutoAssignDistributionSetUpdate {
     @Max(Action.WEIGHT_MAX)
     private Integer weight;
 
-    private boolean confirmationRequired;
+    private Boolean confirmationRequired;
 
     /**
      * Constructor
@@ -102,7 +102,7 @@ public class AutoAssignDistributionSetUpdate {
         return weight;
     }
 
-    public boolean getConfirmationRequired() {
+    public Boolean isConfirmationRequired() {
         return confirmationRequired;
     }
 
