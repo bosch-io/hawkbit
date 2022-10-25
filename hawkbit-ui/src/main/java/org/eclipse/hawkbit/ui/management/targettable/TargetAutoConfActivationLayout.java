@@ -9,9 +9,13 @@
 package org.eclipse.hawkbit.ui.management.targettable;
 
 import com.vaadin.data.Binder;
+import com.vaadin.icons.VaadinIcons;
+import com.vaadin.ui.UI;
+import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.ui.common.AbstractEntityWindowLayout;
 import org.eclipse.hawkbit.ui.common.CommonDialogWindow;
+import org.eclipse.hawkbit.ui.common.ConfirmationDialog;
 import org.eclipse.hawkbit.ui.common.builder.FormComponentBuilder;
 import org.eclipse.hawkbit.ui.common.builder.TextFieldBuilder;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetConfirmationOptions;
@@ -35,11 +39,10 @@ public class TargetAutoConfActivationLayout extends AbstractEntityWindowLayout<P
 
     public static final String TEXTFIELD_INITIATOR = "prompt.target.auto.confirmation.activate.initiator";
 
+    private final ConfirmationManagement confirmationManagement;
     private final VaadinMessageSource i18n;
     private final TextField initiator;
     private final TextArea remarkArea;
-
-    final Consumer<ProxyTargetConfirmationOptions> onActivatedOptions;
 
     /**
      * Constructor for TargetAutoConfActivationLayout
@@ -48,14 +51,14 @@ public class TargetAutoConfActivationLayout extends AbstractEntityWindowLayout<P
      *            to get UI messages
      * @param tenantAware
      *            to get the current operating user
-     * @param onActivatedOptions
-     *            callback on activation
+     * @param confirmationManagement
+     *            to calculate affected actions
      */
     public TargetAutoConfActivationLayout(final VaadinMessageSource i18n, final TenantAware tenantAware,
-            final Consumer<ProxyTargetConfirmationOptions> onActivatedOptions) {
+            final ConfirmationManagement confirmationManagement) {
         super();
         this.i18n = i18n;
-        this.onActivatedOptions = onActivatedOptions;
+        this.confirmationManagement = confirmationManagement;
 
         this.initiator = createInitiatorField(binder, tenantAware);
         this.remarkArea = createRemarkInputArea(binder);
@@ -99,8 +102,8 @@ public class TargetAutoConfActivationLayout extends AbstractEntityWindowLayout<P
     public TextArea createRemarkInputArea(final Binder<ProxyTargetConfirmationOptions> binder) {
         return FormComponentBuilder
                 .createBigTextInput(binder, i18n, AUTO_CONFIRMATION_ACTIVATION_DIALOG_REMARK,
+                        i18n.getMessage("caption.target.auto.confirmation.activate.remark"),
                         i18n.getMessage("prompt.target.auto.confirmation.activate.remark"),
-                        i18n.getMessage("prompt.target.auto.confirmation.activate.remark.prompt"),
                         ProxyTargetConfirmationOptions::getRemark, ProxyTargetConfirmationOptions::setRemark)
                 .getComponent();
     }
@@ -115,12 +118,34 @@ public class TargetAutoConfActivationLayout extends AbstractEntityWindowLayout<P
             @Override
             public void saveOrUpdate() {
                 final ProxyTargetConfirmationOptions newOptions = getEntity();
-                if (onActivatedOptions != null && newOptions != null) {
-                    newOptions.setAutoConfirmationEnabled(true);
-                    onActivatedOptions.accept(getEntity());
+                if (newOptions != null) {
+                    final int count = calculateAffectedActionsOnActivation(newOptions.getControllerId());
+                    if (count > 0) {
+                        final ConfirmationDialog confirmationDialog = ConfirmationDialog.newBuilder(i18n, "test")
+                                .caption(i18n
+                                        .getMessage("caption.target.auto.confirmation.activate.consequences.caption"))
+                                .question(i18n.getMessage(
+                                        "caption.target.auto.confirmation.activate.consequences.question", count))
+                                .icon(VaadinIcons.WARNING).onSaveOrUpdate(() -> activateAutoConfirmation(newOptions))
+                                .build();
+                        UI.getCurrent().addWindow(confirmationDialog.getWindow());
+                        confirmationDialog.getWindow().bringToFront();
+                    } else {
+                        activateAutoConfirmation(newOptions);
+                    }
                 }
             }
         });
+    }
+
+    private void activateAutoConfirmation(final ProxyTargetConfirmationOptions options) {
+        confirmationManagement.activateAutoConfirmation(
+              options.getControllerId(), options.getInitiator(), options.getRemark());
+        //doSetValue(ProxyTargetConfirmationOptions.active(updatedStatus));
+    }
+
+    private int calculateAffectedActionsOnActivation(final String controllerId) {
+        return confirmationManagement.findActiveActionsWaitingConfirmation(controllerId).size();
     }
 
 }

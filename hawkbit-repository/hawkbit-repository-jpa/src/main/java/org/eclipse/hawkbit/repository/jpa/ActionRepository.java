@@ -233,8 +233,8 @@ public interface ActionRepository extends BaseEntityRepository<JpaAction, Long>,
 
     /**
      * Retrieves all {@link Action}s of a specific target and given active flag
-     * ordered by action ID. Loads also the lazy
-     * {@link Action#getDistributionSet()} field.
+     * ordered by action ID. Loads also the lazy {@link Action#getDistributionSet()}
+     * field.
      *
      * @param pageable
      *            page parameters
@@ -251,9 +251,8 @@ public interface ActionRepository extends BaseEntityRepository<JpaAction, Long>,
             @Param("active") boolean active);
 
     /**
-     * Switches the status of actions from one specific status into another,
-     * only if the actions are in a specific status. This should be a atomar
-     * operation.
+     * Switches the status of actions from one specific status into another, only if
+     * the actions are in a specific status. This should be a atomar operation.
      *
      * @param statusToSet
      *            the new status the actions should get
@@ -269,6 +268,23 @@ public interface ActionRepository extends BaseEntityRepository<JpaAction, Long>,
     @Query("UPDATE JpaAction a SET a.status = :statusToSet WHERE a.target IN :targetsIds AND a.active = :active AND a.status = :currentStatus AND a.distributionSet.requiredMigrationStep = false")
     void switchStatus(@Param("statusToSet") Action.Status statusToSet, @Param("targetsIds") List<Long> targetIds,
             @Param("active") boolean active, @Param("currentStatus") Action.Status currentStatus);
+
+    /**
+     *
+     * Retrieves all {@link Action}s referring to the given target IDs, active flag,
+     * current status..
+     *
+     * @param targetIds
+     *            the IDs of targets for the actions
+     * @param active
+     *            flag to indicate active/inactive actions
+     * @param currentStatus
+     *            the current status of the actions
+     * @return the found list of {@link Action}
+     */
+    @Query("SELECT a FROM JpaAction a WHERE a.target.controllerId = :controllerId AND a.active = true AND a.status = :currentStatus")
+    List<JpaAction> findByTargetIdInAndIsActiveAndActionStatus(@Param("controllerId") String controllerId,
+            @Param("currentStatus") Action.Status currentStatus);
 
     /**
      *
@@ -490,8 +506,8 @@ public interface ActionRepository extends BaseEntityRepository<JpaAction, Long>,
     boolean existsByRolloutIdAndStatusNotIn(@Param("rolloutId") Long rolloutId, @Param("status") Status status);
 
     /**
-     * Retrieving all actions referring to a given rollout with a specific
-     * action as parent reference and a specific status.
+     * Retrieving all actions referring to a given rollout with a specific action as
+     * parent reference and a specific status.
      *
      * Finding all actions of a specific rolloutgroup parent relation.
      *
@@ -506,7 +522,7 @@ public interface ActionRepository extends BaseEntityRepository<JpaAction, Long>,
      * @return the actions referring a specific rollout and a specific parent
      *         rolloutgroup in a specific status
      */
-    @EntityGraph(attributePaths = { "target", "rolloutGroup" }, type = EntityGraphType.LOAD)
+    @EntityGraph(attributePaths = { "target", "target.autoConfirmationStatus", "rolloutGroup" }, type = EntityGraphType.LOAD)
     Page<Action> findByRolloutIdAndRolloutGroupParentIdAndStatus(Pageable pageable, Long rollout,
             Long rolloutGroupParent, Status actionStatus);
 
@@ -522,7 +538,8 @@ public interface ActionRepository extends BaseEntityRepository<JpaAction, Long>,
      * @return the actions referring a specific rollout and a specific parent
      *         rolloutgroup in a specific status
      */
-    @EntityGraph(attributePaths = { "target", "rolloutGroup" }, type = EntityGraphType.LOAD)
+    @EntityGraph(attributePaths = { "target", "target.autoConfirmationStatus",
+            "rolloutGroup" }, type = EntityGraphType.LOAD)
     Page<Action> findByRolloutIdAndRolloutGroupParentIsNullAndStatus(Pageable pageable, Long rollout,
             Status actionStatus);
 

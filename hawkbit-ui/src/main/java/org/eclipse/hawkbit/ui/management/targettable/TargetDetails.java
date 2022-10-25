@@ -19,6 +19,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.vaadin.ui.Component;
+import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.DeploymentManagement;
 import org.eclipse.hawkbit.repository.TargetManagement;
 import org.eclipse.hawkbit.repository.TargetTagManagement;
@@ -52,6 +53,7 @@ public class TargetDetails extends AbstractGridDetailsLayout<ProxyTarget> {
 
     private final transient TargetManagement targetManagement;
     private final transient DeploymentManagement deploymentManagement;
+    private final transient ConfirmationManagement confirmationManagement;
 
     private final TargetAttributesDetailsComponent attributesLayout;
     private final KeyValueDetailsComponent assignedDsDetails;
@@ -62,16 +64,18 @@ public class TargetDetails extends AbstractGridDetailsLayout<ProxyTarget> {
     private final Tab confirmationOptionsTab;
     private final transient TargetMetaDataWindowBuilder targetMetaDataWindowBuilder;
 
-    private final TenantConfigHelper tenantConfigHelper;
+    private final transient TenantConfigHelper tenantConfigHelper;
 
     TargetDetails(final CommonUiDependencies uiDependencies, final TargetTagManagement tagManagement,
             final TargetManagement targetManagement, final DeploymentManagement deploymentManagement,
+            final ConfirmationManagement confirmationManagement,
             final TargetMetaDataWindowBuilder targetMetaDataWindowBuilder, final TenantConfigHelper tenantConfigHelper,
             final UiProperties uiProperties, final TenantAware tenantAware) {
         super(uiDependencies.getI18n());
 
         this.targetManagement = targetManagement;
         this.deploymentManagement = deploymentManagement;
+        this.confirmationManagement = confirmationManagement;
         this.targetMetaDataWindowBuilder = targetMetaDataWindowBuilder;
         this.tenantConfigHelper = tenantConfigHelper;
 
@@ -172,7 +176,7 @@ public class TargetDetails extends AbstractGridDetailsLayout<ProxyTarget> {
             final CommonUiDependencies commonUiDependencies, final UiProperties uiProperties,
             final TenantAware tenantAware) {
         final TargetConfirmationOptionsComponent confirmationOptions = new TargetConfirmationOptionsComponent(
-                commonUiDependencies, uiProperties, targetManagement, tenantAware);
+                commonUiDependencies, uiProperties, confirmationManagement, tenantAware);
 
         binder.forField(confirmationOptions).bind(ProxyTarget::getTargetConfirmationOptions, null);
 

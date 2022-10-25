@@ -9,6 +9,8 @@
 package org.eclipse.hawkbit.ui.management.targettable;
 
 import com.vaadin.server.Sizeable;
+import org.eclipse.hawkbit.repository.ConfirmationManagement;
+import org.eclipse.hawkbit.repository.DeploymentManagement;
 import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.ui.UiProperties;
 import org.eclipse.hawkbit.ui.common.AbstractEntityWindowBuilder;
@@ -30,15 +32,15 @@ public class TargetAutoConfActivationWindowBuilder extends AbstractEntityWindowB
     private final UiProperties uiProperties;
 
     private final TenantAware tenantAware;
-    private final Consumer<ProxyTargetConfirmationOptions> onActivatedOptions;
+    private final ConfirmationManagement confirmationManagement;
 
     protected TargetAutoConfActivationWindowBuilder(final CommonUiDependencies uiDependencies,
             final UiProperties uiProperties, final TenantAware tenantAware,
-            final Consumer<ProxyTargetConfirmationOptions> onActivatedOptions) {
+            final ConfirmationManagement confirmationManagement) {
         super(uiDependencies);
         this.uiProperties = uiProperties;
         this.tenantAware = tenantAware;
-        this.onActivatedOptions = onActivatedOptions;
+        this.confirmationManagement = confirmationManagement;
     }
 
     @Override
@@ -59,7 +61,7 @@ public class TargetAutoConfActivationWindowBuilder extends AbstractEntityWindowB
     @Override
     public Window getWindowForUpdate(final ProxyTargetConfirmationOptions entity) {
         final TargetAutoConfActivationLayout layout = new TargetAutoConfActivationLayout(uiDependencies.getI18n(),
-                tenantAware, onActivatedOptions);
+                tenantAware, confirmationManagement);
         layout.setEntity(entity);
 
         final CommonDialogWindow window = createWindow(layout.getRootComponent(), null);

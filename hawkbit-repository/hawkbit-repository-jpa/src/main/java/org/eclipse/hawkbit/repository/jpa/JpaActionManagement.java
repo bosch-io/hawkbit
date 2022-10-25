@@ -31,7 +31,7 @@ public class JpaActionManagement {
         this.actionRepository = actionRepository;
         this.repositoryProperties = repositoryProperties;
     }
-    
+
     protected List<Action> findActiveActionsWithHighestWeightConsideringDefault(final String controllerId,
             final int maxActionCount) {
         if (!actionRepository.activeActionExistsForControllerId(controllerId)) {
@@ -48,6 +48,14 @@ public class JpaActionManagement {
         final Comparator<Action> actionImportance = Comparator.comparingInt(this::getWeightConsideringDefault)
                 .reversed().thenComparing(Action::getId);
         return actions.stream().sorted(actionImportance).limit(maxActionCount).collect(Collectors.toList());
+    }
+
+    protected List<Action> findActiveActionHavingStatus(final String controllerId, final Action.Status status) {
+        if (!actionRepository.activeActionExistsForControllerId(controllerId)) {
+            return Collections.emptyList();
+        }
+        return Collections
+                .unmodifiableList(actionRepository.findByTargetIdInAndIsActiveAndActionStatus(controllerId, status));
     }
 
     protected int getWeightConsideringDefault(final Action action) {

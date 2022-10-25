@@ -240,26 +240,6 @@ public class JpaTargetManagement implements TargetManagement {
     }
 
     @Override
-    public AutoConfirmationStatus activeAutoConfirmation(final String controllerId, final String initiator,
-            final String remark) {
-        final JpaTarget target = getByControllerIdAndThrowIfNotFound(controllerId);
-        if (target.getAutoConfirmationStatus() != null) {
-            throw new AutoConfirmationAlreadyActiveException(controllerId);
-        }
-        final String currentUser = StringUtils.isEmpty(initiator) ? tenantAware.getCurrentUsername() : initiator;
-        final JpaAutoConfirmationStatus confirmationStatus = new JpaAutoConfirmationStatus(currentUser, remark, target);
-        target.setAutoConfirmationStatus(confirmationStatus);
-        return targetRepository.save(target).getAutoConfirmationStatus();
-    }
-
-    @Override
-    public void disableAutoConfirmation(String controllerId) {
-        final JpaTarget target = getByControllerIdAndThrowIfNotFound(controllerId);
-        target.setAutoConfirmationStatus(null);
-        targetRepository.save(target);
-    }
-
-    @Override
     @Transactional
     @Retryable(include = {
             ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))

@@ -11,6 +11,7 @@ package org.eclipse.hawkbit.repository.jpa.model;
 import org.eclipse.hawkbit.repository.model.AutoConfirmationStatus;
 import org.eclipse.hawkbit.repository.model.NamedEntity;
 import org.eclipse.hawkbit.repository.model.Target;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -89,6 +90,13 @@ public class JpaAutoConfirmationStatus implements AutoConfirmationStatus {
 
     public void setRemark(final String remark) {
         this.remark = remark;
+    }
+
+    @Override
+    public String constructActionMessage() {
+        final String remarkMessage = StringUtils.hasText(remark) ? remark : "n/a";
+        return String.format("Assignment automatically confirmed by initiator ''%s'' %nRemark: %s", initiator,
+                remarkMessage);
     }
 
     @Override

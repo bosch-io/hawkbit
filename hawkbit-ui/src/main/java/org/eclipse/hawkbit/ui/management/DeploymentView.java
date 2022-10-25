@@ -13,6 +13,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
+import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.DeploymentManagement;
 import org.eclipse.hawkbit.repository.DistributionSetInvalidationManagement;
 import org.eclipse.hawkbit.repository.DistributionSetManagement;
@@ -100,7 +101,7 @@ public class DeploymentView extends AbstractEventListenersAwareView implements B
             final TenantConfigurationManagement configManagement,
             final TargetManagementStateDataSupplier targetManagementStateDataSupplier,
             final SystemSecurityContext systemSecurityContext, @Qualifier("uiExecutor") final Executor uiExecutor,
-            final TenantAware tenantAware) {
+            final TenantAware tenantAware, final ConfirmationManagement confirmationManagement) {
         this.permChecker = permChecker;
         this.managementUIState = managementUIState;
 
@@ -117,7 +118,7 @@ public class DeploymentView extends AbstractEventListenersAwareView implements B
                     configManagement, targetManagementStateDataSupplier, systemSecurityContext,
                     managementUIState.getTargetTagFilterLayoutUiState(), managementUIState.getTargetGridLayoutUiState(),
                     managementUIState.getTargetBulkUploadUiState(),
-                    managementUIState.getDistributionGridLayoutUiState(), tenantAware);
+                    managementUIState.getDistributionGridLayoutUiState(), tenantAware, confirmationManagement);
             this.targetCountLayout = targetGridLayout.getCountMessageLabel().createFooterMessageComponent();
 
             this.actionHistoryLayout = new ActionHistoryLayout(uiDependencies, deploymentManagement,

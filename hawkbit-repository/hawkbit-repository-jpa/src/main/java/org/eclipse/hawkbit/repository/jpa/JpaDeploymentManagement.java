@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,8 +36,10 @@ import javax.persistence.criteria.ListJoin;
 import javax.persistence.criteria.Root;
 
 import org.eclipse.hawkbit.repository.ActionFields;
+import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.DeploymentManagement;
 import org.eclipse.hawkbit.repository.DistributionSetManagement;
+import org.eclipse.hawkbit.repository.Identifiable;
 import org.eclipse.hawkbit.repository.QuotaManagement;
 import org.eclipse.hawkbit.repository.RepositoryConstants;
 import org.eclipse.hawkbit.repository.RepositoryProperties;
@@ -150,6 +153,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
     private final TenantAware tenantAware;
     private final Database database;
     private final RetryTemplate retryTemplate;
+    private final ConfirmationManagement confirmationManagement;
 
     protected JpaDeploymentManagement(final EntityManager entityManager, final ActionRepository actionRepository,
             final DistributionSetManagement distributionSetManagement,
@@ -159,7 +163,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
             final VirtualPropertyReplacer virtualPropertyReplacer, final PlatformTransactionManager txManager,
             final TenantConfigurationManagement tenantConfigurationManagement, final QuotaManagement quotaManagement,
             final SystemSecurityContext systemSecurityContext, final TenantAware tenantAware, final Database database,
-            final RepositoryProperties repositoryProperties) {
+            final RepositoryProperties repositoryProperties, final ConfirmationManagement confirmationManagement) {
         super(actionRepository, repositoryProperties);
         this.entityManager = entityManager;
         this.distributionSetRepository = distributionSetRepository;
@@ -180,7 +184,8 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         this.systemSecurityContext = systemSecurityContext;
         this.tenantAware = tenantAware;
         this.database = database;
-        retryTemplate = createRetryTemplate();
+        this.retryTemplate = createRetryTemplate();
+        this.confirmationManagement = confirmationManagement;
     }
 
     @Override
@@ -394,7 +399,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         targetEntitiesIdsChunks.forEach(this::cancelInactiveScheduledActionsForTargets);
         setAssignedDistributionSetAndTargetUpdateStatus(assignmentStrategy, distributionSetEntity,
                 targetEntitiesIdsChunks);
-        final List<JpaAction> assignedActions = createActions(initiatedBy, targetsWithActionType, targetEntities,
+        final Map<TargetWithActionType, JpaAction> assignedActions = createActions(initiatedBy, targetsWithActionType, targetEntities,
                 assignmentStrategy, distributionSetEntity);
         // create initial action status when action is created so we remember
         // the initial running status because we will change the status
@@ -403,7 +408,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         createActionsStatus(assignedActions, assignmentStrategy, actionMessage);
 
         detachEntitiesAndSendTargetUpdatedEvents(distributionSetEntity, targetEntities, assignmentStrategy);
-        return assignedActions;
+        return new ArrayList<>(assignedActions.values());
     }
 
     /**
@@ -474,20 +479,48 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         assignmentStrategy.setAssignedDistributionSetAndTargetStatus(set, targetIdsChunks, currentUser);
     }
 
-    private List<JpaAction> createActions(final String initiatedBy,
+    private Map<TargetWithActionType, JpaAction> createActions(final String initiatedBy,
             final Collection<TargetWithActionType> targetsWithActionType, final List<JpaTarget> targets,
             final AbstractDsAssignmentStrategy assignmentStrategy, final JpaDistributionSet set) {
 
-        return targetsWithActionType.stream()
-                .map(twt -> assignmentStrategy.createTargetAction(initiatedBy, twt, targets, set))
-                .filter(Objects::nonNull).map(actionRepository::save).collect(Collectors.toList());
+        final Map<TargetWithActionType, JpaAction> persistedActions = new HashMap<>();
+        
+        for (final TargetWithActionType twt : targetsWithActionType) {
+            final JpaAction targetAction = assignmentStrategy.createTargetAction(initiatedBy, twt, targets, set);
+            if (targetAction != null) {
+                persistedActions.put(twt, actionRepository.save(targetAction));
+            }
+        }
+        return persistedActions;
     }
 
-    private void createActionsStatus(final Collection<JpaAction> actions,
+    private void createActionsStatus(final Map<TargetWithActionType, JpaAction> actions,
             final AbstractDsAssignmentStrategy assignmentStrategy, final String actionMessage) {
-        actionStatusRepository
-                .saveAll(actions.stream().map(action -> assignmentStrategy.createActionStatus(action, actionMessage))
-                        .collect(Collectors.toList()));
+        actionStatusRepository.saveAll(actions.entrySet().stream().map(entry -> {
+            final JpaAction action = entry.getValue();
+            final JpaActionStatus actionStatus = assignmentStrategy.createActionStatus(action, actionMessage);
+            if (actionStatus.getStatus() == Status.WAIT_FOR_CONFIRMATION) {
+                if (action.getStatus().equals(Status.RUNNING)) {
+                    // action is in RUNNING state only if it's confirmed during assignment already
+                    if (!entry.getKey().isConfirmationRequired()) {
+                        // confirmation given on assignment dialog
+                        actionStatus.addMessage(
+                                String.format("Assignment confirmed by initiator [%s].", action.getInitiatedBy()));
+                    } else if (action.getTarget().getAutoConfirmationStatus() != null) {
+                        // auto-confirmation is configured
+                        actionStatus
+                                .addMessage(action.getTarget().getAutoConfirmationStatus().constructActionMessage());
+                    } else {
+                        throw new IllegalStateException("Action in RUNNING state without given confirmation.");
+                    }
+
+                } else {
+                    actionStatus.addMessage(RepositoryConstants.SERVER_MESSAGE_PREFIX
+                            + "Waiting for the confirmation by the device before processing with the deployment");
+                }
+            }
+            return actionStatus;
+        }).collect(Collectors.toList()));
     }
 
     private void detachEntitiesAndSendTargetUpdatedEvents(final JpaDistributionSet set, final List<JpaTarget> targets,
@@ -647,6 +680,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         final List<JpaAction> savedActions = activateActions(actions);
         setInitialActionStatus(savedActions);
         setAssignmentOnTargets(savedActions);
+        //performAutoConfirmations(savedActions);
         return Collections.unmodifiableList(savedActions);
     }
 
@@ -660,10 +694,11 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         }
     }
 
-    private List<JpaAction> activateActions(final List<JpaAction> actions){
+    private List<JpaAction> activateActions(final List<JpaAction> actions) {
         actions.forEach(action -> {
             action.setActive(true);
-            final boolean confirmationRequired = action.getRolloutGroup().isConfirmationRequired();
+            final boolean confirmationRequired = action.getRolloutGroup().isConfirmationRequired()
+                    && action.getTarget().getAutoConfirmationStatus() == null;
             if (isUserConsentEnabled() && confirmationRequired) {
                 action.setStatus(Status.WAIT_FOR_CONFIRMATION);
                 return;
@@ -687,7 +722,29 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
     private void setInitialActionStatus(final List<JpaAction> actions) {
         final List<JpaActionStatus> statusList = new ArrayList<>();
         for (final JpaAction action : actions) {
-            statusList.add(onlineDsAssignmentStrategy.createActionStatus(action, null));
+            final JpaActionStatus actionStatus = onlineDsAssignmentStrategy.createActionStatus(action, null);
+            if (actionStatus.getStatus() == Status.WAIT_FOR_CONFIRMATION) {
+                if (action.getStatus().equals(Status.RUNNING)) {
+                    // action is in RUNNING state only if it's confirmed already
+                    if (!action.getRolloutGroup().isConfirmationRequired()) {
+                        // confirmed on rollout creation
+                        actionStatus.addMessage(
+                                String.format("Assignment confirmed by initiator [%s].", action.getInitiatedBy()));
+                    } else if (action.getTarget().getAutoConfirmationStatus() != null) {
+                        // confirmed by active auto-confirmation
+                        actionStatus
+                                .addMessage(action.getTarget().getAutoConfirmationStatus().constructActionMessage());
+                    } else {
+                        // should never hit
+                        throw new IllegalStateException("Action in RUNNING state without given confirmation.");
+                    }
+
+                } else {
+                    actionStatus.addMessage(
+                            "Waiting for the confirmation by the device before processing with the deployment");
+                }
+            }
+            statusList.add(actionStatus);
         }
         actionStatusRepository.saveAll(statusList);
     }
@@ -751,7 +808,6 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
     public List<Action> findActiveActionsWithHighestWeight(final String controllerId, final int maxActionCount) {
         return findActiveActionsWithHighestWeightConsideringDefault(controllerId, maxActionCount);
     }
-
     @Override
     public int getWeightConsideringDefault(final Action action) {
         return super.getWeightConsideringDefault(action);

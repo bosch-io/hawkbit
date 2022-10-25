@@ -13,7 +13,7 @@ import java.util.List;
 
 import com.vaadin.ui.UI;
 import com.vaadin.ui.Window;
-import org.eclipse.hawkbit.repository.TargetManagement;
+import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.model.AutoConfirmationStatus;
 import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.ui.UiProperties;
@@ -52,9 +52,11 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
     private static final long serialVersionUID = 1L;
 
     private final transient TargetAutoConfActivationWindowBuilder windowBuilder;
-    private final transient TargetManagement targetManagement;
+    private final transient ConfirmationManagement confirmationManagement;
     private final VaadinMessageSource i18n;
     private final HorizontalLayout targetConfirmationOptionsLayout;
+
+    private ProxyTargetConfirmationOptions current = new ProxyTargetConfirmationOptions();
 
     /**
      * Constructor for TargetConfirmationOptionsComponent
@@ -63,17 +65,18 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
      *            the {@link CommonUiDependencies}
      * @param uiProperties
      *            the {@link UiProperties}
-     * @param targetManagement
-     *            the {@link TargetManagement}
+     * @param confirmationManagement
+     *            the {@link ConfirmationManagement}
      * @param tenantAware
      *            the {@link TenantAware}
      */
     public TargetConfirmationOptionsComponent(final CommonUiDependencies commonUiDependencies,
-            final UiProperties uiProperties, final TargetManagement targetManagement, final TenantAware tenantAware) {
+            final UiProperties uiProperties, final ConfirmationManagement confirmationManagement,
+            final TenantAware tenantAware) {
         this.i18n = commonUiDependencies.getI18n();
-        this.targetManagement = targetManagement;
+        this.confirmationManagement = confirmationManagement;
         this.windowBuilder = new TargetAutoConfActivationWindowBuilder(commonUiDependencies, uiProperties, tenantAware,
-                this::onActivatedConfirmationOptions);
+                confirmationManagement);
 
         this.targetConfirmationOptionsLayout = new HorizontalLayout();
         this.targetConfirmationOptionsLayout.setSpacing(true);
@@ -166,14 +169,13 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
 
         requestAttributesButton.addClickListener(e -> {
             if (options.isAutoConfirmationEnabled()) {
-                final ConfirmationDialog dialog = new ConfirmationDialog(i18n,
-                        i18n.getMessage("caption.target.auto.confirmation.disable"),
-                        i18n.getMessage("message.target.auto.confirmation.disable"), ok -> {
-                            if (ok) {
-                                targetManagement.disableAutoConfirmation(options.getControllerId());
-                                doSetValue(ProxyTargetConfirmationOptions.disabled(options.getControllerId()));
-                            }
-                        }, VaadinIcons.WARNING, AUTO_CONFIRMATION_ACTIVATION_DIALOG, null);
+                final ConfirmationDialog dialog = ConfirmationDialog
+                        .newBuilder(i18n, AUTO_CONFIRMATION_ACTIVATION_DIALOG).icon(VaadinIcons.WARNING)
+                        .caption(i18n.getMessage("caption.target.auto.confirmation.disable"))
+                        .question(i18n.getMessage("message.target.auto.confirmation.disable")).onSaveOrUpdate(() -> {
+                            confirmationManagement.disableAutoConfirmation(options.getControllerId());
+                            doSetValue(ProxyTargetConfirmationOptions.disabled(options.getControllerId()));
+                        }).build();
 
                 UI.getCurrent().addWindow(dialog.getWindow());
 
@@ -186,12 +188,6 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
         });
 
         return requestAttributesButton;
-    }
-
-    private void onActivatedConfirmationOptions(final ProxyTargetConfirmationOptions activatedOptions) {
-        final AutoConfirmationStatus updatedStatus = targetManagement.activeAutoConfirmation(
-                activatedOptions.getControllerId(), activatedOptions.getInitiator(), activatedOptions.getRemark());
-        doSetValue(ProxyTargetConfirmationOptions.active(updatedStatus));
     }
 
 }

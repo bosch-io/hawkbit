@@ -22,6 +22,7 @@ import org.eclipse.hawkbit.repository.ArtifactEncryptionSecretsStore;
 import org.eclipse.hawkbit.repository.ArtifactEncryptionService;
 import org.eclipse.hawkbit.repository.ArtifactManagement;
 import org.eclipse.hawkbit.repository.BaseRepositoryTypeProvider;
+import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.ControllerManagement;
 import org.eclipse.hawkbit.repository.DeploymentManagement;
 import org.eclipse.hawkbit.repository.DistributionSetManagement;
@@ -735,11 +736,23 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
             final VirtualPropertyReplacer virtualPropertyReplacer, final PlatformTransactionManager txManager,
             final TenantConfigurationManagement tenantConfigurationManagement, final QuotaManagement quotaManagement,
             final SystemSecurityContext systemSecurityContext, final TenantAware tenantAware,
-            final JpaProperties properties, final RepositoryProperties repositoryProperties) {
+            final JpaProperties properties, final RepositoryProperties repositoryProperties,
+            final ConfirmationManagement confirmationManagement) {
         return new JpaDeploymentManagement(entityManager, actionRepository, distributionSetManagement,
                 distributionSetRepository, targetRepository, actionStatusRepository, auditorProvider,
                 eventPublisherHolder, afterCommit, virtualPropertyReplacer, txManager, tenantConfigurationManagement,
-                quotaManagement, systemSecurityContext, tenantAware, properties.getDatabase(), repositoryProperties);
+                quotaManagement, systemSecurityContext, tenantAware, properties.getDatabase(), repositoryProperties,
+                confirmationManagement);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    ConfirmationManagement confirmationManagement(final TargetRepository targetRepository,
+            final TenantAware tenantAware, final ActionRepository actionRepository,
+            final RepositoryProperties repositoryProperties, final ControllerManagement controllerManagement,
+            final EntityFactory entityFactory, final SystemSecurityContext securityContext) {
+        return new JpaConfirmationManagement(targetRepository, tenantAware, actionRepository, repositoryProperties,
+                controllerManagement, entityFactory, securityContext);
     }
 
     /**

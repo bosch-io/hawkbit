@@ -44,4 +44,6 @@ public interface AutoConfirmationStatus extends Serializable {
      */
     String getRemark();
 
+    String constructActionMessage();
+
 }
