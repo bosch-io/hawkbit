@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -483,7 +484,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
             final Collection<TargetWithActionType> targetsWithActionType, final List<JpaTarget> targets,
             final AbstractDsAssignmentStrategy assignmentStrategy, final JpaDistributionSet set) {
 
-        final Map<TargetWithActionType, JpaAction> persistedActions = new HashMap<>();
+        final Map<TargetWithActionType, JpaAction> persistedActions = new LinkedHashMap<>();
         
         for (final TargetWithActionType twt : targetsWithActionType) {
             final JpaAction targetAction = assignmentStrategy.createTargetAction(initiatedBy, twt, targets, set);
