@@ -12,12 +12,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.vaadin.server.FontAwesome;
-import com.vaadin.shared.ui.MarginInfo;
-import com.vaadin.ui.Alignment;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.Window;
 import org.eclipse.hawkbit.repository.ConfirmationManagement;
-import org.eclipse.hawkbit.repository.model.AutoConfirmationStatus;
 import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.ui.UiProperties;
 import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
@@ -28,7 +25,6 @@ import org.eclipse.hawkbit.ui.common.detailslayout.KeyValueDetailsComponent;
 import org.eclipse.hawkbit.ui.components.SPUIComponentProvider;
 import org.eclipse.hawkbit.ui.decorators.SPUIButtonStyleNoBorder;
 import org.eclipse.hawkbit.ui.utils.SPDateTimeUtil;
-import org.eclipse.hawkbit.ui.utils.SPUIStyleDefinitions;
 import org.eclipse.hawkbit.ui.utils.UIComponentIdProvider;
 import org.eclipse.hawkbit.ui.utils.VaadinMessageSource;
 
@@ -38,7 +34,6 @@ import com.vaadin.ui.Component;
 import com.vaadin.ui.CustomField;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
-import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.themes.ValoTheme;
 
 import static org.eclipse.hawkbit.ui.utils.UIComponentIdProvider.AUTO_CONFIRMATION_ACTIVATION_DIALOG;
