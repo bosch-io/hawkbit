@@ -11,6 +11,9 @@ package org.eclipse.hawkbit.ui.management.targettable;
 import java.util.Arrays;
 import java.util.List;
 
+import com.vaadin.server.FontAwesome;
+import com.vaadin.shared.ui.MarginInfo;
+import com.vaadin.ui.Alignment;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.Window;
 import org.eclipse.hawkbit.repository.ConfirmationManagement;
@@ -108,7 +111,8 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
         final boolean isAutoConfirmationEnabled = targetConfirmationOptions.isAutoConfirmationEnabled();
 
         if (isAutoConfirmationEnabled) {
-            final VerticalLayout detailsLayout = buildAutoConfirmationDetailsLayout(targetConfirmationOptions);
+            final KeyValueDetailsComponent detailsLayout = buildAutoConfirmationDetailsLayout(
+                    targetConfirmationOptions);
             targetConfirmationOptionsLayout.addComponent(detailsLayout);
             targetConfirmationOptionsLayout.setExpandRatio(detailsLayout, 1.0F);
         } else {
@@ -121,11 +125,7 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
         targetConfirmationOptionsLayout.addComponent(button);
     }
 
-    private VerticalLayout buildAutoConfirmationDetailsLayout(final ProxyTargetConfirmationOptions options) {
-        final VerticalLayout detailsLayout = new VerticalLayout();
-        detailsLayout.setMargin(false);
-        detailsLayout.setSpacing(false);
-
+    private KeyValueDetailsComponent buildAutoConfirmationDetailsLayout(final ProxyTargetConfirmationOptions options) {
         final List<ProxyKeyValueDetails> values = Arrays.asList(
                 new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_STATE,
                         i18n.getMessage("label.target.auto.confirmation.state"),
@@ -141,9 +141,8 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
         final KeyValueDetailsComponent details = new KeyValueDetailsComponent();
         details.disableSpacing();
         details.setValue(values);
-        detailsLayout.addComponent(details);
 
-        return detailsLayout;
+        return details;
     }
 
     private Label buildConfirmationRequiredLabel() {
@@ -153,21 +152,23 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
     }
 
     private Button buildAutoConfirmationToggleButton(final ProxyTargetConfirmationOptions options) {
-        final Button requestAttributesButton;
+        final Button toggleAutoConfirmationButton;
 
         if (options.isAutoConfirmationEnabled()) {
-            requestAttributesButton = SPUIComponentProvider.getButton(UIComponentIdProvider.TARGET_ATTRIBUTES_UPDATE,
-                    "", i18n.getMessage("button.target.auto.confirmation.disable"), "", false, VaadinIcons.DOT_CIRCLE,
+            toggleAutoConfirmationButton = SPUIComponentProvider.getButton(
+                    UIComponentIdProvider.AUTO_CONFIRMATION_DETAILS_TOGGLE, "",
+                    i18n.getMessage("button.target.auto.confirmation.disable"), "", false, FontAwesome.TOGGLE_ON,
                     SPUIButtonStyleNoBorder.class);
-            requestAttributesButton.setStyleName(SPUIStyleDefinitions.STATUS_ICON_GREEN);
         } else {
-            requestAttributesButton = SPUIComponentProvider.getButton(UIComponentIdProvider.TARGET_ATTRIBUTES_UPDATE,
-                    "", i18n.getMessage("button.target.auto.confirmation.activate"), "", false, VaadinIcons.DOT_CIRCLE,
+            toggleAutoConfirmationButton = SPUIComponentProvider.getButton(
+                    UIComponentIdProvider.AUTO_CONFIRMATION_DETAILS_TOGGLE, "",
+                    i18n.getMessage("button.target.auto.confirmation.activate"), "", false, FontAwesome.TOGGLE_OFF,
                     SPUIButtonStyleNoBorder.class);
-            requestAttributesButton.setStyleName(SPUIStyleDefinitions.STATUS_ICON_YELLOW);
         }
+        toggleAutoConfirmationButton.setWidth(50, Unit.PIXELS);
+        toggleAutoConfirmationButton.setHeight(30, Unit.PIXELS);
 
-        requestAttributesButton.addClickListener(e -> {
+        toggleAutoConfirmationButton.addClickListener(e -> {
             if (options.isAutoConfirmationEnabled()) {
                 final ConfirmationDialog dialog = ConfirmationDialog
                         .newBuilder(i18n, AUTO_CONFIRMATION_ACTIVATION_DIALOG).icon(VaadinIcons.WARNING)
@@ -187,7 +188,7 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
             }
         });
 
-        return requestAttributesButton;
+        return toggleAutoConfirmationButton;
     }
 
 }

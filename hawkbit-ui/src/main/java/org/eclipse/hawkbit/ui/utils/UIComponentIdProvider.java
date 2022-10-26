@@ -1234,6 +1234,8 @@ public final class UIComponentIdProvider {
 
     public static final String AUTO_CONFIRMATION_DETAILS = "target.details.auto.confirmation";
 
+    public static final String AUTO_CONFIRMATION_DETAILS_TOGGLE = "target.details.auto.confirmation.toggle";
+
     public static final String AUTO_CONFIRMATION_DETAILS_STATE = AUTO_CONFIRMATION_DETAILS + ".state";
 
     public static final String AUTO_CONFIRMATION_DETAILS_INITIATOR = AUTO_CONFIRMATION_DETAILS + ".initiator";
