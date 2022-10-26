@@ -86,13 +86,25 @@ public class JpaConfirmationManagement extends JpaActionManagement implements Co
         final JpaAutoConfirmationStatus confirmationStatus = new JpaAutoConfirmationStatus(currentUser, remark, target);
         target.setAutoConfirmationStatus(confirmationStatus);
         final JpaTarget updatedTarget = targetRepository.save(target);
-        giveConfirmationForActiveActions(updatedTarget.getAutoConfirmationStatus());
-        return updatedTarget.getAutoConfirmationStatus();
+        final AutoConfirmationStatus autoConfStatus = updatedTarget.getAutoConfirmationStatus();
+        if (autoConfStatus == null) {
+            final String message = String.format("Persisted auto confirmation status is null. "
+                    + "Cannot proceed with giving confirmations for active actions for device %s with initiator %s.",
+                    controllerId, initiator);
+            LOG.error("message");
+            throw new IllegalStateException(message);
+        }
+        giveConfirmationForActiveActions(autoConfStatus);
+        return autoConfStatus;
     }
 
     @Override
     public List<Action> autoConfirmActiveActions(final String controllerId) {
         final JpaTarget target = getByControllerIdAndThrowIfNotFound(controllerId);
+        if (target.getAutoConfirmationStatus() == null) {
+            // auto-confirmation is not active
+            return Collections.emptyList();
+        }
         return giveConfirmationForActiveActions(target.getAutoConfirmationStatus());
     }
 

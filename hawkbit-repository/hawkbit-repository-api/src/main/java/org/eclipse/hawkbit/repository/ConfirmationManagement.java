@@ -15,6 +15,9 @@ import org.eclipse.hawkbit.tenancy.TenantAware;
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
+/**
+ * Service layer for all confirmation related operations.
+ */
 public interface ConfirmationManagement {
 
     /**
