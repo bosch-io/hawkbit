@@ -54,8 +54,6 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
     private final VaadinMessageSource i18n;
     private final HorizontalLayout targetConfirmationOptionsLayout;
 
-    private ProxyTargetConfirmationOptions current = new ProxyTargetConfirmationOptions();
-
     /**
      * Constructor for TargetConfirmationOptionsComponent
      *
@@ -80,7 +78,6 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
         this.targetConfirmationOptionsLayout.setSpacing(true);
         this.targetConfirmationOptionsLayout.setMargin(false);
         this.targetConfirmationOptionsLayout.setSizeFull();
-        this.targetConfirmationOptionsLayout.addStyleName("disable-horizontal-scroll");
     }
 
     @Override
@@ -152,16 +149,14 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
         if (options.isAutoConfirmationEnabled()) {
             toggleAutoConfirmationButton = SPUIComponentProvider.getButton(
                     UIComponentIdProvider.AUTO_CONFIRMATION_DETAILS_TOGGLE, "",
-                    i18n.getMessage("button.target.auto.confirmation.disable"), "", false, FontAwesome.TOGGLE_ON,
-                    SPUIButtonStyleNoBorder.class);
+                    i18n.getMessage("button.target.auto.confirmation.disable"), ValoTheme.BUTTON_HUGE, true,
+                    FontAwesome.TOGGLE_ON, SPUIButtonStyleNoBorder.class);
         } else {
             toggleAutoConfirmationButton = SPUIComponentProvider.getButton(
                     UIComponentIdProvider.AUTO_CONFIRMATION_DETAILS_TOGGLE, "",
-                    i18n.getMessage("button.target.auto.confirmation.activate"), "", false, FontAwesome.TOGGLE_OFF,
-                    SPUIButtonStyleNoBorder.class);
+                    i18n.getMessage("button.target.auto.confirmation.activate"), ValoTheme.BUTTON_HUGE, true,
+                    FontAwesome.TOGGLE_OFF, SPUIButtonStyleNoBorder.class);
         }
-        toggleAutoConfirmationButton.setWidth(50, Unit.PIXELS);
-        toggleAutoConfirmationButton.setHeight(30, Unit.PIXELS);
 
         toggleAutoConfirmationButton.addClickListener(e -> {
             if (options.isAutoConfirmationEnabled()) {
