@@ -28,6 +28,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.hawkbit.artifact.repository.ArtifactRepository;
 import org.eclipse.hawkbit.cache.TenantAwareCacheManager;
 import org.eclipse.hawkbit.repository.ArtifactManagement;
+import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.ControllerManagement;
 import org.eclipse.hawkbit.repository.DeploymentManagement;
 import org.eclipse.hawkbit.repository.DistributionSetInvalidationManagement;
@@ -159,6 +160,8 @@ public abstract class AbstractIntegrationTest {
     protected DeploymentManagement deploymentManagement;
 
     @Autowired
+    protected ConfirmationManagement confirmationManagement;
+    @Autowired
     protected DistributionSetInvalidationManagement distributionSetInvalidationManagement;
 
     @Autowired
@@ -246,6 +249,13 @@ public abstract class AbstractIntegrationTest {
                 .assignDistributionSets(deploymentRequests);
         assertThat(results).hasSize(1);
         return results.get(0);
+    }
+
+    protected List<DistributionSetAssignmentResult> assignDistributionSets(final List<DeploymentRequest> requests) {
+        final List<DistributionSetAssignmentResult> distributionSetAssignmentResults = deploymentManagement
+                .assignDistributionSets(requests);
+        assertThat(distributionSetAssignmentResults).hasSize(requests.size());
+        return distributionSetAssignmentResults;
     }
 
     protected DistributionSetAssignmentResult assignDistributionSet(final DistributionSet ds,

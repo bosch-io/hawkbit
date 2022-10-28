@@ -6,11 +6,17 @@ UPDATE sp_target_filter_query SET confirmation_required = 0;
 
 create table sp_target_conf_status
 (
-    target_id       bigint      not null,
-    initiator       varchar(64) not null,
-    activatedAt     bigint not null,
-    remark          varchar(512),
-    primary key (target_id)
+    id                  bigint not null auto_increment,
+    target_id           bigint not null,
+    initiator           varchar(64) not null,
+    remark              varchar(512),
+    created_at          bigint,
+    created_by          varchar(40),
+    last_modified_at    bigint,
+    last_modified_by    varchar(40),
+    optlock_revision    bigint,
+    tenant              varchar(40) not null,
+    primary key (id)
 );
 ALTER TABLE sp_target_conf_status
     ADD CONSTRAINT fk_target_auto_conf FOREIGN KEY (target_id) REFERENCES sp_target (id) ON DELETE CASCADE;

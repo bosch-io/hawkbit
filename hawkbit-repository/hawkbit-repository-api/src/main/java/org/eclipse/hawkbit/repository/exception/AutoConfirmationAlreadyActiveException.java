@@ -48,7 +48,7 @@ public class AutoConfirmationAlreadyActiveException extends AbstractServerRtExce
      *            of affected device
      */
     public AutoConfirmationAlreadyActiveException(final String controllerId) {
-        super("Auto confirmation is already active for device" + controllerId, THIS_ERROR);
+        super("Auto confirmation is already active for device " + controllerId, THIS_ERROR);
     }
 
 }
