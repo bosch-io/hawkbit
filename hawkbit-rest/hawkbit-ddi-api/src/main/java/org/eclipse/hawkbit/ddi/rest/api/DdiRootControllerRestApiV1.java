@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * REST resource handling for root controller CRUD operations.
  */
 @RequestMapping(DdiRestConstants.BASE_V1_REQUEST_MAPPING)
-public interface DdiRootControllerRestApi {
+public interface DdiRootControllerRestApiV1 {
 
     /**
      * Returns all artifacts of a given software module and target.
@@ -123,17 +123,16 @@ public interface DdiRootControllerRestApi {
      * @param controllerId
      *            of the target
      * @param actionId
-     *            of the {@link DdiDeploymentBase} that matches to active
-     *            actions.
+     *            of the {@link DdiDeploymentBase} that matches to active actions.
      * @param resource
-     *            an hashcode of the resource which indicates if the action has
-     *            been changed, e.g. from 'soft' to 'force' and the eTag needs
-     *            to be re-generated
+     *            an hashcode of the resource which indicates if the action has been
+     *            changed, e.g. from 'soft' to 'force' and the eTag needs to be
+     *            re-generated
      * @param actionHistoryMessageCount
      *            specifies the number of messages to be returned from action
      *            history. Regardless of the passed value, in order to restrict
-     *            resource utilization by controllers, maximum number of
-     *            messages that are retrieved from database is limited by
+     *            resource utilization by controllers, maximum number of messages
+     *            that are retrieved from database is limited by
      *            {@link RepositoryConstants#MAX_ACTION_HISTORY_MSG_COUNT}.
      * 
      *            actionHistoryMessageCount less than zero: retrieves the maximum
@@ -212,8 +211,8 @@ public interface DdiRootControllerRestApi {
             @PathVariable("actionId") @NotEmpty final Long actionId);
 
     /**
-     * RequestMethod.POST method receiving the {@link DdiActionFeedback} from
-     * the target.
+     * RequestMethod.POST method receiving the {@link DdiActionFeedback} from the
+     * target.
      *
      * @param feedback
      *            the {@link DdiActionFeedback} from the target.

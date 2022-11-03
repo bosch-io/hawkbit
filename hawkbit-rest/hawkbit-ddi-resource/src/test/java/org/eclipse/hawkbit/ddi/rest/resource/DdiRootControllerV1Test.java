@@ -79,7 +79,7 @@ import io.qameta.allure.Story;
  */
 @Feature("Component Tests - Direct Device Integration API")
 @Story("Root Poll Resource")
-class DdiRootControllerTest extends AbstractDDiApiIntegrationTest {
+class DdiRootControllerV1Test extends AbstractDDiApiIntegrationTest {
 
     private static final String TARGET_COMPLETED_INSTALLATION_MSG = "Target completed installation.";
     private static final String TARGET_PROCEEDING_INSTALLATION_MSG = "Target proceeding installation.";

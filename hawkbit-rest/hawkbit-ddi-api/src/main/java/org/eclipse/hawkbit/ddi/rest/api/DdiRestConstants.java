@@ -18,10 +18,22 @@ public final class DdiRestConstants {
      */
     public static final String BASE_V1_REQUEST_MAPPING = "/{tenant}/controller/v1";
 
+    public static final String BASE_V2_REQUEST_MAPPING = "/{tenant}/controller/v2";
+
     /**
      * Deployment action resources.
      */
     public static final String DEPLOYMENT_BASE_ACTION = "deploymentBase";
+
+    /**
+     * Auto confirmation resources.
+     */
+    public static final String AUTO_CONFIRMATION = "autoConfirmation";
+
+
+    public static final String AUTO_CONFIRMATION_ACTIVATE = "activate";
+
+    public static final String AUTO_CONFIRMATION_DISABLE = "disable";
 
     /**
      * Installed action resources.
@@ -51,7 +63,7 @@ public final class DdiRestConstants {
     /**
      * Default value specifying that no action history to be sent as part of
      * response to deploymentBase
-     * {@link DdiRootControllerRestApi#getControllerBasedeploymentAction}.
+     * {@link DdiRootControllerRestApiV1#getControllerBasedeploymentAction}.
      */
     public static final String NO_ACTION_HISTORY = "0";
 

@@ -164,7 +164,8 @@ public class SecurityManagedConfiguration {
                 DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/cancelAction/**",
                 DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/configData",
                 DdiRestConstants.BASE_V1_REQUEST_MAPPING
-                        + "/{controllerId}/softwaremodules/{softwareModuleId}/artifacts" };
+                        + "/{controllerId}/softwaremodules/{softwareModuleId}/artifacts",
+                DdiRestConstants.BASE_V2_REQUEST_MAPPING + "/{controllerId}/autoConfirmation/**" };
 
         private final ControllerManagement controllerManagement;
         private final TenantConfigurationManagement tenantConfigurationManagement;

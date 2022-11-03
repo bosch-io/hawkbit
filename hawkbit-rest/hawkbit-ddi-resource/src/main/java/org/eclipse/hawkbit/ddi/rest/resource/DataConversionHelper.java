@@ -47,7 +47,7 @@ public final class DataConversionHelper {
 
     }
 
-    static List<DdiChunk> createChunks(final Target target, final Action uAction,
+    public static List<DdiChunk> createChunks(final Target target, final Action uAction,
             final ArtifactUrlHandler artifactUrlHandler, final SystemManagement systemManagement,
             final HttpRequest request, final ControllerManagement controllerManagement) {
 
@@ -80,7 +80,7 @@ public final class DataConversionHelper {
         return key;
     }
 
-    static List<DdiArtifact> createArtifacts(final Target target, final SoftwareModule module,
+    public static List<DdiArtifact> createArtifacts(final Target target, final SoftwareModule module,
             final ArtifactUrlHandler artifactUrlHandler, final SystemManagement systemManagement,
             final HttpRequest request) {
 
@@ -109,14 +109,15 @@ public final class DataConversionHelper {
     }
 
     public static DdiControllerBase fromTarget(final Target target, final Action installedAction,
-            final Action activeAction, final String defaultControllerPollTime, final TenantAware tenantAware) {
+            final Action activeAction, final String defaultControllerPollTime, final TenantAware tenantAware,
+            final boolean userConsentFlowActive) {
         final DdiControllerBase result = new DdiControllerBase(
                 new DdiConfig(new DdiPolling(defaultControllerPollTime)));
 
         if (activeAction != null) {
             if (activeAction.isCancelingOrCanceled()) {
                 result.add(WebMvcLinkBuilder
-                        .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
+                        .linkTo(WebMvcLinkBuilder.methodOn(DdiRootControllerV1.class, tenantAware.getCurrentTenant())
                                 .getControllerCancelAction(tenantAware.getCurrentTenant(), target.getControllerId(),
                                         activeAction.getId()))
                         .withRel(DdiRestConstants.CANCEL_ACTION));
@@ -126,10 +127,10 @@ public final class DataConversionHelper {
                 // have changed from 'soft' to 'forced' type and we need to
                 // change the payload of the
                 // response because of eTags.
-                result.add(WebMvcLinkBuilder
-                        .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
-                                .getControllerBasedeploymentAction(tenantAware.getCurrentTenant(),
-                                        target.getControllerId(), activeAction.getId(), calculateEtag(activeAction), null))
+                result.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder
+                        .methodOn(DdiRootControllerV1.class, tenantAware.getCurrentTenant())
+                        .getControllerBasedeploymentAction(tenantAware.getCurrentTenant(), target.getControllerId(),
+                                activeAction.getId(), calculateEtag(activeAction), null))
                         .withRel(DdiRestConstants.DEPLOYMENT_BASE_ACTION));
             }
         }
@@ -137,7 +138,7 @@ public final class DataConversionHelper {
         if (installedAction != null && !installedAction.isActive()) {
             result.add(
                     WebMvcLinkBuilder
-                            .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
+                            .linkTo(WebMvcLinkBuilder.methodOn(DdiRootControllerV1.class, tenantAware.getCurrentTenant())
                                     .getControllerInstalledAction(tenantAware.getCurrentTenant(),
                                             target.getControllerId(), installedAction.getId(), null))
                             .withRel(DdiRestConstants.INSTALLED_BASE_ACTION));
@@ -145,10 +146,20 @@ public final class DataConversionHelper {
 
         if (target.isRequestControllerAttributes()) {
             result.add(WebMvcLinkBuilder
-                    .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
+                    .linkTo(WebMvcLinkBuilder.methodOn(DdiRootControllerV1.class, tenantAware.getCurrentTenant())
                             .putConfigData(null, tenantAware.getCurrentTenant(), target.getControllerId()))
                     .withRel(DdiRestConstants.CONFIG_DATA_ACTION));
         }
+
+        if (userConsentFlowActive) {
+            result.add(WebMvcLinkBuilder
+                    .linkTo(WebMvcLinkBuilder
+                            .methodOn(DdiRootControllerV2.class,
+                                    tenantAware.getCurrentTenant())
+                            .getAutoConfirmationState(tenantAware.getCurrentTenant(), target.getControllerId()))
+                    .withRel(DdiRestConstants.AUTO_CONFIRMATION));
+        }
+
         return result;
     }
 

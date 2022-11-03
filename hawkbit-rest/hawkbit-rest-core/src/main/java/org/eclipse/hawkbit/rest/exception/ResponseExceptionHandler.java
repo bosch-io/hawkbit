@@ -93,6 +93,7 @@ public class ResponseExceptionHandler {
         ERROR_TO_HTTP_STATUS.put(SpServerError.SP_DS_INVALID, HttpStatus.BAD_REQUEST);
         ERROR_TO_HTTP_STATUS.put(SpServerError.SP_DS_INCOMPLETE, HttpStatus.BAD_REQUEST);
         ERROR_TO_HTTP_STATUS.put(SpServerError.SP_STOP_ROLLOUT_FAILED, HttpStatus.LOCKED);
+        ERROR_TO_HTTP_STATUS.put(SpServerError.SP_REPO_AUTO_CONF_ALREADY_ACTIVE, HttpStatus.CONFLICT);
     }
 
     private static HttpStatus getStatusOrDefault(final SpServerError error) {

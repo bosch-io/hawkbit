@@ -35,12 +35,13 @@ import org.eclipse.hawkbit.ddi.json.model.DdiDeploymentBase;
 import org.eclipse.hawkbit.ddi.json.model.DdiResult.FinalResult;
 import org.eclipse.hawkbit.ddi.json.model.DdiUpdateMode;
 import org.eclipse.hawkbit.ddi.rest.api.DdiRestConstants;
-import org.eclipse.hawkbit.ddi.rest.api.DdiRootControllerRestApi;
+import org.eclipse.hawkbit.ddi.rest.api.DdiRootControllerRestApiV1;
 import org.eclipse.hawkbit.repository.ArtifactManagement;
 import org.eclipse.hawkbit.repository.ControllerManagement;
 import org.eclipse.hawkbit.repository.EntityFactory;
 import org.eclipse.hawkbit.repository.RepositoryConstants;
 import org.eclipse.hawkbit.repository.SystemManagement;
+import org.eclipse.hawkbit.repository.TenantConfigurationManagement;
 import org.eclipse.hawkbit.repository.UpdateMode;
 import org.eclipse.hawkbit.repository.builder.ActionStatusCreate;
 import org.eclipse.hawkbit.repository.event.remote.DownloadProgressEvent;
@@ -58,8 +59,10 @@ import org.eclipse.hawkbit.rest.util.FileStreamingUtil;
 import org.eclipse.hawkbit.rest.util.HttpUtil;
 import org.eclipse.hawkbit.rest.util.RequestResponseContextHolder;
 import org.eclipse.hawkbit.security.HawkbitSecurityProperties;
+import org.eclipse.hawkbit.security.SystemSecurityContext;
 import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.util.IpUtil;
+import org.eclipse.hawkbit.utils.TenantConfigHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,7 +82,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.WebApplicationContext;
 
 /**
- * The {@link DdiRootController} of the hawkBit server DDI API that is queried
+ * The {@link DdiRootControllerV1} of the hawkBit server DDI API that is queried
  * by the hawkBit controller in order to pull {@link Action}s that have to be
  * fulfilled and report status updates concerning the {@link Action} processing.
  *
@@ -87,9 +90,9 @@ import org.springframework.web.context.WebApplicationContext;
  */
 @RestController
 @Scope(value = WebApplicationContext.SCOPE_REQUEST)
-public class DdiRootController implements DdiRootControllerRestApi {
+public class DdiRootControllerV1 implements DdiRootControllerRestApiV1 {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DdiRootController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DdiRootControllerV1.class);
     private static final String GIVEN_ACTION_IS_NOT_ASSIGNED_TO_GIVEN_TARGET = "given action ({}) is not assigned to given target ({}).";
 
     @Autowired
@@ -125,6 +128,12 @@ public class DdiRootController implements DdiRootControllerRestApi {
     @Autowired
     private EntityFactory entityFactory;
 
+    @Autowired
+    private TenantConfigurationManagement tenantConfigurationManagement;
+
+    @Autowired
+    private SystemSecurityContext securityContext;
+
     @Override
     public ResponseEntity<List<DdiArtifact>> getSoftwareModulesArtifacts(@PathVariable("tenant") final String tenant,
             @PathVariable("controllerId") final String controllerId,
@@ -159,7 +168,7 @@ public class DdiRootController implements DdiRootControllerRestApi {
                 DataConversionHelper.fromTarget(target, installedAction, activeAction,
                         activeAction == null ? controllerManagement.getPollingTime()
                                 : controllerManagement.getPollingTimeForAction(activeAction.getId()),
-                        tenantAware),
+                        tenantAware, isUserConsentFlowEnabled()),
                 HttpStatus.OK);
     }
 
@@ -486,6 +495,10 @@ public class DdiRootController implements DdiRootControllerRestApi {
         LOG.debug("Found an installed UpdateAction for target {}. returning deployment: {}", controllerId, base);
         return new ResponseEntity<>(base, HttpStatus.OK);
 
+    }
+    
+    private boolean isUserConsentFlowEnabled(){
+        return TenantConfigHelper.usingContext(securityContext, tenantConfigurationManagement).isUserConsentEnabled();
     }
 
     private DdiDeploymentBase generateDdiDeploymentBase(final Target target, final Action action,
