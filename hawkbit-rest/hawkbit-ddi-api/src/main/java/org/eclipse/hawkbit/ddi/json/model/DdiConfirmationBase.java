@@ -27,7 +27,7 @@ public class DdiConfirmationBase extends RepresentationModel<DdiConfirmationBase
     @NotNull
     private String id;
 
-    @JsonProperty("deployment")
+    @JsonProperty("confirmation")
     @NotNull
     private DdiDeployment deployment;
 

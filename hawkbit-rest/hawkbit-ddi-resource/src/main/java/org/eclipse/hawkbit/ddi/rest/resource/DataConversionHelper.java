@@ -117,7 +117,7 @@ public final class DataConversionHelper {
             if (activeAction.isWaitingConfirmation()) {
                 result.add(WebMvcLinkBuilder
                         .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
-                                .getControllerBaseconfirmationAction(tenantAware.getCurrentTenant(),
+                                .getControllerBaseConfirmationAction(tenantAware.getCurrentTenant(),
                                         target.getControllerId(), activeAction.getId(), calculateEtag(activeAction), null))
                         .withRel(DdiRestConstants.CONFIRMATION_BASE_ACTION));
 

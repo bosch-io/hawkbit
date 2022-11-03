@@ -64,7 +64,7 @@ public class DdiConfirmationBaseTest {
     @Description("Verify the correct deserialization of a model with a additional unknown property")
     void shouldDeserializeObjectWithUnknownProperty() throws IOException {
         // Setup
-        String serializedDdiConfirmationBase = "{\"id\":\"1234\",\"deployment\":{\"download\":\"forced\","
+        String serializedDdiConfirmationBase = "{\"id\":\"1234\",\"confirmation\":{\"download\":\"forced\","
                 + "\"update\":\"attempt\",\"maintenanceWindow\":\"available\",\"chunks\":[]},"
                 + "\"actionHistory\":{\"status\":\"TestAction\",\"messages\":[\"Action status message 1\","
                 + "\"Action status message 2\"]},\"links\":[],\"unknownProperty\":\"test\"}";

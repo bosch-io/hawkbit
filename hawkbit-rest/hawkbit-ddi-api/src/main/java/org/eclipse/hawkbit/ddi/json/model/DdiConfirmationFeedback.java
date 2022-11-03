@@ -43,10 +43,10 @@ public class DdiConfirmationFeedback {
      * @param code  code for confirmation
      * @param details messages
      */
-    @JsonCreator
-    public DdiConfirmationFeedback(@JsonProperty(value = "confirmation", required = true) final Confirmation confirmation,
-                                   @JsonProperty(value = "code") final Integer code,
-                                   @JsonProperty(value = "details") final List<String> details) {
+    @JsonCreator public DdiConfirmationFeedback(
+            @JsonProperty(value = "confirmation", required = true) final Confirmation confirmation,
+            @JsonProperty(value = "code") final Integer code,
+            @JsonProperty(value = "details") final List<String> details) {
         this.confirmation = confirmation;
         this.code = code;
         this.details = details;

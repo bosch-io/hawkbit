@@ -152,6 +152,26 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
 
     }
 
+    @Test
+    @Description("Ensure that the confirmation endpoint is not available.")
+    public void confirmationEndpointNotExposed() throws Exception {
+        final DistributionSet ds = testdataFactory.createDistributionSet("");
+        Target savedTarget = testdataFactory.createTarget("988");
+        savedTarget = getFirstAssignedTarget(assignDistributionSet(ds.getId(), savedTarget.getControllerId()));
+
+        String controllerId = savedTarget.getControllerId();
+
+        final Action savedAction = deploymentManagement.findActiveActionsByTarget(PAGE, controllerId)
+                .getContent().get(0);
+
+        mvc.perform(get(CONTROLLER_BASE, tenantAware.getCurrentTenant(), controllerId)
+                        .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(jsonPath("$._links.confirmationBase.href").doesNotExist());
+
+       mvc.perform(get(CONFIRMATION_BASE, tenantAware.getCurrentTenant(), controllerId, savedAction.getId())
+                .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isNotFound());
+    }
+
 
     @Test
     @Description("Controller sends a confirmed action state.")
@@ -159,7 +179,7 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
             @Expect(type = DistributionSetCreatedEvent.class, count = 1),
             @Expect(type = TargetAssignDistributionSetEvent.class, count = 1),
             @Expect(type = ActionCreatedEvent.class, count = 1),
-            @Expect(type = ActionUpdatedEvent.class, count = 1),
+            @Expect(type = ActionUpdatedEvent.class, count = 2),
             @Expect(type = TargetUpdatedEvent.class, count = 1),
             @Expect(type = SoftwareModuleCreatedEvent.class, count = 3),
             @Expect(type = TargetUpdatedEvent.class, count = 1),
@@ -186,8 +206,12 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
 
         mvc.perform(get(CONTROLLER_BASE, tenantAware.getCurrentTenant(), controllerId)
                         .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(jsonPath("$._links.deploymentBase.href", containsString(expectedDeploymentBaseLink)));
+                .andExpect(jsonPath("$._links.deploymentBase.href", containsString(expectedDeploymentBaseLink)))
+                .andExpect(jsonPath("$._links.confirmationBase.href").doesNotExist());
 
+        //assert that deployment endpoint is working
+        mvc.perform(get(expectedDeploymentBaseLink)
+                .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk());
     }
 
     @Test
@@ -215,10 +239,18 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
                 "Action denied message.").andExpect(status().isOk());
 
         //asserts that deployment link is not available
+        final String expectedConfirmationBaseLink = String.format("/%s/controller/v1/%s/confirmationBase/%d",
+                tenantAware.getCurrentTenant(), controllerId, savedAction.getId());
+
         mvc.perform(
                 get(CONTROLLER_BASE, tenantAware.getCurrentTenant(), controllerId).accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(jsonPath("$._links.deploymentBase.href").doesNotExist());
+                .andExpect(jsonPath("$._links.deploymentBase.href").doesNotExist())
+                .andExpect(jsonPath("$._links.confirmationBase.href", containsString(expectedConfirmationBaseLink)));
+
+        mvc.perform(get(DEPLOYMENT_BASE, tenantAware.getCurrentTenant(), controllerId, savedAction.getId())
+                        .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
+                .andExpect(status().isNotFound());
     }
 
     private ResultActions sendConfirmationFeedback(final Target target, final Action action,

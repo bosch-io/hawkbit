@@ -281,7 +281,7 @@ public interface DdiRootControllerRestApi {
      *            of the target
      * @param actionId
      *            of the {@link DdiConfirmationBase} that matches to active
-     *            actions.
+     *            actions in WAITING_FOR_CONFIRMATION status.
      * @param resource
      *            an hashcode of the resource which indicates if the action has
      *            been changed, e.g. from 'soft' to 'force' and the eTag needs
@@ -306,7 +306,7 @@ public interface DdiRootControllerRestApi {
      */
     @GetMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION + "/{actionId}", produces = {
             MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR})
-    ResponseEntity<DdiConfirmationBase> getControllerBaseconfirmationAction(@PathVariable("tenant") final String tenant,
+    ResponseEntity<DdiConfirmationBase> getControllerBaseConfirmationAction(@PathVariable("tenant") final String tenant,
             @PathVariable("controllerId") @NotEmpty final String controllerId,
             @PathVariable("actionId") @NotEmpty final Long actionId,
             @RequestParam(value = "c", required = false, defaultValue = "-1") final int resource,

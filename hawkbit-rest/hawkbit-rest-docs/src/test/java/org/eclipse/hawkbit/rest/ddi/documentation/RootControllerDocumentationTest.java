@@ -582,6 +582,104 @@ public class RootControllerDocumentationTest extends AbstractApiRestDocumentatio
     }
 
     @Test
+    @Description("Core resource for confirmation of actions. Contains all necessary information for confirmation.")
+    @WithUser(tenantId = "TENANT_ID", authorities = "ROLE_CONTROLLER", allSpPermissions = true)
+    public void getControllerBaseConfirmationAction() throws Exception {
+        enableUserConsentFlow();
+
+        final DistributionSet set = testdataFactory.createDistributionSet("one");
+
+        set.getModules().forEach(module -> {
+            final byte[] random = RandomStringUtils.random(5).getBytes();
+
+            artifactManagement.create(
+                    new ArtifactUpload(new ByteArrayInputStream(random), module.getId(), "binary.tgz", false, 0));
+            artifactManagement.create(
+                    new ArtifactUpload(new ByteArrayInputStream(random), module.getId(), "file.signature", false, 0));
+        });
+
+        softwareModuleManagement.createMetaData(
+                entityFactory.softwareModuleMetadata().create(set.getModules().iterator().next().getId())
+                        .key("aMetadataKey").value("Metadata value as defined in software module").targetVisible(true));
+
+        final Target target = targetManagement.create(entityFactory.target().create().controllerId(CONTROLLER_ID));
+        final Long actionId = getFirstAssignedActionId(assignDistributionSetWithMaintenanceWindow(set.getId(),
+                target.getControllerId(), getTestSchedule(-5), getTestDuration(10), getTestTimeZone()));
+
+        controllerManagement.addInformationalActionStatus(
+                entityFactory.actionStatus().create(actionId).message("Started download").status(Status.DOWNLOAD));
+        controllerManagement.addInformationalActionStatus(entityFactory.actionStatus().create(actionId)
+                .message("Download failed. ErrorCode #5876745. Retry").status(Status.WARNING));
+        controllerManagement.addInformationalActionStatus(
+                entityFactory.actionStatus().create(actionId).message("Download done").status(Status.DOWNLOADED));
+        controllerManagement.addInformationalActionStatus(
+                entityFactory.actionStatus().create(actionId).message("Write firmware").status(Status.RUNNING));
+        controllerManagement.addInformationalActionStatus(
+                entityFactory.actionStatus().create(actionId).message("Reboot").status(Status.RUNNING));
+
+        mockMvc.perform(get(
+                        DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION
+                                + "/{actionId}?actionHistory=10",
+                        tenantAware.getCurrentTenant(), target.getControllerId(), actionId).accept(MediaTypes.HAL_JSON_VALUE))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
+                .andDo(this.document.document(
+                        pathParameters(parameterWithName("tenant").description(ApiModelPropertiesGeneric.TENANT),
+                                parameterWithName("controllerId").description(DdiApiModelProperties.CONTROLLER_ID),
+                                parameterWithName("actionId").description(DdiApiModelProperties.ACTION_ID)),
+                        requestParameters(
+                                parameterWithName("actionHistory").description(DdiApiModelProperties.ACTION_HISTORY)),
+                        responseFields(fieldWithPath("id").description(DdiApiModelProperties.ACTION_ID),
+                                fieldWithPath("confirmation").description(DdiApiModelProperties.CONFIRMATION),
+                                fieldWithPath("confirmation.download")
+                                        .description(DdiApiModelProperties.HANDLING_DOWNLOAD).type("enum")
+                                        .attributes(key("value").value("['skip', 'attempt', 'forced']")),
+                                fieldWithPath("confirmation.update").description(DdiApiModelProperties.HANDLING_UPDATE)
+                                        .type("enum").attributes(key("value").value("['skip', 'attempt', 'forced']")),
+                                fieldWithPath("confirmation.maintenanceWindow")
+                                        .description(DdiApiModelProperties.MAINTENANCE_WINDOW).type("enum")
+                                        .attributes(key("value").value("['available', 'unavailable']")),
+                                fieldWithPath("confirmation.chunks").description(DdiApiModelProperties.CHUNK),
+                                fieldWithPath("confirmation.chunks[].metadata")
+                                        .description(DdiApiModelProperties.CHUNK_META_DATA).optional(),
+                                fieldWithPath("confirmation.chunks[].metadata[].key")
+                                        .description(DdiApiModelProperties.CHUNK_META_DATA_KEY).optional(),
+                                fieldWithPath("confirmation.chunks[].metadata[].value")
+                                        .description(DdiApiModelProperties.CHUNK_META_DATA_VALUE).optional(),
+                                fieldWithPath("confirmation.chunks[].part").description(DdiApiModelProperties.CHUNK_TYPE),
+                                fieldWithPath("confirmation.chunks[].name").description(DdiApiModelProperties.CHUNK_NAME),
+                                fieldWithPath("confirmation.chunks[].version")
+                                        .description(DdiApiModelProperties.CHUNK_VERSION),
+                                fieldWithPath("confirmation.chunks[].artifacts")
+                                        .description(DdiApiModelProperties.ARTIFACTS),
+                                fieldWithPath("confirmation.chunks[].artifacts[].filename")
+                                        .description(DdiApiModelProperties.ARTIFACTS),
+                                fieldWithPath("confirmation.chunks[].artifacts[].hashes")
+                                        .description(DdiApiModelProperties.ARTIFACTS),
+                                fieldWithPath("confirmation.chunks[].artifacts[].hashes.sha1")
+                                        .description(DdiApiModelProperties.ARTIFACT_HASHES_SHA1),
+                                fieldWithPath("confirmation.chunks[].artifacts[].hashes.md5")
+                                        .description(DdiApiModelProperties.ARTIFACT_HASHES_MD5),
+                                fieldWithPath("confirmation.chunks[].artifacts[].hashes.sha256")
+                                        .description(DdiApiModelProperties.ARTIFACT_HASHES_SHA256),
+                                fieldWithPath("confirmation.chunks[].artifacts[].size")
+                                        .description(DdiApiModelProperties.ARTIFACT_SIZE),
+                                fieldWithPath("confirmation.chunks[].artifacts[]._links.download")
+                                        .description(DdiApiModelProperties.ARTIFACT_HTTPS_DOWNLOAD_LINK_BY_CONTROLLER),
+                                fieldWithPath("confirmation.chunks[].artifacts[]._links.md5sum")
+                                        .description(DdiApiModelProperties.ARTIFACT_HTTPS_HASHES_MD5SUM_LINK),
+                                fieldWithPath("confirmation.chunks[].artifacts[]._links.download-http")
+                                        .description(DdiApiModelProperties.ARTIFACT_HTTP_DOWNLOAD_LINK_BY_CONTROLLER),
+                                fieldWithPath("confirmation.chunks[].artifacts[]._links.md5sum-http")
+                                        .description(DdiApiModelProperties.ARTIFACT_HTTP_HASHES_MD5SUM_LINK),
+                                fieldWithPath("actionHistory").description(DdiApiModelProperties.ACTION_HISTORY_RESP),
+                                fieldWithPath("actionHistory.status")
+                                        .description(DdiApiModelProperties.ACTION_HISTORY_RESP_STATUS),
+                                fieldWithPath("actionHistory.messages")
+                                        .description(DdiApiModelProperties.ACTION_HISTORY_RESP_MESSAGES))));
+    }
+
+    @Test
     @Description("Feedback channel for confirming an action")
     @WithUser(tenantId = "TENANT_ID", authorities = "ROLE_CONTROLLER", allSpPermissions = true)
     public void postConfirmationFeedback() throws Exception {

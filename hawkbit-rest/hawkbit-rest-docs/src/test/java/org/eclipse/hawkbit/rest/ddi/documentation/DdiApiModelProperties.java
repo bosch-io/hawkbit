@@ -96,6 +96,8 @@ final class DdiApiModelProperties {
 
     static final String DEPLOYMENT = "Detailed deployment operation";
 
+    static final String CONFIRMATION = "Deployment confirmation operation";
+
     static final String CANCEL = "Detailed cancel operation of a deployment";
 
     static final String INSTALLED = "Detailed operation of last successfully finished action";
