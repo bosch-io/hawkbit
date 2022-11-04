@@ -39,6 +39,7 @@ import javax.persistence.criteria.Root;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
+import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.ControllerManagement;
 import org.eclipse.hawkbit.repository.EntityFactory;
 import org.eclipse.hawkbit.repository.MaintenanceScheduleHelper;
@@ -72,6 +73,7 @@ import org.eclipse.hawkbit.repository.jpa.utils.QuotaHelper;
 import org.eclipse.hawkbit.repository.model.Action;
 import org.eclipse.hawkbit.repository.model.Action.Status;
 import org.eclipse.hawkbit.repository.model.ActionStatus;
+import org.eclipse.hawkbit.repository.model.AutoConfirmationStatus;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.SoftwareModule;
 import org.eclipse.hawkbit.repository.model.SoftwareModuleMetadata;
@@ -154,6 +156,9 @@ public class JpaControllerManagement extends JpaActionManagement implements Cont
 
     @Autowired
     private TenantAware tenantAware;
+
+    @Autowired
+    private ConfirmationManagement confirmationManagement;
 
     public JpaControllerManagement(final ScheduledExecutorService executorService,
             final RepositoryProperties repositoryProperties, final ActionRepository actionRepository) {
@@ -1075,6 +1080,17 @@ public class JpaControllerManagement extends JpaActionManagement implements Cont
         } else {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public AutoConfirmationStatus activateAutoConfirmation(final String controllerId, final String initiator,
+            final String remark) {
+        return confirmationManagement.activateAutoConfirmation(controllerId, initiator, remark);
+    }
+
+    @Override
+    public void deactivateAutoConfirmation(final String controllerId) {
+        confirmationManagement.deactivateAutoConfirmation(controllerId);
     }
 
     private void cancelAssignDistributionSetEvent(final Action action) {

@@ -27,6 +27,7 @@ import org.eclipse.hawkbit.dmf.amqp.api.MessageType;
 import org.eclipse.hawkbit.dmf.json.model.DmfActionStatus;
 import org.eclipse.hawkbit.dmf.json.model.DmfActionUpdateStatus;
 import org.eclipse.hawkbit.dmf.json.model.DmfAttributeUpdate;
+import org.eclipse.hawkbit.dmf.json.model.DmfAutoConfirmation;
 import org.eclipse.hawkbit.dmf.json.model.DmfCreateThing;
 import org.eclipse.hawkbit.dmf.json.model.DmfUpdateMode;
 import org.eclipse.hawkbit.im.authentication.SpPermission.SpringEvalExpressions;
@@ -315,6 +316,9 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
         case UPDATE_ATTRIBUTES:
             updateAttributes(message);
             break;
+        case UPDATE_AUTO_CONFIRMATION:
+            setAutoConfirmationState(message);
+            break;
         default:
             logAndThrowMessageError(message, "Got event without appropriate topic.");
             break;
@@ -332,7 +336,20 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
         final String thingId = getStringHeaderKey(message, MessageHeaderKey.THING_ID, THING_ID_NULL);
 
         controllerManagement.updateControllerAttributes(thingId, attributeUpdate.getAttributes(),
-                getUpdateMode(attributeUpdate));
+              getUpdateMode(attributeUpdate));
+    }
+
+    private void setAutoConfirmationState(final Message message) {
+        final DmfAutoConfirmation autoConfirmation = convertMessage(message, DmfAutoConfirmation.class);
+        final String thingId = getStringHeaderKey(message, MessageHeaderKey.THING_ID, THING_ID_NULL);
+        if (autoConfirmation.isEnabled()) {
+            final String remark = autoConfirmation.getRemark() == null
+                    ? "Activated using Device Management Federation API."
+                    : autoConfirmation.getRemark();
+            controllerManagement.activateAutoConfirmation(thingId, autoConfirmation.getInitiator(), remark);
+        } else {
+            controllerManagement.deactivateAutoConfirmation(thingId);
+        }
     }
 
     /**
