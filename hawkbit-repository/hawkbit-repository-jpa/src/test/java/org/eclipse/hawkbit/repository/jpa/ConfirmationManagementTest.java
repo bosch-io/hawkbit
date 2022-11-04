@@ -46,6 +46,8 @@ class ConfirmationManagementTest extends AbstractJpaIntegrationTest {
     @Test
     @Description("Verify 'findActiveActionsWaitingConfirmation' method is filtering like expected")
     void retrieveActionsWithConfirmationState() {
+        enableUserConsentFlow();
+        
         final String controllerId = testdataFactory.createTarget().getControllerId();
         final Long dsId = testdataFactory.createDistributionSet().getId();
 
@@ -67,6 +69,7 @@ class ConfirmationManagementTest extends AbstractJpaIntegrationTest {
     @Description("Verify 'findActiveActionsWaitingConfirmation' method is filtering like expected with multi assignment active")
     void retrieveActionsWithConfirmationStateInMultiAssignment() {
         enableMultiAssignments();
+        enableUserConsentFlow();
 
         final String controllerId = testdataFactory.createTarget().getControllerId();
         final Long dsId = testdataFactory.createDistributionSet().getId();
@@ -96,6 +99,7 @@ class ConfirmationManagementTest extends AbstractJpaIntegrationTest {
     @Description("Verify multiple actions in WFC state will be transferred in RUNNING state in case auto-confirmation is activated.")
     void activateAutoConfirmationInMultiAssignment() {
         enableMultiAssignments();
+        enableUserConsentFlow();
 
         final String controllerId = testdataFactory.createTarget().getControllerId();
         final Long dsId = testdataFactory.createDistributionSet().getId();

@@ -282,7 +282,7 @@ public interface ActionRepository extends BaseEntityRepository<JpaAction, Long>,
      */
     @Query("SELECT a FROM JpaAction a WHERE a.target.controllerId = :controllerId AND a.active = true AND a.status = :status")
     List<JpaAction> findByTargetIdInAndIsActiveAndActionStatus(@Param("controllerId") String controllerId,
-            @Param("currentStatus") Action.Status status);
+            @Param("status") Action.Status status);
 
     /**
      *
