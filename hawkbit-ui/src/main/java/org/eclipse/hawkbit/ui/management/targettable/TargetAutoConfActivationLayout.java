@@ -141,7 +141,6 @@ public class TargetAutoConfActivationLayout extends AbstractEntityWindowLayout<P
     private void activateAutoConfirmation(final ProxyTargetConfirmationOptions options) {
         confirmationManagement.activateAutoConfirmation(
               options.getControllerId(), options.getInitiator(), options.getRemark());
-        //doSetValue(ProxyTargetConfirmationOptions.active(updatedStatus));
     }
 
     private int calculateAffectedActionsOnActivation(final String controllerId) {

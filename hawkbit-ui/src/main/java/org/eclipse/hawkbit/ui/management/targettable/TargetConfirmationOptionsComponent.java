@@ -164,7 +164,7 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
                         .newBuilder(i18n, AUTO_CONFIRMATION_ACTIVATION_DIALOG).icon(VaadinIcons.WARNING)
                         .caption(i18n.getMessage("caption.target.auto.confirmation.disable"))
                         .question(i18n.getMessage("message.target.auto.confirmation.disable")).onSaveOrUpdate(() -> {
-                            confirmationManagement.disableAutoConfirmation(options.getControllerId());
+                            confirmationManagement.deactivateAutoConfirmation(options.getControllerId());
                             doSetValue(ProxyTargetConfirmationOptions.disabled(options.getControllerId()));
                         }).build();
 

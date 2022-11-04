@@ -177,7 +177,7 @@ class ConfirmationManagementTest extends AbstractJpaIntegrationTest {
                     });
         });
 
-        confirmationManagement.disableAutoConfirmation(controllerId);
+        confirmationManagement.deactivateAutoConfirmation(controllerId);
         verifyAutoConfirmationIsDisabled(controllerId);
     }
 
@@ -206,7 +206,7 @@ class ConfirmationManagementTest extends AbstractJpaIntegrationTest {
         final String controllerId = testdataFactory.createTarget().getControllerId();
 
         verifyAutoConfirmationIsDisabled(controllerId);
-        confirmationManagement.disableAutoConfirmation(controllerId);
+        confirmationManagement.deactivateAutoConfirmation(controllerId);
         verifyAutoConfirmationIsDisabled(controllerId);
     }
 

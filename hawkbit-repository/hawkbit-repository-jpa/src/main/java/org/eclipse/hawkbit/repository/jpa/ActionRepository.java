@@ -271,20 +271,18 @@ public interface ActionRepository extends BaseEntityRepository<JpaAction, Long>,
 
     /**
      *
-     * Retrieves all {@link Action}s referring to the given target IDs, active flag,
-     * current status..
+     * Retrieves all active {@link Action}s by given controllerId filtered by a
+     * status
      *
-     * @param targetIds
+     * @param controllerId
      *            the IDs of targets for the actions
-     * @param active
-     *            flag to indicate active/inactive actions
-     * @param currentStatus
+     * @param status
      *            the current status of the actions
      * @return the found list of {@link Action}
      */
-    @Query("SELECT a FROM JpaAction a WHERE a.target.controllerId = :controllerId AND a.active = true AND a.status = :currentStatus")
+    @Query("SELECT a FROM JpaAction a WHERE a.target.controllerId = :controllerId AND a.active = true AND a.status = :status")
     List<JpaAction> findByTargetIdInAndIsActiveAndActionStatus(@Param("controllerId") String controllerId,
-            @Param("currentStatus") Action.Status currentStatus);
+            @Param("currentStatus") Action.Status status);
 
     /**
      *
