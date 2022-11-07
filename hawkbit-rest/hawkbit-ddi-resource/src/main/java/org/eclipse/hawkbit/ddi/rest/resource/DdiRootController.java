@@ -497,28 +497,6 @@ public class DdiRootController implements DdiRootControllerRestApi {
 
     }
 
- /*   private DdiDeploymentBase generateDdiDeploymentBase(final Target target, final Action action,
-            final Integer actionHistoryMessageCount) {
-        final List<DdiChunk> chunks = DataConversionHelper.createChunks(target, action, artifactUrlHandler,
-                systemManagement, new ServletServerHttpRequest(requestResponseContextHolder.getHttpServletRequest()),
-                controllerManagement);
-
-        final List<String> actionHistoryMsgs = controllerManagement.getActionHistoryMessages(action.getId(),
-                actionHistoryMessageCount == null ? Integer.parseInt(DdiRestConstants.NO_ACTION_HISTORY)
-                        : actionHistoryMessageCount);
-
-        final DdiActionHistory actionHistory = actionHistoryMsgs.isEmpty() ? null
-                : new DdiActionHistory(action.getStatus().name(), actionHistoryMsgs);
-
-        final HandlingType downloadType = calculateDownloadType(action);
-        final HandlingType updateType = calculateUpdateType(action, downloadType);
-
-        final DdiMaintenanceWindowStatus maintenanceWindow = calculateMaintenanceWindow(action);
-
-        return new DdiDeploymentBase(Long.toString(action.getId()),
-                new DdiDeployment(downloadType, updateType, chunks, maintenanceWindow), actionHistory);
-    }*/
-
     private static ActionStatusCreate generateActionCancelStatus(final DdiActionFeedback feedback, final Target target,
             final Long actionId, final EntityFactory entityFactory) {
 
@@ -637,7 +615,7 @@ public class DdiRootController implements DdiRootControllerRestApi {
             @PathVariable("actionId") final Long actionId,
             @RequestParam(value = "c", required = false, defaultValue = "-1") final int resource,
             @RequestParam(value = "actionHistory", defaultValue = DdiRestConstants.NO_ACTION_HISTORY) final Integer actionHistoryMessageCount) {
-        LOG.debug("getControllerBaseconfirmationAction({},{})", controllerId, resource);
+        LOG.debug("getControllerBaseConfirmationAction({},{})", controllerId, resource);
 
         final Target target = findTarget(controllerId);
         final Action action = findActionForTarget(actionId, target);
@@ -648,10 +626,7 @@ public class DdiRootController implements DdiRootControllerRestApi {
 
             final DdiConfirmationBase base = generateDdiConfirmationBase(target, action, actionHistoryMessageCount);
 
-            LOG.debug("Found an active UpdateAction for target {}. returning deployment: {}", controllerId, base);
-
-            controllerManagement.registerRetrieved(action.getId(), RepositoryConstants.SERVER_MESSAGE_PREFIX
-                    + "Target retrieved action details. Awaiting confirmation before proceeding with the deployment.");
+            LOG.debug("Found an active UpdateAction for target {}. Returning confirmation: {}", controllerId, base);
 
             return new ResponseEntity<>(base, HttpStatus.OK);
         }
@@ -704,6 +679,11 @@ public class DdiRootController implements DdiRootControllerRestApi {
             LOG.warn("Updating action {} with confirmation {} not possible since action not active anymore.",
                     action.getId(), feedback.getConfirmation());
             return new ResponseEntity<>(HttpStatus.GONE);
+        }
+
+        if (!action.isWaitingConfirmation()) {
+            LOG.debug("Action is not waiting for confirmation, deny request.");
+            return ResponseEntity.notFound().build();
         }
 
 
