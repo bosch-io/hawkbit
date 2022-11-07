@@ -53,9 +53,9 @@ public class DdiConfirmationBaseTest {
 
         assertThat(serializedDdiConfirmationBase).contains(id, FORCED.getName(), ATTEMPT.getName(), AVAILABLE.getStatus(),
                 actionStatus);
-        assertThat(deserializedDdiConfigurationBase.getDeployment().getDownload()).isEqualTo(ddiDeployment.getDownload());
-        assertThat(deserializedDdiConfigurationBase.getDeployment().getUpdate()).isEqualTo(ddiDeployment.getUpdate());
-        assertThat(deserializedDdiConfigurationBase.getDeployment().getMaintenanceWindow()).isEqualTo(
+        assertThat(deserializedDdiConfigurationBase.getConfirmation().getDownload()).isEqualTo(ddiDeployment.getDownload());
+        assertThat(deserializedDdiConfigurationBase.getConfirmation().getUpdate()).isEqualTo(ddiDeployment.getUpdate());
+        assertThat(deserializedDdiConfigurationBase.getConfirmation().getMaintenanceWindow()).isEqualTo(
                 ddiDeployment.getMaintenanceWindow());
         assertThat(deserializedDdiConfigurationBase.getActionHistory().toString()).isEqualTo(ddiActionHistory.toString());
     }
@@ -72,9 +72,9 @@ public class DdiConfirmationBaseTest {
         // Test
         DdiConfirmationBase ddiConfirmationBase = mapper.readValue(serializedDdiConfirmationBase, DdiConfirmationBase.class);
 
-        assertThat(ddiConfirmationBase.getDeployment().getDownload().getName()).isEqualTo(FORCED.getName());
-        assertThat(ddiConfirmationBase.getDeployment().getUpdate().getName()).isEqualTo(ATTEMPT.getName());
-        assertThat(ddiConfirmationBase.getDeployment().getMaintenanceWindow().getStatus()).isEqualTo(
+        assertThat(ddiConfirmationBase.getConfirmation().getDownload().getName()).isEqualTo(FORCED.getName());
+        assertThat(ddiConfirmationBase.getConfirmation().getUpdate().getName()).isEqualTo(ATTEMPT.getName());
+        assertThat(ddiConfirmationBase.getConfirmation().getMaintenanceWindow().getStatus()).isEqualTo(
                 AVAILABLE.getStatus());
     }
 

@@ -15,12 +15,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.springframework.hateoas.RepresentationModel;
 
 import javax.validation.constraints.NotNull;
+import java.util.Objects;
 
 /**
  * Update action resource.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonPropertyOrder({ "id", "deployment", "actionHistory" })
+@JsonPropertyOrder({ "id", "confirmation", "actionHistory" })
 public class DdiConfirmationBase extends RepresentationModel<DdiConfirmationBase> {
 
     @JsonProperty("id")
@@ -29,7 +30,7 @@ public class DdiConfirmationBase extends RepresentationModel<DdiConfirmationBase
 
     @JsonProperty("confirmation")
     @NotNull
-    private DdiDeployment deployment;
+    private DdiDeployment confirmation;
 
     /**
      * Action history containing current action status and a list of feedback
@@ -51,20 +52,26 @@ public class DdiConfirmationBase extends RepresentationModel<DdiConfirmationBase
      *
      * @param id
      *            of the update action
-     * @param deployment
-     *            details
+     * @param confirmation
+     *            chunk details
      * @param actionHistory
-     *            containing current action status and a list of feedback
-     *            messages received earlier from the controller.
+     *            containing current action status and a list of feedback messages
+     *            received earlier from the controller.
      */
-    public DdiConfirmationBase(final String id, final DdiDeployment deployment, final DdiActionHistory actionHistory) {
+    public DdiConfirmationBase(final String id, final DdiDeployment confirmation,
+            final DdiActionHistory actionHistory) {
         this.id = id;
-        this.deployment = deployment;
+        this.confirmation = confirmation;
         this.actionHistory = actionHistory;
     }
 
-    public DdiDeployment getDeployment() {
-        return deployment;
+    /**
+     * Return the confirmation data containing chunks needed to confirm a action.
+     * 
+     * @return {@link DdiDeployment}
+     */
+    public DdiDeployment getConfirmation() {
+        return confirmation;
     }
 
     /**
@@ -79,7 +86,24 @@ public class DdiConfirmationBase extends RepresentationModel<DdiConfirmationBase
 
     @Override
     public String toString() {
-        return "ConfirmationBase [id=" + id + ", deployment=" + deployment + " actionHistory=" + actionHistory + "]";
+        return "ConfirmationBase [id=" + id + ", confirmation=" + confirmation + " actionHistory=" + actionHistory
+                + "]";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (this.getClass() != obj.getClass()) {
+            return false;
+        }
+        final DdiConfirmationBase oBase = (DdiConfirmationBase) obj;
+        return Objects.equals(this.id, oBase.id) && Objects.equals(this.confirmation, oBase.confirmation)
+                && Objects.equals(this.actionHistory, oBase.actionHistory);
     }
 
 }
