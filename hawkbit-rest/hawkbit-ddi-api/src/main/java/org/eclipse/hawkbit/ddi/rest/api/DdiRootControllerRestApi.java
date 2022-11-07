@@ -19,6 +19,8 @@ import org.eclipse.hawkbit.ddi.json.model.DdiActionFeedback;
 import org.eclipse.hawkbit.ddi.json.model.DdiArtifact;
 import org.eclipse.hawkbit.ddi.json.model.DdiCancel;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfigData;
+import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationBase;
+import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationFeedback;
 import org.eclipse.hawkbit.ddi.json.model.DdiControllerBase;
 import org.eclipse.hawkbit.ddi.json.model.DdiDeploymentBase;
 import org.springframework.hateoas.MediaTypes;
@@ -270,4 +272,64 @@ public interface DdiRootControllerRestApi {
             @PathVariable("actionId") @NotEmpty final Long actionId,
             @RequestParam(value = "actionHistory", defaultValue = DdiRestConstants.NO_ACTION_HISTORY) final Integer actionHistoryMessageCount);
 
+    /**
+     * Resource for confirmation of an action.
+     *
+     * @param tenant
+     *            of the request
+     * @param controllerId
+     *            of the target
+     * @param actionId
+     *            of the {@link DdiConfirmationBase} that matches to active
+     *            actions in WAITING_FOR_CONFIRMATION status.
+     * @param resource
+     *            an hashcode of the resource which indicates if the action has
+     *            been changed, e.g. from 'soft' to 'force' and the eTag needs
+     *            to be re-generated
+     * @param actionHistoryMessageCount
+     *            specifies the number of messages to be returned from action
+     *            history. Regardless of the passed value, in order to restrict
+     *            resource utilization by controllers, maximum number of
+     *            messages that are retrieved from database is limited by
+     *            {@link RepositoryConstants#MAX_ACTION_HISTORY_MSG_COUNT}.
+     *
+     *            actionHistoryMessageCount less than zero: retrieves the maximum
+     *            allowed number of action status messages from history;
+     *
+     *            actionHistoryMessageCount equal to zero: does not retrieve any
+     *            message;
+     *
+     *            actionHistoryMessageCount greater than zero: retrieves the
+     *            specified number of messages, limited by maximum allowed number.
+     *
+     * @return the response
+     */
+    @GetMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION + "/{actionId}", produces = {
+            MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR})
+    ResponseEntity<DdiConfirmationBase> getControllerBaseConfirmationAction(@PathVariable("tenant") final String tenant,
+            @PathVariable("controllerId") @NotEmpty final String controllerId,
+            @PathVariable("actionId") @NotEmpty final Long actionId,
+            @RequestParam(value = "c", required = false, defaultValue = "-1") final int resource,
+            @RequestParam(value = "actionHistory", defaultValue = DdiRestConstants.NO_ACTION_HISTORY) final Integer actionHistoryMessageCount);
+
+    /**
+     * This is the feedback channel for the {@link DdiConfirmationBase} action.
+     *
+     * @param tenant
+     *            of the client
+     * @param feedback
+     *            to provide
+     * @param controllerId
+     *            of the target that matches to controller id
+     * @param actionId
+     *            of the action we have feedback for
+     *
+     * @return the response
+     */
+    @PostMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION + "/{actionId}/"
+            + DdiRestConstants.FEEDBACK, consumes = { MediaType.APPLICATION_JSON_VALUE,
+            DdiRestConstants.MEDIA_TYPE_CBOR })
+    ResponseEntity<Void> postConfirmationActionFeedback(@Valid final DdiConfirmationFeedback feedback,
+            @PathVariable("tenant") final String tenant, @PathVariable("controllerId") final String controllerId,
+            @PathVariable("actionId") @NotEmpty final Long actionId);
 }
