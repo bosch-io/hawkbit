@@ -170,7 +170,8 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         this.virtualPropertyReplacer = virtualPropertyReplacer;
         this.txManager = txManager;
         onlineDsAssignmentStrategy = new OnlineDsAssignmentStrategy(targetRepository, afterCommit, eventPublisherHolder,
-                actionRepository, actionStatusRepository, quotaManagement, this::isMultiAssignmentsEnabled, this::isUserConsentEnabled);
+                actionRepository, actionStatusRepository, quotaManagement, this::isMultiAssignmentsEnabled,
+                this::isUserConsentEnabled);
         offlineDsAssignmentStrategy = new OfflineDsAssignmentStrategy(targetRepository, afterCommit,
                 eventPublisherHolder, actionRepository, actionStatusRepository, quotaManagement,
                 this::isMultiAssignmentsEnabled, this::isUserConsentEnabled);
@@ -662,7 +663,8 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
     private List<JpaAction> activateActions(final List<JpaAction> actions){
         actions.forEach(action -> {
             action.setActive(true);
-            if (isUserConsentEnabled()) {
+            final boolean confirmationRequired = action.getRolloutGroup().isConfirmationRequired();
+            if (isUserConsentEnabled() && confirmationRequired) {
                 action.setStatus(Status.WAIT_FOR_CONFIRMATION);
                 return;
             }

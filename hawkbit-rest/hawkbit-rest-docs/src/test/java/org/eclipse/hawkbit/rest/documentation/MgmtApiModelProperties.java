@@ -90,6 +90,8 @@ public final class MgmtApiModelProperties {
 
     // rollout
     public static final String ROLLOUT_FILTER_QUERY = "target filter query language expression";
+    public static final String ROLLOUT_CONFIRMATION_REQUIRED = "(available with user consent flow active) if the confirmation is required for this rollout. Value will be used if confirmation options are missing in the rollout group definitions. Confirmation is required per default";
+    public static final String ROLLOUT_GROUP_CONFIRMATION_REQUIRED = "(available with user consent flow active) if the confirmation is required for this rollout group. Confirmation is required per default.";
     public static final String ROLLOUT_GROUP_FILTER_QUERY = "target filter query language expression that selects a subset of targets which match the target filter of the Rollout";
     public static final String ROLLOUT_GROUP_TARGET_PERCENTAGE = "percentage of remaining and matching targets that should be added to this group";
     public static final String ROLLOUT_DS_ID = "the ID of distributionset of this rollout";
@@ -139,6 +141,8 @@ public final class MgmtApiModelProperties {
     public static final String ACTION_TYPE = "Type of action.";
 
     public static final String ACTION_FORCE_TYPE = "Force type of the action that provides a hint if the controller should apply the action immediately or whenever possible.";
+
+    public static final String ACTION_CONFIRMATION_REQUIRED = "(Available with user consent flow active) Defines, if the confirmation is required for an action. Confirmation is required per default.";
 
     public static final String ACTION_FORCE_TIME = "In case of timeforced mode the difference, measured in milliseconds, between the time the action should switch to forced and midnight, January 1, 1970 UTC.";
 
@@ -217,6 +221,7 @@ public final class MgmtApiModelProperties {
     public static final String FORCETIME = "Forcetime in milliseconds.";
     public static final String FORCE = "Force as boolean.";
     public static final String ASSIGNMENT_WEIGHT = "Importance of the assignment.";
+    public static final String ASSIGNMENT_CONFIRMATION_REQUIRED = "(Available with user consent flow active) Specifies if the confirmation by the device is required for this action.";
     public static final String ASSIGNMENT_TYPE = "The type of the assignment.";
     public static final String TARGET_ASSIGNED = "The number of targets that have been assigned as part of this operation.";
     public static final String TARGET_ASSIGNED_ALREADY = "The number of targets which already had been the assignment.";

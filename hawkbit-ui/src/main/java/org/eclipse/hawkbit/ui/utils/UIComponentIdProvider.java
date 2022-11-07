@@ -1009,6 +1009,8 @@ public final class UIComponentIdProvider {
      */
     public static final String TARGET_FILTER_TABLE_TYPE_LABEL_ID = "target.query.filter.table.typeId";
 
+    public static final String TARGET_FILTER_TABLE_CONFIRMATION_LABEL_ID = "target.query.filter.table.confirmationId";
+
     /**
      * create or update target filter query - name label id.
      */
@@ -1572,6 +1574,8 @@ public final class UIComponentIdProvider {
     public static final String ROLLOUT_ACTION_TYPE_OPTIONS_ID = "rollout.action.type.options.id";
 
     public static final String ROLLOUT_START_OPTIONS_ID = "rollout.start.options.id";
+
+    public static final String ROLLOUT_CONFIRMATION_REQUIRED = "rollout.confirmation.required";
 
     public static final String SM_TYPE_COLOR_STYLE = "sm-type-colors";
 
