@@ -188,12 +188,6 @@ public class TargetGrid extends AbstractGrid<ProxyTarget, TargetManagementFilter
         init();
     }
 
-    private Boolean isUserConsentFlowActive(final SystemSecurityContext systemSecurityContext,
-            final TenantConfigurationManagement configManagement) {
-        return systemSecurityContext.runAsSystem(
-                () -> configManagement.getConfigurationValue(USER_CONSENT_ENABLED, Boolean.class).getValue());
-    }
-
     @Override
     public void init() {
         super.init();
