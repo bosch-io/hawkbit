@@ -65,7 +65,7 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
     @Test
     @Description("Forced deployment to a controller. Checks if the confirmation resource response payload for a given" +
             " deployment is as expected.")
-    public void deploymentForceAction() throws Exception {
+    public void verifyConfirmationReferencesInControllerBase() throws Exception {
         enableUserConsentFlow();
         // Prepare test data
         final DistributionSet ds = testdataFactory.createDistributionSet("", true);
@@ -121,17 +121,16 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
                 findDistributionSetByAction.findFirstModuleByType(osType).get().getId(), "forced", "forced");
 
         // Retrieved is reported
-        final Iterable<ActionStatus> actionStatusMessages = deploymentManagement
+        final Iterable<ActionStatus> actionStatus = deploymentManagement
                 .findActionStatusByAction(PageRequest.of(0, 100, Sort.Direction.DESC, "id"), uaction.getId());
-        assertThat(actionStatusMessages).hasSize(2);
-        final ActionStatus actionStatusMessage = actionStatusMessages.iterator().next();
-        assertThat(actionStatusMessage.getStatus()).isEqualTo(Action.Status.RETRIEVED);
+        assertThat(actionStatus).hasSize(1)
+                .allMatch(status -> status.getStatus() == Action.Status.WAIT_FOR_CONFIRMATION);
     }
-
 
     @Test
     @Description("Ensure that the deployment resource is available as CBOR")
     public void confirmationResourceCbor() throws Exception {
+        enableUserConsentFlow();
         final Target target = testdataFactory.createTarget();
         final DistributionSet distributionSet = testdataFactory.createDistributionSet("");
 
@@ -159,17 +158,45 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
         Target savedTarget = testdataFactory.createTarget("988");
         savedTarget = getFirstAssignedTarget(assignDistributionSet(ds.getId(), savedTarget.getControllerId()));
 
-        String controllerId = savedTarget.getControllerId();
+        final String controllerId = savedTarget.getControllerId();
 
         final Action savedAction = deploymentManagement.findActiveActionsByTarget(PAGE, controllerId)
-                .getContent().get(0);
+              .getContent().get(0);
 
         mvc.perform(get(CONTROLLER_BASE, tenantAware.getCurrentTenant(), controllerId)
-                        .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
-                .andExpect(jsonPath("$._links.confirmationBase.href").doesNotExist());
+                    .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+              .andExpect(jsonPath("$._links.confirmationBase.href").doesNotExist());
 
-       mvc.perform(get(CONFIRMATION_BASE, tenantAware.getCurrentTenant(), controllerId, savedAction.getId())
-                .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isNotFound());
+        mvc.perform(get(CONFIRMATION_BASE, tenantAware.getCurrentTenant(), controllerId, savedAction.getId())
+              .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Description("Ensure that the deploymentBase endpoint is not available for action ins WFC state.")
+    public void deploymentEndpointNotAccessibleForActionsWFC() throws Exception {
+        enableUserConsentFlow();
+
+        final DistributionSet ds = testdataFactory.createDistributionSet("");
+        Target savedTarget = testdataFactory.createTarget("988");
+        savedTarget = getFirstAssignedTarget(assignDistributionSet(ds.getId(), savedTarget.getControllerId()));
+
+        final String controllerId = savedTarget.getControllerId();
+
+        final Action savedAction = deploymentManagement.findActiveActionsByTarget(PAGE, controllerId).getContent()
+                .get(0);
+
+        mvc.perform(
+                get(CONTROLLER_BASE, tenantAware.getCurrentTenant(), controllerId).accept(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(jsonPath("$._links.confirmationBase.href").exists())
+                .andExpect(jsonPath("$._links.deploymentBase.href").doesNotExist());
+
+        mvc.perform(get(CONFIRMATION_BASE, tenantAware.getCurrentTenant(), controllerId, savedAction.getId())
+                .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk());
+
+        mvc.perform(get(DEPLOYMENT_BASE, tenantAware.getCurrentTenant(), controllerId, savedAction.getId())
+                .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
+                .andExpect(status().isNotFound());
     }
 
 
@@ -274,7 +301,7 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
             @Expect(type = ActionCreatedEvent.class, count = 1), @Expect(type = ActionUpdatedEvent.class, count = 2),
             @Expect(type = TargetUpdatedEvent.class, count = 1),
             @Expect(type = SoftwareModuleCreatedEvent.class, count = 3),
-            @Expect(type = TenantConfigurationCreatedEvent.class, count = 1)})
+            @Expect(type = TenantConfigurationCreatedEvent.class, count = 1) })
     void testActionHistoryCount() throws Exception {
         enableUserConsentFlow();
 
@@ -284,21 +311,27 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
 
         String controllerId = savedTarget.getControllerId();
 
-        final Action savedAction = deploymentManagement.findActiveActionsByTarget(PAGE, controllerId)
-                .getContent().get(0);
+        final Action savedAction = deploymentManagement.findActiveActionsByTarget(PAGE, controllerId).getContent()
+                .get(0);
         final String CONFIRMED_MESSAGE = "Action confirmed message.";
         final Integer CONFIRMED_CODE = 10;
         sendConfirmationFeedback(savedTarget, savedAction, DdiConfirmationFeedback.Confirmation.CONFIRMED,
                 CONFIRMED_CODE, CONFIRMED_MESSAGE).andExpect(status().isOk());
 
+        // confirmationBase not available in RUNNING state anymore
+        mvc.perform(get(CONFIRMATION_BASE, tenantAware.getCurrentTenant(), savedTarget.getControllerId(),
+                savedAction.getId()).contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isNotFound());
 
-        //assert confirmed message
-        mvc.perform(get(CONFIRMATION_BASE + "?actionHistory=2", tenantAware.getCurrentTenant(), savedTarget.getControllerId(),
+        // assert confirmed message against deploymentBase endpoint
+        // this call will update the action due to retrieved action status update
+        mvc.perform(
+                get(DEPLOYMENT_BASE + "?actionHistory=2", tenantAware.getCurrentTenant(), savedTarget.getControllerId(),
                         savedAction.getId()).contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
                 .andExpect(jsonPath("$.actionHistory.messages", hasItem(containsString(CONFIRMED_MESSAGE))))
                 .andExpect(jsonPath("$.actionHistory.messages",
-                        hasItem(containsString(String.format(DEVICE_REPORTED_CONFIRMATION_CODE,CONFIRMED_CODE)))));
+                        hasItem(containsString(String.format(DEVICE_REPORTED_CONFIRMATION_CODE, CONFIRMED_CODE)))));
     }
 
 }

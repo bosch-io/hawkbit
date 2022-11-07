@@ -606,17 +606,6 @@ public class RootControllerDocumentationTest extends AbstractApiRestDocumentatio
         final Long actionId = getFirstAssignedActionId(assignDistributionSetWithMaintenanceWindow(set.getId(),
                 target.getControllerId(), getTestSchedule(-5), getTestDuration(10), getTestTimeZone()));
 
-        controllerManagement.addInformationalActionStatus(
-                entityFactory.actionStatus().create(actionId).message("Started download").status(Status.DOWNLOAD));
-        controllerManagement.addInformationalActionStatus(entityFactory.actionStatus().create(actionId)
-                .message("Download failed. ErrorCode #5876745. Retry").status(Status.WARNING));
-        controllerManagement.addInformationalActionStatus(
-                entityFactory.actionStatus().create(actionId).message("Download done").status(Status.DOWNLOADED));
-        controllerManagement.addInformationalActionStatus(
-                entityFactory.actionStatus().create(actionId).message("Write firmware").status(Status.RUNNING));
-        controllerManagement.addInformationalActionStatus(
-                entityFactory.actionStatus().create(actionId).message("Reboot").status(Status.RUNNING));
-
         mockMvc.perform(get(
                         DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION
                                 + "/{actionId}?actionHistory=10",
@@ -683,6 +672,8 @@ public class RootControllerDocumentationTest extends AbstractApiRestDocumentatio
     @Description("Feedback channel for confirming an action")
     @WithUser(tenantId = "TENANT_ID", authorities = "ROLE_CONTROLLER", allSpPermissions = true)
     public void postConfirmationFeedback() throws Exception {
+        enableUserConsentFlow();
+
         final DistributionSet set = testdataFactory.createDistributionSet("one");
 
         final Target target = targetManagement.create(entityFactory.target().create().controllerId(CONTROLLER_ID));

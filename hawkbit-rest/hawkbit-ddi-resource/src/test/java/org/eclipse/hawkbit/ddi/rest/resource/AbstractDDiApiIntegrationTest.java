@@ -192,44 +192,44 @@ public abstract class AbstractDDiApiIntegrationTest extends AbstractRestIntegrat
                         contains(ds.findFirstModuleByType(runtimeType).get().getVersion())))
                 .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].name",
                         contains(ds.findFirstModuleByType(osType).get().getName())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].version",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].version",
                         contains(ds.findFirstModuleByType(osType).get().getVersion())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0].size", contains(ARTIFACT_SIZE)))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0].filename",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[0].size", contains(ARTIFACT_SIZE)))
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[0].filename",
                         contains(artifact.getFilename())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0].hashes.md5",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[0].hashes.md5",
                         contains(artifact.getMd5Hash())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0].hashes.sha1",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[0].hashes.sha1",
                         contains(artifact.getSha1Hash())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0].hashes.sha256",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[0].hashes.sha256",
                         contains(artifact.getSha256Hash())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0]._links.download-http.href",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[0]._links.download-http.href",
                         contains(HTTP_LOCALHOST + tenantAware.getCurrentTenant() + "/controller/v1/" + controllerId
                                 + "/softwaremodules/" + osModuleId + "/artifacts/" + artifact.getFilename())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0]._links.md5sum-http.href",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[0]._links.md5sum-http.href",
                         contains(HTTP_LOCALHOST + tenantAware.getCurrentTenant() + "/controller/v1/" + controllerId
                                 + "/softwaremodules/" + osModuleId + "/artifacts/" + artifact.getFilename()
                                 + ".MD5SUM")))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1].size", contains(ARTIFACT_SIZE)))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1].filename",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[1].size", contains(ARTIFACT_SIZE)))
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[1].filename",
                         contains(artifactSignature.getFilename())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1].hashes.md5",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[1].hashes.md5",
                         contains(artifactSignature.getMd5Hash())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1].hashes.sha1",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[1].hashes.sha1",
                         contains(artifactSignature.getSha1Hash())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1].hashes.sha256",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[1].hashes.sha256",
                         contains(artifactSignature.getSha256Hash())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1]._links.download-http.href",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[1]._links.download-http.href",
                         contains(HTTP_LOCALHOST + tenantAware.getCurrentTenant() + "/controller/v1/" + controllerId
                                 + "/softwaremodules/" + osModuleId + "/artifacts/" + artifactSignature.getFilename())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1]._links.md5sum-http.href",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].artifacts[1]._links.md5sum-http.href",
                         contains(HTTP_LOCALHOST + tenantAware.getCurrentTenant() + "/controller/v1/" + controllerId
                                 + "/softwaremodules/" + osModuleId + "/artifacts/" + artifactSignature.getFilename()
                                 + ".MD5SUM")))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='bApp')].version",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='bApp')].version",
                         contains(ds.findFirstModuleByType(appType).get().getVersion())))
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='bApp')].metadata").doesNotExist())
-                .andExpect(jsonPath(prefix + "chunks[?(@.part=='bApp')].name")
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='bApp')].metadata").doesNotExist())
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='bApp')].name")
                         .value(ds.findFirstModuleByType(appType).get().getName()));
     }
 
