@@ -262,7 +262,7 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
 
         final String feedback = getJsonConfirmationFeedback(confirmation, code, Collections.singletonList(message));
         return mvc.perform(
-                post(CONFIRMNATION_FEEDBACK, tenantAware.getCurrentTenant(), target.getControllerId(), action.getId())
+                post(CONFIRMATION_FEEDBACK, tenantAware.getCurrentTenant(), target.getControllerId(), action.getId())
                         .content(feedback).contentType(MediaType.APPLICATION_JSON));
     }
 

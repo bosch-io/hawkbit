@@ -71,7 +71,7 @@ public abstract class AbstractDDiApiIntegrationTest extends AbstractRestIntegrat
 
     protected static final String CONFIRMATION_BASE = CONTROLLER_BASE + "/confirmationBase/{actionId}";
 
-    protected static final String CONFIRMNATION_FEEDBACK = CONFIRMATION_BASE + "/feedback";
+    protected static final String CONFIRMATION_FEEDBACK = CONFIRMATION_BASE + "/feedback";
 
     protected static final int ARTIFACT_SIZE = 5 * 1024;
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -160,7 +160,7 @@ public abstract class AbstractDDiApiIntegrationTest extends AbstractRestIntegrat
             final Long osModuleId, final String downloadType, final String updateType) throws Exception {
         final ResultActions resultActions = performGet(DEPLOYMENT_BASE, mediaType, status().isOk(),
                 tenantAware.getCurrentTenant(), controllerId, actionId.toString());
-        return verifyBasePayload(resultActions, controllerId, ds, artifact, artifactSignature, actionId, osModuleId,
+        return verifyBasePayload("$.deployment", resultActions, controllerId, ds, artifact, artifactSignature, actionId, osModuleId,
                 downloadType, updateType);
     }
 
@@ -176,60 +176,60 @@ public abstract class AbstractDDiApiIntegrationTest extends AbstractRestIntegrat
             final Long osModuleId, final Action.ActionType actionType) throws Exception {
         final ResultActions resultActions = performGet(INSTALLED_BASE, mediaType, status().isOk(),
                 tenantAware.getCurrentTenant(), controllerId, actionId.toString());
-        return verifyBasePayload(resultActions, controllerId, ds, artifact, artifactSignature, actionId, osModuleId,
+        return verifyBasePayload("$.deployment", resultActions, controllerId, ds, artifact, artifactSignature, actionId, osModuleId,
                 getDownloadAndUploadType(actionType), getDownloadAndUploadType(actionType));
     }
 
-    private ResultActions verifyBasePayload(final ResultActions resultActions, final String controllerId,
+    private ResultActions verifyBasePayload(final String prefix, final ResultActions resultActions, final String controllerId,
             final DistributionSet ds, final Artifact artifact, final Artifact artifactSignature, final Long actionId,
             final Long osModuleId, final String downloadType, final String updateType) throws Exception {
         return resultActions.andExpect(jsonPath("$.id", equalTo(String.valueOf(actionId))))
-                .andExpect(jsonPath("$.deployment.download", equalTo(downloadType)))
-                .andExpect(jsonPath("$.deployment.update", equalTo(updateType)))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='jvm')].name",
+                .andExpect(jsonPath(prefix + ".download", equalTo(downloadType)))
+                .andExpect(jsonPath(prefix + ".update", equalTo(updateType)))
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='jvm')].name",
                         contains(ds.findFirstModuleByType(runtimeType).get().getName())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='jvm')].version",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='jvm')].version",
                         contains(ds.findFirstModuleByType(runtimeType).get().getVersion())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].name",
+                .andExpect(jsonPath(prefix + ".chunks[?(@.part=='os')].name",
                         contains(ds.findFirstModuleByType(osType).get().getName())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].version",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].version",
                         contains(ds.findFirstModuleByType(osType).get().getVersion())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[0].size", contains(ARTIFACT_SIZE)))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[0].filename",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0].size", contains(ARTIFACT_SIZE)))
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0].filename",
                         contains(artifact.getFilename())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[0].hashes.md5",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0].hashes.md5",
                         contains(artifact.getMd5Hash())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[0].hashes.sha1",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0].hashes.sha1",
                         contains(artifact.getSha1Hash())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[0].hashes.sha256",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0].hashes.sha256",
                         contains(artifact.getSha256Hash())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[0]._links.download-http.href",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0]._links.download-http.href",
                         contains(HTTP_LOCALHOST + tenantAware.getCurrentTenant() + "/controller/v1/" + controllerId
                                 + "/softwaremodules/" + osModuleId + "/artifacts/" + artifact.getFilename())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[0]._links.md5sum-http.href",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[0]._links.md5sum-http.href",
                         contains(HTTP_LOCALHOST + tenantAware.getCurrentTenant() + "/controller/v1/" + controllerId
                                 + "/softwaremodules/" + osModuleId + "/artifacts/" + artifact.getFilename()
                                 + ".MD5SUM")))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[1].size", contains(ARTIFACT_SIZE)))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[1].filename",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1].size", contains(ARTIFACT_SIZE)))
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1].filename",
                         contains(artifactSignature.getFilename())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[1].hashes.md5",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1].hashes.md5",
                         contains(artifactSignature.getMd5Hash())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[1].hashes.sha1",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1].hashes.sha1",
                         contains(artifactSignature.getSha1Hash())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[1].hashes.sha256",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1].hashes.sha256",
                         contains(artifactSignature.getSha256Hash())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[1]._links.download-http.href",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1]._links.download-http.href",
                         contains(HTTP_LOCALHOST + tenantAware.getCurrentTenant() + "/controller/v1/" + controllerId
                                 + "/softwaremodules/" + osModuleId + "/artifacts/" + artifactSignature.getFilename())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='os')].artifacts[1]._links.md5sum-http.href",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='os')].artifacts[1]._links.md5sum-http.href",
                         contains(HTTP_LOCALHOST + tenantAware.getCurrentTenant() + "/controller/v1/" + controllerId
                                 + "/softwaremodules/" + osModuleId + "/artifacts/" + artifactSignature.getFilename()
                                 + ".MD5SUM")))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='bApp')].version",
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='bApp')].version",
                         contains(ds.findFirstModuleByType(appType).get().getVersion())))
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='bApp')].metadata").doesNotExist())
-                .andExpect(jsonPath("$.deployment.chunks[?(@.part=='bApp')].name")
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='bApp')].metadata").doesNotExist())
+                .andExpect(jsonPath(prefix + "chunks[?(@.part=='bApp')].name")
                         .value(ds.findFirstModuleByType(appType).get().getName()));
     }
 
@@ -354,7 +354,9 @@ public abstract class AbstractDDiApiIntegrationTest extends AbstractRestIntegrat
             final Long osModuleId, final String downloadType, final String updateType) throws Exception {
         final ResultActions resultActions = performGet(CONFIRMATION_BASE, mediaType, status().isOk(),
                 tenantAware.getCurrentTenant(), controllerId, actionId.toString());
-        return verifyBasePayload(resultActions, controllerId, ds, artifact, artifactSignature, actionId, osModuleId,
+        return verifyBasePayload("$.confirmation", resultActions, controllerId, ds, artifact, artifactSignature, actionId, osModuleId,
                 downloadType, updateType);
     }
+
+
 }

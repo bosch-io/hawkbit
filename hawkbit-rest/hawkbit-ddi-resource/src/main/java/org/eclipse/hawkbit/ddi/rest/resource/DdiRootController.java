@@ -95,7 +95,7 @@ public class DdiRootController implements DdiRootControllerRestApi {
     private static final Logger LOG = LoggerFactory.getLogger(DdiRootController.class);
     private static final String GIVEN_ACTION_IS_NOT_ASSIGNED_TO_GIVEN_TARGET = "given action ({}) is not assigned to given target ({}).";
 
-    protected static final String DEVICE_REPORTED_CONFIRMATION_CODE = "Device reported confirmation code: %d";
+    protected static final String DEVICE_REPORTED_CONFIRMATION_CODE = "Device reported status code: %d";
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
@@ -651,7 +651,7 @@ public class DdiRootController implements DdiRootControllerRestApi {
             LOG.debug("Found an active UpdateAction for target {}. returning deployment: {}", controllerId, base);
 
             controllerManagement.registerRetrieved(action.getId(), RepositoryConstants.SERVER_MESSAGE_PREFIX
-                    + "Target retrieved confirmation action and now should confirm the action.");
+                    + "Target retrieved action details. Awaiting confirmation before proceeding with the deployment.");
 
             return new ResponseEntity<>(base, HttpStatus.OK);
         }
@@ -694,7 +694,8 @@ public class DdiRootController implements DdiRootControllerRestApi {
     public ResponseEntity<Void> postConfirmationActionFeedback(@Valid @RequestBody final DdiConfirmationFeedback feedback,
             @PathVariable("tenant") final String tenant, @PathVariable("controllerId") final String controllerId,
             @PathVariable("actionId") @NotEmpty final Long actionId) {
-        LOG.debug("provideConfirmationActionFeedback for target [{},{}]: {}", controllerId, actionId, feedback);
+        LOG.debug("provideConfirmationActionFeedback with feedback [controllerId={}, actionId={}]: {}",
+                controllerId, actionId, feedback);
 
         final Target target = findTarget(controllerId);
         final Action action = findActionForTarget(actionId, target);
@@ -725,14 +726,16 @@ public class DdiRootController implements DdiRootControllerRestApi {
                 LOG.info("Controller confirmed the action (actionId: {}, controllerId: {}) as we got {} report.",
                         actionId, controllerId, feedback.getConfirmation());
                 status = Status.RUNNING;
-                messages.add(RepositoryConstants.SERVER_MESSAGE_PREFIX + "Target confirmed the action.");
+                messages.add(RepositoryConstants.SERVER_MESSAGE_PREFIX + "Target confirmed action."
+                        + " Therefore, it will be set to the running state to proceed with the deployment.");
                 break;
             case DENIED:
             default:
                 LOG.debug("Controller denied the action (actionId: {}, controllerId: {}) as we got {} report.",
                         actionId, controllerId, feedback.getConfirmation());
                 status = Status.WAIT_FOR_CONFIRMATION;
-                messages.add(RepositoryConstants.SERVER_MESSAGE_PREFIX + "Target REJECTED the action.");
+                messages.add(RepositoryConstants.SERVER_MESSAGE_PREFIX + "Target rejected action."
+                        + " Action will stay in confirmation pending state.");
                 break;
         }
 

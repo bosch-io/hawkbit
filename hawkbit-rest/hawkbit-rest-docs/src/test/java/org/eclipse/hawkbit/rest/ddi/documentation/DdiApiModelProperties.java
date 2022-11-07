@@ -141,8 +141,8 @@ final class DdiApiModelProperties {
 
     static final String TARGET_CONFIRMATION_STATE = "action confirmation state";
 
-    static final String TARGET_CONFIRMATION_CODE = "optional individual confirmation code";
+    static final String TARGET_CONFIRMATION_CODE = "optional individual status code";
 
-    static final String TARGET_CONFIRMATION_DETAILS = "List of details message information";
+    static final String TARGET_CONFIRMATION_DETAILS = "List of detailed message information";
 
 }

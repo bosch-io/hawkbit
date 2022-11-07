@@ -39,16 +39,16 @@ public class DdiConfirmationBaseTest {
     @Description("Verify the correct serialization and deserialization of the model")
     void shouldSerializeAndDeserializeObject() throws IOException {
         // Setup
-        String id = "1234";
-        DdiDeployment ddiDeployment = new DdiDeployment(FORCED, ATTEMPT, Collections.emptyList(), AVAILABLE);
-        String actionStatus = "TestAction";
-        DdiActionHistory ddiActionHistory = new DdiActionHistory(actionStatus,
+        final String id = "1234";
+        final DdiDeployment ddiDeployment = new DdiDeployment(FORCED, ATTEMPT, Collections.emptyList(), AVAILABLE);
+        final String actionStatus = "TestAction";
+        final DdiActionHistory ddiActionHistory = new DdiActionHistory(actionStatus,
                 Arrays.asList("Action status message 1", "Action status message 2"));
-        DdiConfirmationBase ddiConfirmationBase = new DdiConfirmationBase(id, ddiDeployment, ddiActionHistory);
+        final DdiConfirmationBase ddiConfirmationBase = new DdiConfirmationBase(id, ddiDeployment, ddiActionHistory);
 
         // Test
         String serializedDdiConfirmationBase = mapper.writeValueAsString(ddiConfirmationBase);
-        DdiConfirmationBase deserializedDdiConfigurationBase = mapper.readValue(serializedDdiConfirmationBase,
+        final DdiConfirmationBase deserializedDdiConfigurationBase = mapper.readValue(serializedDdiConfirmationBase,
                 DdiConfirmationBase.class);
 
         assertThat(serializedDdiConfirmationBase).contains(id, FORCED.getName(), ATTEMPT.getName(), AVAILABLE.getStatus(),
@@ -82,7 +82,7 @@ public class DdiConfirmationBaseTest {
     @Description("Verify that deserialization fails for known properties with a wrong datatype")
     void shouldFailForObjectWithWrongDataTypes() throws IOException {
         // Setup
-        String serializedDdiConfirmationBase = "{\"id\":[\"1234\"],\"deployment\":{\"download\":\"forced\","
+        String serializedDdiConfirmationBase = "{\"id\":[\"1234\"],\"confirmation\":{\"download\":\"forced\","
                 + "\"update\":\"attempt\",\"maintenanceWindow\":\"available\",\"chunks\":[]},"
                 + "\"actionHistory\":{\"status\":\"TestAction\",\"messages\":[\"Action status message 1\","
                 + "\"Action status message 2\"]},\"links\":[]}";
