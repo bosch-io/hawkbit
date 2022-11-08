@@ -746,10 +746,10 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
     @Bean
     @ConditionalOnMissingBean
     ConfirmationManagement confirmationManagement(final TargetRepository targetRepository,
-            final TenantAware tenantAware, final ActionRepository actionRepository,
-            final RepositoryProperties repositoryProperties, final ControllerManagement controllerManagement,
-            final EntityFactory entityFactory, final SystemSecurityContext securityContext) {
-        return new JpaConfirmationManagement(targetRepository, tenantAware, actionRepository, repositoryProperties,
+            final ActionRepository actionRepository, final RepositoryProperties repositoryProperties,
+            final ControllerManagement controllerManagement, final EntityFactory entityFactory,
+            final SystemSecurityContext securityContext) {
+        return new JpaConfirmationManagement(targetRepository, actionRepository, repositoryProperties,
                 controllerManagement, entityFactory, securityContext);
     }
 

@@ -8,12 +8,12 @@ create table sp_target_conf_status
 (
     id                  bigint not null auto_increment,
     target_id           bigint not null,
-    initiator           varchar(64) not null,
+    initiator           varchar(64),
     remark              VARCHAR(512),
     created_at          bigint,
-    created_by          varchar(40),
+    created_by          varchar(64),
     last_modified_at    bigint,
-    last_modified_by    varchar(40),
+    last_modified_by    varchar(64),
     optlock_revision    bigint,
     tenant              varchar(40) not null,
     primary key (id)

@@ -5,13 +5,13 @@ CREATE TABLE sp_target_conf_status
 (
     id                  NUMERIC(19) IDENTITY NOT NULL,
     target_id           NUMERIC(19) NOT NULL,
-    initiator           VARCHAR(64) NOT NULL,
+    initiator           VARCHAR(64),
     remark              VARCHAR(512),
     tenant              VARCHAR(40) NOT NULL,
     created_at          NUMERIC(19) NOT NULL,
-    created_by          VARCHAR(40) NOT NULL,
+    created_by          VARCHAR(64) NOT NULL,
     last_modified_at    NUMERIC(19) NOT NULL,
-    last_modified_by    VARCHAR(40) NOT NULL,
+    last_modified_by    VARCHAR(64) NOT NULL,
     optlock_revision    INTEGER NULL,
     PRIMARY KEY (id)
 );

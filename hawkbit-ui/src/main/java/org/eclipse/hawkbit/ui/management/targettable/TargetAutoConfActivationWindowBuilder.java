@@ -18,6 +18,7 @@ import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetConfirmationOptions;
 
 import com.vaadin.ui.Window;
+import org.springframework.util.StringUtils;
 
 import static org.eclipse.hawkbit.ui.utils.UIComponentIdProvider.AUTO_CONFIRMATION_ACTIVATION_DIALOG;
 
@@ -58,7 +59,10 @@ public class TargetAutoConfActivationWindowBuilder extends AbstractEntityWindowB
     @Override
     public Window getWindowForUpdate(final ProxyTargetConfirmationOptions entity) {
         final TargetAutoConfActivationLayout layout = new TargetAutoConfActivationLayout(uiDependencies.getI18n(),
-                tenantAware, confirmationManagement);
+                confirmationManagement);
+        if (StringUtils.isEmpty(entity.getInitiator())) {
+            entity.setInitiator(tenantAware.getCurrentUsername());
+        }
         layout.setEntity(entity);
 
         final CommonDialogWindow window = createWindow(layout.getRootComponent(), null);
