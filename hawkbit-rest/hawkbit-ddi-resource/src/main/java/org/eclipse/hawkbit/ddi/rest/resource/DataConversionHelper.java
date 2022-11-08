@@ -124,7 +124,7 @@ public final class DataConversionHelper {
 
             } else if (activeAction.isCancelingOrCanceled()) {
                 result.add(WebMvcLinkBuilder
-                        .linkTo(WebMvcLinkBuilder.methodOn(DdiRootControllerV1.class, tenantAware.getCurrentTenant())
+                        .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
                                 .getControllerCancelAction(tenantAware.getCurrentTenant(), target.getControllerId(),
                                         activeAction.getId()))
                         .withRel(DdiRestConstants.CANCEL_ACTION));
@@ -135,7 +135,7 @@ public final class DataConversionHelper {
                 // change the payload of the
                 // response because of eTags.
                 result.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder
-                        .methodOn(DdiRootControllerV1.class, tenantAware.getCurrentTenant())
+                        .methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
                         .getControllerBasedeploymentAction(tenantAware.getCurrentTenant(), target.getControllerId(),
                                 activeAction.getId(), calculateEtag(activeAction), null))
                         .withRel(DdiRestConstants.DEPLOYMENT_BASE_ACTION));
@@ -145,7 +145,7 @@ public final class DataConversionHelper {
         if (installedAction != null && !installedAction.isActive()) {
             result.add(
                     WebMvcLinkBuilder
-                            .linkTo(WebMvcLinkBuilder.methodOn(DdiRootControllerV1.class, tenantAware.getCurrentTenant())
+                            .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
                                     .getControllerInstalledAction(tenantAware.getCurrentTenant(),
                                             target.getControllerId(), installedAction.getId(), null))
                             .withRel(DdiRestConstants.INSTALLED_BASE_ACTION));
@@ -153,7 +153,7 @@ public final class DataConversionHelper {
 
         if (target.isRequestControllerAttributes()) {
             result.add(WebMvcLinkBuilder
-                    .linkTo(WebMvcLinkBuilder.methodOn(DdiRootControllerV1.class, tenantAware.getCurrentTenant())
+                    .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
                             .putConfigData(null, tenantAware.getCurrentTenant(), target.getControllerId()))
                     .withRel(DdiRestConstants.CONFIG_DATA_ACTION));
         }
@@ -161,7 +161,7 @@ public final class DataConversionHelper {
         if (userConsentFlowActive) {
             result.add(WebMvcLinkBuilder
                     .linkTo(WebMvcLinkBuilder
-                            .methodOn(DdiRootControllerV2.class,
+                            .methodOn(DdiRootController.class,
                                     tenantAware.getCurrentTenant())
                             .getAutoConfirmationState(tenantAware.getCurrentTenant(), target.getControllerId()))
                     .withRel(DdiRestConstants.AUTO_CONFIRMATION));
