@@ -27,11 +27,9 @@ import org.eclipse.hawkbit.repository.model.Action.Status;
 import org.eclipse.hawkbit.repository.model.AutoConfirmationStatus;
 import org.eclipse.hawkbit.repository.model.Target;
 import org.eclipse.hawkbit.security.SystemSecurityContext;
-import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -47,19 +45,17 @@ public class JpaConfirmationManagement extends JpaActionManagement implements Co
     private final ControllerManagement controllerManagement;
     private final EntityFactory entityFactory;
     private final TargetRepository targetRepository;
-    private final TenantAware tenantAware;
     private final SystemSecurityContext securityContext;
 
     /**
      * Constructor
      */
-    protected JpaConfirmationManagement(final TargetRepository targetRepository, final TenantAware tenantAware,
+    protected JpaConfirmationManagement(final TargetRepository targetRepository,
             final ActionRepository actionRepository, final RepositoryProperties repositoryProperties,
             final ControllerManagement controllerManagement, final EntityFactory entityFactory,
             final SystemSecurityContext securityContext) {
         super(actionRepository, repositoryProperties);
         this.targetRepository = targetRepository;
-        this.tenantAware = tenantAware;
         this.controllerManagement = controllerManagement;
         this.entityFactory = entityFactory;
         this.securityContext = securityContext;
@@ -81,8 +77,7 @@ public class JpaConfirmationManagement extends JpaActionManagement implements Co
                     controllerId);
             throw new AutoConfirmationAlreadyActiveException(controllerId);
         }
-        final String currentUser = StringUtils.isEmpty(initiator) ? tenantAware.getCurrentUsername() : initiator;
-        final JpaAutoConfirmationStatus confirmationStatus = new JpaAutoConfirmationStatus(currentUser, remark, target);
+        final JpaAutoConfirmationStatus confirmationStatus = new JpaAutoConfirmationStatus(initiator, remark, target);
         target.setAutoConfirmationStatus(confirmationStatus);
         final JpaTarget updatedTarget = targetRepository.save(target);
         final AutoConfirmationStatus autoConfStatus = updatedTarget.getAutoConfirmationStatus();
@@ -116,8 +111,9 @@ public class JpaConfirmationManagement extends JpaActionManagement implements Co
     private Action autoConfirmAction(final long actionId, final AutoConfirmationStatus autoConfirmationStatus) {
         final ActionStatusCreate actionStatus = entityFactory.actionStatus().create(actionId).status(Status.RUNNING)
                 .messages(Collections.singletonList(autoConfirmationStatus.constructActionMessage()));
-        LOG.debug("Automatically confirm actionId '{}' due to active auto-confirmation initiated by '{}'", actionId,
-                autoConfirmationStatus.getInitiator());
+        LOG.debug(
+                "Automatically confirm actionId '{}' due to active auto-confirmation initiated by '{}' and rollouts system user '{}'",
+                actionId, autoConfirmationStatus.getInitiator(), autoConfirmationStatus.getCreatedBy());
         return securityContext.runAsControllerAsTenant(autoConfirmationStatus.getTarget().getTenant(),
                 () -> controllerManagement.addUpdateActionStatus(actionStatus));
     }

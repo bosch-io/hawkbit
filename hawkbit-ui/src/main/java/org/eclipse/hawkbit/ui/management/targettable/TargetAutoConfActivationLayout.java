@@ -25,7 +25,6 @@ import com.vaadin.ui.ComponentContainer;
 import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.TextArea;
 import com.vaadin.ui.TextField;
-import org.springframework.util.StringUtils;
 
 import java.util.function.Consumer;
 
@@ -37,7 +36,8 @@ import static org.eclipse.hawkbit.ui.utils.UIComponentIdProvider.AUTO_CONFIRMATI
  */
 public class TargetAutoConfActivationLayout extends AbstractEntityWindowLayout<ProxyTargetConfirmationOptions> {
 
-    public static final String TEXTFIELD_INITIATOR = "prompt.target.auto.confirmation.activate.initiator";
+    public static final String CAPTION_TEXTFIELD_INITIATOR = "caption.target.auto.confirmation.activate.initiator";
+    public static final String PROMPT_TEXTFIELD_INITIATOR = "prompt.target.auto.confirmation.activate.initiator";
 
     private final ConfirmationManagement confirmationManagement;
     private final VaadinMessageSource i18n;
@@ -49,18 +49,16 @@ public class TargetAutoConfActivationLayout extends AbstractEntityWindowLayout<P
      *
      * @param i18n
      *            to get UI messages
-     * @param tenantAware
-     *            to get the current operating user
      * @param confirmationManagement
      *            to calculate affected actions
      */
-    public TargetAutoConfActivationLayout(final VaadinMessageSource i18n, final TenantAware tenantAware,
+    public TargetAutoConfActivationLayout(final VaadinMessageSource i18n,
             final ConfirmationManagement confirmationManagement) {
         super();
         this.i18n = i18n;
         this.confirmationManagement = confirmationManagement;
 
-        this.initiator = createInitiatorField(binder, tenantAware);
+        this.initiator = createInitiatorField(binder);
         this.remarkArea = createRemarkInputArea(binder);
     }
 
@@ -78,15 +76,13 @@ public class TargetAutoConfActivationLayout extends AbstractEntityWindowLayout<P
         return autoConfirmationLayout;
     }
 
-    public TextField createInitiatorField(final Binder<ProxyTargetConfirmationOptions> binder,
-            final TenantAware tenantAware) {
+    public TextField createInitiatorField(final Binder<ProxyTargetConfirmationOptions> binder) {
         final TextField initiatorField = new TextFieldBuilder(64).id(AUTO_CONFIRMATION_ACTIVATION_DIALOG_INITIATOR)
-                .caption(i18n.getMessage(TEXTFIELD_INITIATOR)).prompt(i18n.getMessage(TEXTFIELD_INITIATOR))
-                .buildTextComponent();
+                .caption(i18n.getMessage(CAPTION_TEXTFIELD_INITIATOR))
+                .prompt(i18n.getMessage(PROMPT_TEXTFIELD_INITIATOR)).buildTextComponent();
 
-        binder.forField(initiatorField)
-                .bind((options) -> StringUtils.isEmpty(options.getInitiator()) ? tenantAware.getCurrentUsername()
-                        : options.getInitiator(), null);
+        binder.forField(initiatorField).bind(ProxyTargetConfirmationOptions::getInitiator,
+                ProxyTargetConfirmationOptions::setInitiator);
 
         initiatorField.setSizeUndefined();
         return initiatorField;
@@ -139,8 +135,8 @@ public class TargetAutoConfActivationLayout extends AbstractEntityWindowLayout<P
     }
 
     private void activateAutoConfirmation(final ProxyTargetConfirmationOptions options) {
-        confirmationManagement.activateAutoConfirmation(
-              options.getControllerId(), options.getInitiator(), options.getRemark());
+        confirmationManagement.activateAutoConfirmation(options.getControllerId(), options.getInitiator(),
+                options.getRemark());
     }
 
     private int calculateAffectedActionsOnActivation(final String controllerId) {

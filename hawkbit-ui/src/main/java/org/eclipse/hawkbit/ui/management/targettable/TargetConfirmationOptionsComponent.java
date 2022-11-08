@@ -35,11 +35,13 @@ import com.vaadin.ui.CustomField;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.themes.ValoTheme;
+import org.springframework.util.StringUtils;
 
 import static org.eclipse.hawkbit.ui.utils.UIComponentIdProvider.AUTO_CONFIRMATION_ACTIVATION_DIALOG;
 import static org.eclipse.hawkbit.ui.utils.UIComponentIdProvider.AUTO_CONFIRMATION_DETAILS_ACTIVATEDAT;
 import static org.eclipse.hawkbit.ui.utils.UIComponentIdProvider.AUTO_CONFIRMATION_DETAILS_INITIATOR;
 import static org.eclipse.hawkbit.ui.utils.UIComponentIdProvider.AUTO_CONFIRMATION_DETAILS_REMARK;
+import static org.eclipse.hawkbit.ui.utils.UIComponentIdProvider.AUTO_CONFIRMATION_DETAILS_ROLLOUTS_USER;
 import static org.eclipse.hawkbit.ui.utils.UIComponentIdProvider.AUTO_CONFIRMATION_DETAILS_STATE;
 
 /**
@@ -118,14 +120,19 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
     }
 
     private KeyValueDetailsComponent buildAutoConfirmationDetailsLayout(final ProxyTargetConfirmationOptions options) {
+        final String initiator = notApplicableIfEmpty(options.getInitiator());
+        final String remark = notApplicableIfEmpty(options.getRemark());
         final List<ProxyKeyValueDetails> values = Arrays.asList(
                 new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_STATE,
                         i18n.getMessage("label.target.auto.confirmation.state"),
                         i18n.getMessage("label.target.auto.confirmation.active")),
                 new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_INITIATOR,
-                        i18n.getMessage("label.target.auto.confirmation.initiator"), options.getInitiator()),
+                        i18n.getMessage("label.target.auto.confirmation.initiator"), initiator),
+                new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_ROLLOUTS_USER,
+                        i18n.getMessage("label.target.auto.confirmation.systemuser"),
+                        options.getInitiatedSystemUser()),
                 new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_REMARK,
-                        i18n.getMessage("label.target.auto.confirmation.remark"), options.getRemark()),
+                        i18n.getMessage("label.target.auto.confirmation.remark"), remark),
                 new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_ACTIVATEDAT,
                         i18n.getMessage("label.target.auto.confirmation.activatedat"),
                         SPDateTimeUtil.getFormattedDate(options.getActivatedAt())));
@@ -135,6 +142,10 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
         details.setValue(values);
 
         return details;
+    }
+
+    private static String notApplicableIfEmpty(final String text) {
+        return StringUtils.hasText(text) ? text : "n/a";
     }
 
     private Label buildConfirmationRequiredLabel() {

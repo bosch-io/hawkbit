@@ -8,13 +8,11 @@
  */
 package org.eclipse.hawkbit.repository.model;
 
-import java.io.Serializable;
-
 /**
  * {@link AutoConfirmationStatus} of a {@link Target}.
  *
  */
-public interface AutoConfirmationStatus extends Serializable {
+public interface AutoConfirmationStatus extends BaseEntity {
 
     /**
      * For which target this status is corresponding to.
@@ -24,7 +22,9 @@ public interface AutoConfirmationStatus extends Serializable {
     Target getTarget();
 
     /**
-     * The user who initiated the auto confirmation.
+     * The user who initiated the auto confirmation. Will be set on auto
+     * confirmation activation and could be null. In this case the created_by can be
+     * considered as initiator.
      *
      * @return the user
      */
