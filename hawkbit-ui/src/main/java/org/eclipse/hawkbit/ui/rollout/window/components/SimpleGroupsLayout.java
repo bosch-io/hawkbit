@@ -273,13 +273,13 @@ public class SimpleGroupsLayout extends ValidatableLayout {
     public Link createConfirmationHelpLink(final UiProperties uiProperties) {
         final String confirmationFlowHelpUrl = uiProperties.getLinks().getDocumentation()
                 .getUserConsentAndConfirmationGuide();
-        final Link confirmationHelpLink = new Link("", new ExternalResource(confirmationFlowHelpUrl));
+        final Link link = new Link("", new ExternalResource(confirmationFlowHelpUrl));
 
-        confirmationHelpLink.setTargetName("_blank");
-        confirmationHelpLink.setIcon(VaadinIcons.QUESTION_CIRCLE);
-        confirmationHelpLink.setDescription(i18n.getMessage("tooltip.documentation.link"));
+        link.setTargetName("_blank");
+        link.setIcon(VaadinIcons.QUESTION_CIRCLE);
+        link.setDescription(i18n.getMessage("tooltip.documentation.link"));
 
-        return confirmationHelpLink;
+        return link;
     }
 
     private GridLayout buildLayout(final boolean isUserConsentEnabled) {
