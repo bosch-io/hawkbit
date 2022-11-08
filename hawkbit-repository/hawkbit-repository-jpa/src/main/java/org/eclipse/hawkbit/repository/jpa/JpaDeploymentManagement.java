@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,10 +36,8 @@ import javax.persistence.criteria.ListJoin;
 import javax.persistence.criteria.Root;
 
 import org.eclipse.hawkbit.repository.ActionFields;
-import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.DeploymentManagement;
 import org.eclipse.hawkbit.repository.DistributionSetManagement;
-import org.eclipse.hawkbit.repository.Identifiable;
 import org.eclipse.hawkbit.repository.QuotaManagement;
 import org.eclipse.hawkbit.repository.RepositoryConstants;
 import org.eclipse.hawkbit.repository.RepositoryProperties;
@@ -154,7 +151,6 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
     private final TenantAware tenantAware;
     private final Database database;
     private final RetryTemplate retryTemplate;
-    private final ConfirmationManagement confirmationManagement;
 
     protected JpaDeploymentManagement(final EntityManager entityManager, final ActionRepository actionRepository,
             final DistributionSetManagement distributionSetManagement,
@@ -164,7 +160,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
             final VirtualPropertyReplacer virtualPropertyReplacer, final PlatformTransactionManager txManager,
             final TenantConfigurationManagement tenantConfigurationManagement, final QuotaManagement quotaManagement,
             final SystemSecurityContext systemSecurityContext, final TenantAware tenantAware, final Database database,
-            final RepositoryProperties repositoryProperties, final ConfirmationManagement confirmationManagement) {
+            final RepositoryProperties repositoryProperties) {
         super(actionRepository, repositoryProperties);
         this.entityManager = entityManager;
         this.distributionSetRepository = distributionSetRepository;
@@ -186,7 +182,6 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         this.tenantAware = tenantAware;
         this.database = database;
         this.retryTemplate = createRetryTemplate();
-        this.confirmationManagement = confirmationManagement;
     }
 
     @Override
@@ -500,28 +495,42 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         actionStatusRepository.saveAll(actions.entrySet().stream().map(entry -> {
             final JpaAction action = entry.getValue();
             final JpaActionStatus actionStatus = assignmentStrategy.createActionStatus(action, actionMessage);
-            if (actionStatus.getStatus() == Status.WAIT_FOR_CONFIRMATION) {
-                if (action.getStatus().equals(Status.RUNNING)) {
-                    // action is in RUNNING state only if it's confirmed during assignment already
-                    if (!entry.getKey().isConfirmationRequired()) {
-                        // confirmation given on assignment dialog
-                        actionStatus.addMessage(
-                                String.format("Assignment confirmed by initiator [%s].", action.getInitiatedBy()));
-                    } else if (action.getTarget().getAutoConfirmationStatus() != null) {
-                        // auto-confirmation is configured
-                        actionStatus
-                                .addMessage(action.getTarget().getAutoConfirmationStatus().constructActionMessage());
-                    } else {
-                        throw new IllegalStateException("Action in RUNNING state without given confirmation.");
-                    }
-
-                } else {
-                    actionStatus.addMessage(RepositoryConstants.SERVER_MESSAGE_PREFIX
-                            + "Waiting for the confirmation by the device before processing with the deployment");
-                }
-            }
+            verifyAndAddConfirmationStatus(action, actionStatus, entry.getKey().isConfirmationRequired());
             return actionStatus;
         }).collect(Collectors.toList()));
+    }
+
+    private void setInitialActionStatusOfRolloutGroup(final List<JpaAction> actions) {
+        final List<JpaActionStatus> statusList = new ArrayList<>();
+        for (final JpaAction action : actions) {
+            final JpaActionStatus actionStatus = onlineDsAssignmentStrategy.createActionStatus(action, null);
+            verifyAndAddConfirmationStatus(action, actionStatus, action.getRolloutGroup().isConfirmationRequired());
+            statusList.add(actionStatus);
+        }
+        actionStatusRepository.saveAll(statusList);
+    }
+
+    private void verifyAndAddConfirmationStatus(final JpaAction action, final JpaActionStatus actionStatus,
+            final boolean isConfirmationRequired) {
+        if (actionStatus.getStatus() == Status.WAIT_FOR_CONFIRMATION) {
+            if (action.getStatus().equals(Status.RUNNING)) {
+                // action is in RUNNING state only if it's confirmed during assignment already
+                if (!isConfirmationRequired) {
+                    // confirmation given on assignment dialog
+                    actionStatus.addMessage(
+                            String.format("Assignment confirmed by initiator [%s].", action.getInitiatedBy()));
+                } else if (action.getTarget().getAutoConfirmationStatus() != null) {
+                    // auto-confirmation is configured
+                    actionStatus.addMessage(action.getTarget().getAutoConfirmationStatus().constructActionMessage());
+                } else {
+                    throw new IllegalStateException("Action in RUNNING state without given confirmation.");
+                }
+
+            } else {
+                actionStatus
+                        .addMessage("Waiting for the confirmation by the device before processing with the deployment");
+            }
+        }
     }
 
     private void detachEntitiesAndSendTargetUpdatedEvents(final JpaDistributionSet set, final List<JpaTarget> targets,
@@ -678,10 +687,9 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         if (!isMultiAssignmentsEnabled()) {
             closeOrCancelOpenDeviceActions(actions);
         }
-        final List<JpaAction> savedActions = activateActions(actions);
-        setInitialActionStatus(savedActions);
+        final List<JpaAction> savedActions = activateActionsOfRolloutGroup(actions);
+        setInitialActionStatusOfRolloutGroup(savedActions);
         setAssignmentOnTargets(savedActions);
-        //performAutoConfirmations(savedActions);
         return Collections.unmodifiableList(savedActions);
     }
 
@@ -695,7 +703,7 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         }
     }
 
-    private List<JpaAction> activateActions(final List<JpaAction> actions) {
+    private List<JpaAction> activateActionsOfRolloutGroup(final List<JpaAction> actions) {
         actions.forEach(action -> {
             action.setActive(true);
             final boolean confirmationRequired = action.getRolloutGroup().isConfirmationRequired()
@@ -718,36 +726,6 @@ public class JpaDeploymentManagement extends JpaActionManagement implements Depl
         }).collect(Collectors.toList());
 
         targetRepository.saveAll(assignedDsTargets);
-    }
-
-    private void setInitialActionStatus(final List<JpaAction> actions) {
-        final List<JpaActionStatus> statusList = new ArrayList<>();
-        for (final JpaAction action : actions) {
-            final JpaActionStatus actionStatus = onlineDsAssignmentStrategy.createActionStatus(action, null);
-            if (actionStatus.getStatus() == Status.WAIT_FOR_CONFIRMATION) {
-                if (action.getStatus().equals(Status.RUNNING)) {
-                    // action is in RUNNING state only if it's confirmed already
-                    if (!action.getRolloutGroup().isConfirmationRequired()) {
-                        // confirmed on rollout creation
-                        actionStatus.addMessage(
-                                String.format("Assignment confirmed by initiator [%s].", action.getInitiatedBy()));
-                    } else if (action.getTarget().getAutoConfirmationStatus() != null) {
-                        // confirmed by active auto-confirmation
-                        actionStatus
-                                .addMessage(action.getTarget().getAutoConfirmationStatus().constructActionMessage());
-                    } else {
-                        // should never hit
-                        throw new IllegalStateException("Action in RUNNING state without given confirmation.");
-                    }
-
-                } else {
-                    actionStatus.addMessage(
-                            "Waiting for the confirmation by the device before processing with the deployment");
-                }
-            }
-            statusList.add(actionStatus);
-        }
-        actionStatusRepository.saveAll(statusList);
     }
 
     private void setSkipActionStatus(final JpaAction action) {

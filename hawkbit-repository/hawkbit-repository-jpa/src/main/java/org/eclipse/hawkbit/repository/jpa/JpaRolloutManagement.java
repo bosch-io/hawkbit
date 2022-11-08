@@ -252,11 +252,6 @@ public class JpaRolloutManagement implements RolloutManagement {
         return rolloutRepository.save(savedRollout);
     }
 
-    private boolean isUserConsentEnabled() {
-        return TenantConfigHelper.usingContext(systemSecurityContext, tenantConfigurationManagement)
-                .isUserConsentEnabled();
-    }
-    
     private Rollout createRolloutGroups(final List<RolloutGroupCreate> groupList,
             final RolloutGroupConditions conditions, final Rollout rollout) {
         RolloutHelper.verifyRolloutInStatus(rollout, RolloutStatus.CREATING);

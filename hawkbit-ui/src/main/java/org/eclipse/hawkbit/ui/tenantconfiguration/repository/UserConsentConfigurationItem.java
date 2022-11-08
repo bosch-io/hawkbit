@@ -8,9 +8,7 @@
  */
 package org.eclipse.hawkbit.ui.tenantconfiguration.repository;
 
-import com.vaadin.data.Binder;
 import com.vaadin.ui.VerticalLayout;
-import org.eclipse.hawkbit.ui.common.data.proxies.ProxySystemConfigRepository;
 import org.eclipse.hawkbit.ui.components.SPUIComponentProvider;
 import org.eclipse.hawkbit.ui.utils.VaadinMessageSource;
 
@@ -23,7 +21,6 @@ public class UserConsentConfigurationItem extends VerticalLayout {
   private static final long serialVersionUID = 1L;
 
   private static final String MSG_KEY_CHECKBOX = "label.configuration.repository.userconsent";
-  private final VaadinMessageSource i18n;
 
   /**
    * Constructor.
@@ -32,7 +29,6 @@ public class UserConsentConfigurationItem extends VerticalLayout {
    *            VaadinMessageSource
    */
   public UserConsentConfigurationItem(final VaadinMessageSource i18n) {
-    this.i18n = i18n;
     this.setSpacing(false);
     this.setMargin(false);
     addComponent(SPUIComponentProvider.generateLabel(i18n, MSG_KEY_CHECKBOX));

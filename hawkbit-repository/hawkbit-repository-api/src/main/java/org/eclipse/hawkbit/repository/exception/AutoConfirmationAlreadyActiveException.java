@@ -10,12 +10,11 @@ package org.eclipse.hawkbit.repository.exception;
 
 import org.eclipse.hawkbit.exception.AbstractServerRtException;
 import org.eclipse.hawkbit.exception.SpServerError;
-import org.eclipse.hawkbit.repository.model.BaseEntity;
 
 /**
- * the {@link AutoConfirmationAlreadyActiveException} is thrown when auto
+ * The {@link AutoConfirmationAlreadyActiveException} is thrown when auto
  * confirmation is already active for a device but the
- * {@link org.eclipse.hawkbit.repository.TargetManagement#activeAutoConfirmation}
+ * {@link org.eclipse.hawkbit.repository.ConfirmationManagement#activateAutoConfirmation}
  * is getting called.
  */
 public class AutoConfirmationAlreadyActiveException extends AbstractServerRtException {
@@ -41,7 +40,7 @@ public class AutoConfirmationAlreadyActiveException extends AbstractServerRtExce
     }
 
     /**
-     * Parameterized constructor for auto confirmation is already ative for given
+     * Parameterized constructor for auto confirmation is already active for given
      * controller ID
      *
      * @param controllerId

@@ -10,7 +10,6 @@ package org.eclipse.hawkbit.ui.management.targettable;
 
 import com.vaadin.server.Sizeable;
 import org.eclipse.hawkbit.repository.ConfirmationManagement;
-import org.eclipse.hawkbit.repository.DeploymentManagement;
 import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.ui.UiProperties;
 import org.eclipse.hawkbit.ui.common.AbstractEntityWindowBuilder;
@@ -19,8 +18,6 @@ import org.eclipse.hawkbit.ui.common.CommonUiDependencies;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyTargetConfirmationOptions;
 
 import com.vaadin.ui.Window;
-
-import java.util.function.Consumer;
 
 import static org.eclipse.hawkbit.ui.utils.UIComponentIdProvider.AUTO_CONFIRMATION_ACTIVATION_DIALOG;
 

@@ -96,6 +96,8 @@ final class DdiApiModelProperties {
 
     static final String DEPLOYMENT = "Detailed deployment operation";
 
+    static final String CONFIRMATION = "Deployment confirmation operation";
+
     static final String CANCEL = "Detailed cancel operation of a deployment";
 
     static final String INSTALLED = "Detailed operation of last successfully finished action";
@@ -136,5 +138,11 @@ final class DdiApiModelProperties {
 
     static final String UPDATE_MODE = "Optional parameter to specify the update mode that should be applied when updating target attributes. "
             + "Valid values are 'merge', 'replace', and 'remove'. Defaults to 'merge'.";
+
+    static final String TARGET_CONFIRMATION_STATE = "action confirmation state";
+
+    static final String TARGET_CONFIRMATION_CODE = "optional individual status code";
+
+    static final String TARGET_CONFIRMATION_DETAILS = "List of detailed message information";
 
 }

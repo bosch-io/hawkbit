@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -27,6 +28,8 @@ import org.eclipse.hawkbit.ddi.json.model.DdiCancel;
 import org.eclipse.hawkbit.ddi.json.model.DdiCancelActionToStop;
 import org.eclipse.hawkbit.ddi.json.model.DdiChunk;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfigData;
+import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationBase;
+import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationFeedback;
 import org.eclipse.hawkbit.ddi.json.model.DdiControllerBase;
 import org.eclipse.hawkbit.ddi.json.model.DdiDeployment;
 import org.eclipse.hawkbit.ddi.json.model.DdiDeployment.DdiMaintenanceWindowStatus;
@@ -94,6 +97,8 @@ public class DdiRootControllerV1 implements DdiRootControllerRestApiV1 {
 
     private static final Logger LOG = LoggerFactory.getLogger(DdiRootControllerV1.class);
     private static final String GIVEN_ACTION_IS_NOT_ASSIGNED_TO_GIVEN_TARGET = "given action ({}) is not assigned to given target ({}).";
+
+    protected static final String DEVICE_REPORTED_CONFIRMATION_CODE = "Device reported status code: %d";
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
@@ -163,7 +168,7 @@ public class DdiRootControllerV1 implements DdiRootControllerRestApiV1 {
         final Action installedAction = controllerManagement.getInstalledActionByTarget(controllerId).orElse(null);
 
         checkAndCancelExpiredAction(activeAction);
-
+        //activeAction
         return new ResponseEntity<>(
                 DataConversionHelper.fromTarget(target, installedAction, activeAction,
                         activeAction == null ? controllerManagement.getPollingTime()
@@ -285,7 +290,7 @@ public class DdiRootControllerV1 implements DdiRootControllerRestApiV1 {
 
         checkAndCancelExpiredAction(action);
 
-        if (!action.isCancelingOrCanceled()) {
+        if (!action.isCancelingOrCanceled() && !action.isWaitingConfirmation()) {
 
             final DdiDeploymentBase base = generateDdiDeploymentBase(target, action, actionHistoryMessageCount);
 
@@ -332,6 +337,10 @@ public class DdiRootControllerV1 implements DdiRootControllerRestApiV1 {
 
         final Target target = findTarget(controllerId);
         final Action action = findActionForTarget(actionId, target);
+
+        if (action.isWaitingConfirmation()) {
+            return ResponseEntity.notFound().build();
+        }
 
         if (!action.isActive()) {
             LOG.warn("Updating action {} with feedback {} not possible since action not active anymore.",
@@ -501,28 +510,6 @@ public class DdiRootControllerV1 implements DdiRootControllerRestApiV1 {
         return TenantConfigHelper.usingContext(securityContext, tenantConfigurationManagement).isUserConsentEnabled();
     }
 
-    private DdiDeploymentBase generateDdiDeploymentBase(final Target target, final Action action,
-            final Integer actionHistoryMessageCount) {
-        final List<DdiChunk> chunks = DataConversionHelper.createChunks(target, action, artifactUrlHandler,
-                systemManagement, new ServletServerHttpRequest(requestResponseContextHolder.getHttpServletRequest()),
-                controllerManagement);
-
-        final List<String> actionHistoryMsgs = controllerManagement.getActionHistoryMessages(action.getId(),
-                actionHistoryMessageCount == null ? Integer.parseInt(DdiRestConstants.NO_ACTION_HISTORY)
-                        : actionHistoryMessageCount);
-
-        final DdiActionHistory actionHistory = actionHistoryMsgs.isEmpty() ? null
-                : new DdiActionHistory(action.getStatus().name(), actionHistoryMsgs);
-
-        final HandlingType downloadType = calculateDownloadType(action);
-        final HandlingType updateType = calculateUpdateType(action, downloadType);
-
-        final DdiMaintenanceWindowStatus maintenanceWindow = calculateMaintenanceWindow(action);
-
-        return new DdiDeploymentBase(Long.toString(action.getId()),
-                new DdiDeployment(downloadType, updateType, chunks, maintenanceWindow), actionHistory);
-    }
-
     private static ActionStatusCreate generateActionCancelStatus(final DdiActionFeedback feedback, final Target target,
             final Long actionId, final EntityFactory entityFactory) {
 
@@ -634,4 +621,119 @@ public class DdiRootControllerV1 implements DdiRootControllerRestApiV1 {
         return null;
     }
 
+
+    @Override
+    public ResponseEntity<DdiConfirmationBase> getControllerBaseConfirmationAction(
+            @PathVariable("tenant") final String tenant, @PathVariable("controllerId") final String controllerId,
+            @PathVariable("actionId") final Long actionId,
+            @RequestParam(value = "c", required = false, defaultValue = "-1") final int resource,
+            @RequestParam(value = "actionHistory", defaultValue = DdiRestConstants.NO_ACTION_HISTORY) final Integer actionHistoryMessageCount) {
+        LOG.debug("getControllerBaseConfirmationAction({},{})", controllerId, resource);
+
+        final Target target = findTarget(controllerId);
+        final Action action = findActionForTarget(actionId, target);
+
+        checkAndCancelExpiredAction(action);
+
+        if (!action.isCancelingOrCanceled() && action.isWaitingConfirmation()) {
+
+            final DdiConfirmationBase base = generateDdiConfirmationBase(target, action, actionHistoryMessageCount);
+
+            LOG.debug("Found an active UpdateAction for target {}. Returning confirmation: {}", controllerId, base);
+
+            return new ResponseEntity<>(base, HttpStatus.OK);
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+
+    private DdiDeploymentBase generateDdiDeploymentBase(final Target target, final Action action,
+            final Integer actionHistoryMessageCount) {
+        final DdiActionHistory actionHistory = generateDdiActionHistory(action, actionHistoryMessageCount).orElse(null);
+        final DdiDeployment ddiDeployment = generateDdiDeployment(target, action);
+        return new DdiDeploymentBase(Long.toString(action.getId()), ddiDeployment, actionHistory);
+    }
+    private DdiConfirmationBase generateDdiConfirmationBase(final Target target, final Action action,
+            final Integer actionHistoryMessageCount) {
+        final DdiActionHistory actionHistory = generateDdiActionHistory(action, actionHistoryMessageCount).orElse(null);
+        final DdiDeployment ddiDeployment = generateDdiDeployment(target, action);
+        return new DdiConfirmationBase(Long.toString(action.getId()), ddiDeployment, actionHistory);
+    }
+    private DdiDeployment generateDdiDeployment(final Target target, final Action action) {
+        final List<DdiChunk> chunks = DataConversionHelper.createChunks(target, action, artifactUrlHandler,
+                systemManagement, new ServletServerHttpRequest(requestResponseContextHolder.getHttpServletRequest()),
+                controllerManagement);
+        final HandlingType downloadType = calculateDownloadType(action);
+        final HandlingType updateType = calculateUpdateType(action, downloadType);
+        final DdiMaintenanceWindowStatus maintenanceWindow = calculateMaintenanceWindow(action);
+        return new DdiDeployment(downloadType, updateType, chunks, maintenanceWindow);
+    }
+    private Optional<DdiActionHistory> generateDdiActionHistory(final Action action,
+            final Integer actionHistoryMessageCount) {
+        final List<String> actionHistoryMsgs = controllerManagement.getActionHistoryMessages(action.getId(),
+                actionHistoryMessageCount == null ? Integer.parseInt(DdiRestConstants.NO_ACTION_HISTORY)
+                        : actionHistoryMessageCount);
+        return actionHistoryMsgs.isEmpty() ? Optional.empty()
+                : Optional.of(new DdiActionHistory(action.getStatus().name(), actionHistoryMsgs));
+    }
+
+    @Override
+    public ResponseEntity<Void> postConfirmationActionFeedback(@Valid @RequestBody final DdiConfirmationFeedback feedback,
+            @PathVariable("tenant") final String tenant, @PathVariable("controllerId") final String controllerId,
+            @PathVariable("actionId") @NotEmpty final Long actionId) {
+        LOG.debug("provideConfirmationActionFeedback with feedback [controllerId={}, actionId={}]: {}",
+                controllerId, actionId, feedback);
+
+        final Target target = findTarget(controllerId);
+        final Action action = findActionForTarget(actionId, target);
+
+        if (!action.isActive()) {
+            LOG.warn("Updating action {} with confirmation {} not possible since action not active anymore.",
+                    action.getId(), feedback.getConfirmation());
+            return new ResponseEntity<>(HttpStatus.GONE);
+        }
+
+        if (!action.isWaitingConfirmation()) {
+            LOG.debug("Action is not waiting for confirmation, deny request.");
+            return ResponseEntity.notFound().build();
+        }
+
+
+        final ActionStatusCreate actionStatusCreate = entityFactory.actionStatus().create(actionId);
+        final List<String> messages = new ArrayList<>();
+
+        if (!CollectionUtils.isEmpty(feedback.getDetails())) {
+            messages.addAll(feedback.getDetails());
+        }
+
+        final Integer code = feedback.getCode();
+        if (code != null) {
+            actionStatusCreate.code(code);
+            messages.add(String.format(DEVICE_REPORTED_CONFIRMATION_CODE, code));
+        }
+
+        final Status status;
+        switch (feedback.getConfirmation()) {
+            case CONFIRMED:
+                LOG.info("Controller confirmed the action (actionId: {}, controllerId: {}) as we got {} report.",
+                        actionId, controllerId, feedback.getConfirmation());
+                status = Status.RUNNING;
+                messages.add(RepositoryConstants.SERVER_MESSAGE_PREFIX + "Target confirmed action."
+                        + " Therefore, it will be set to the running state to proceed with the deployment.");
+                break;
+            case DENIED:
+            default:
+                LOG.debug("Controller denied the action (actionId: {}, controllerId: {}) as we got {} report.",
+                        actionId, controllerId, feedback.getConfirmation());
+                status = Status.WAIT_FOR_CONFIRMATION;
+                messages.add(RepositoryConstants.SERVER_MESSAGE_PREFIX + "Target rejected action."
+                        + " Action will stay in confirmation pending state.");
+                break;
+        }
+
+        controllerManagement.addUpdateActionStatus(actionStatusCreate.status(status).messages(messages));
+
+        return ResponseEntity.ok().build();
+    }
 }

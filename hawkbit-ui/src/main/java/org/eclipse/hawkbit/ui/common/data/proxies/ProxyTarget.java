@@ -42,7 +42,7 @@ public class ProxyTarget extends ProxyNamedEntity implements TypeInfoAware {
 
     private ProxyTypeInfo typeInfo;
 
-    private ProxyTargetConfirmationOptions options = new ProxyTargetConfirmationOptions();
+    private transient ProxyTargetConfirmationOptions options = new ProxyTargetConfirmationOptions();
 
     /**
      * Gets the controllerId

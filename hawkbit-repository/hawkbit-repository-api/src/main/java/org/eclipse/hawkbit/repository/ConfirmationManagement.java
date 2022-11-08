@@ -68,11 +68,11 @@ public interface ConfirmationManagement {
     List<Action> autoConfirmActiveActions(@NotEmpty String controllerId);
 
     /**
-     * Disable auto conformation for a specific controller id
+     * Deactivate auto confirmation for a specific controller id
      *
      * @param controllerId
      *            to disable auto confirmation for
      */
-    void disableAutoConfirmation(@NotEmpty String controllerId);
+    void deactivateAutoConfirmation(@NotEmpty String controllerId);
 
 }

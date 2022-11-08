@@ -64,6 +64,7 @@ public final class DdiRestConstants {
      * Default value specifying that no action history to be sent as part of
      * response to deploymentBase
      * {@link DdiRootControllerRestApiV1#getControllerBasedeploymentAction}.
+     * {@link DdiRootControllerRestApi#getControllerBaseconfirmationAction}.
      */
     public static final String NO_ACTION_HISTORY = "0";
 
@@ -72,6 +73,11 @@ public final class DdiRestConstants {
      * can reuse - even the Jackson data converter simply hardcodes this.
      */
     public static final String MEDIA_TYPE_CBOR = "application/cbor";
+
+    /**
+     * Confirmation action resources.
+     */
+    public static final String CONFIRMATION_BASE_ACTION = "confirmationBase";
 
     private DdiRestConstants() {
         // constant class, private constructor.

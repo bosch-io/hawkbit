@@ -44,6 +44,12 @@ public interface AutoConfirmationStatus extends Serializable {
      */
     String getRemark();
 
+    /**
+     * Construct the action message based on the current status.
+     *
+     * @return the constructed message which can be used for the action status as a
+     *         message
+     */
     String constructActionMessage();
 
 }

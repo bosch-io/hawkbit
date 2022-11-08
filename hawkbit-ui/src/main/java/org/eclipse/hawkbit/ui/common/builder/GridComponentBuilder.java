@@ -299,7 +299,7 @@ public final class GridComponentBuilder {
      * @param <E>
      *            entity type of the grid
      */
-    public static <E, T> void removeColumn(final Grid<E> grid, final String columnId) {
+    public static <E> void removeColumn(final Grid<E> grid, final String columnId) {
         grid.removeColumn(columnId);
     }
 
@@ -314,7 +314,7 @@ public final class GridComponentBuilder {
      *            entity type of the grid
      * @return if the column is present
      */
-    public static <E, T> boolean isColumnPresent(final Grid<E> grid, final String columnId) {
+    public static <E> boolean isColumnPresent(final Grid<E> grid, final String columnId) {
         return grid.getColumn(columnId) != null;
     }
 
