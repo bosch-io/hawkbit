@@ -25,7 +25,9 @@ public class DdiActivateAutoConfirmation {
      * Constructor.
      *
      * @param initiator
+     *            can be null
      * @param remark
+     *            can be null
      */
     @JsonCreator
     public DdiActivateAutoConfirmation(@JsonProperty(value = "initiator") final String initiator,
@@ -36,7 +38,8 @@ public class DdiActivateAutoConfirmation {
 
     @Override
     public String toString() {
-        return "DdiActivateAutoConfirmation [initiator=" + initiator + ", remark=" + remark + ", toString()=" + super.toString() + "]";
+        return "DdiActivateAutoConfirmation [initiator=" + initiator + ", remark=" + remark + ", toString()="
+                + super.toString() + "]";
     }
 
     public String getInitiator() {
