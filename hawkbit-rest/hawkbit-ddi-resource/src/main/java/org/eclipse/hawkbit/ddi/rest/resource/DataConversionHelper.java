@@ -122,7 +122,7 @@ public final class DataConversionHelper {
         } else {
             confirmationBase.add(WebMvcLinkBuilder
                     .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
-                            .deactivateAutoConfirmation(tenantAware.getCurrentTenant(), controllerId))
+                            .activateAutoConfirmation(tenantAware.getCurrentTenant(), controllerId, null))
                     .withRel(DdiRestConstants.AUTO_CONFIRM_ACTIVATE));
         }
         if (activeAction != null && activeAction.isWaitingConfirmation()) {

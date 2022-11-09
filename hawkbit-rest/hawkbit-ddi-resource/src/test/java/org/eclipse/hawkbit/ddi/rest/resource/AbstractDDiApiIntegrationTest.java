@@ -69,9 +69,12 @@ public abstract class AbstractDDiApiIntegrationTest extends AbstractRestIntegrat
     protected static final String DEPLOYMENT_FEEDBACK = DEPLOYMENT_BASE + "/feedback";
     protected static final String CANCEL_FEEDBACK = CANCEL_ACTION + "/feedback";
 
-    protected static final String CONFIRMATION_BASE = CONTROLLER_BASE + "/confirmationBase/{actionId}";
+    protected static final String CONFIRMATION_BASE = CONTROLLER_BASE + "/confirmationBase";
+    protected static final String ACTIVATE_AUTO_CONFIRM = CONFIRMATION_BASE + "/activateAutoConfirm";
+    protected static final String DEACTIVATE_AUTO_CONFIRM = CONFIRMATION_BASE + "/deactivateAutoConfirm";
+    protected static final String CONFIRMATION_BASE_ACTION = CONTROLLER_BASE + "/confirmationBase/{actionId}";
 
-    protected static final String CONFIRMATION_FEEDBACK = CONFIRMATION_BASE + "/feedback";
+    protected static final String CONFIRMATION_FEEDBACK = CONFIRMATION_BASE_ACTION + "/feedback";
 
     protected static final int ARTIFACT_SIZE = 5 * 1024;
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -349,10 +352,14 @@ public abstract class AbstractDDiApiIntegrationTest extends AbstractRestIntegrat
         return objectMapper.writeValueAsString(new DdiConfirmationFeedback(confirmation, code, messages));
     }
 
+    protected static ObjectMapper getMapper(){
+        return objectMapper;
+    }
+
     protected ResultActions getAndVerifyConfirmationBasePayload(final String controllerId, final MediaType mediaType,
             final DistributionSet ds, final Artifact artifact, final Artifact artifactSignature, final Long actionId,
             final Long osModuleId, final String downloadType, final String updateType) throws Exception {
-        final ResultActions resultActions = performGet(CONFIRMATION_BASE, mediaType, status().isOk(),
+        final ResultActions resultActions = performGet(CONFIRMATION_BASE_ACTION, mediaType, status().isOk(),
                 tenantAware.getCurrentTenant(), controllerId, actionId.toString());
         return verifyBasePayload("$.confirmation", resultActions, controllerId, ds, artifact, artifactSignature, actionId, osModuleId,
                 downloadType, updateType);

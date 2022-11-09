@@ -13,6 +13,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.eclipse.hawkbit.ddi.json.model.DdiActivateAutoConfirmation;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationFeedback;
 import org.eclipse.hawkbit.ddi.rest.api.DdiRestConstants;
 import org.eclipse.hawkbit.repository.event.remote.TargetAssignDistributionSetEvent;
@@ -33,6 +34,9 @@ import org.eclipse.hawkbit.repository.test.matcher.Expect;
 import org.eclipse.hawkbit.repository.test.matcher.ExpectEvents;
 import org.eclipse.hawkbit.rest.util.MockMvcResultPrinter;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.hateoas.MediaTypes;
@@ -42,6 +46,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.eclipse.hawkbit.ddi.rest.resource.DdiRootController.DEVICE_REPORTED_CONFIRMATION_CODE;
@@ -140,8 +145,8 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
                 .getContent().get(0);
 
         // get confirmation base
-        performGet(CONFIRMATION_BASE, MediaType.parseMediaType(DdiRestConstants.MEDIA_TYPE_CBOR), status().isOk(),
-                tenantAware.getCurrentTenant(), target.getControllerId(), action.getId().toString());
+        performGet(CONFIRMATION_BASE_ACTION, MediaType.parseMediaType(DdiRestConstants.MEDIA_TYPE_CBOR),
+                status().isOk(), tenantAware.getCurrentTenant(), target.getControllerId(), action.getId().toString());
 
         final Long softwareModuleId = distributionSet.getModules().stream().findAny().get().getId();
         testdataFactory.createArtifacts(softwareModuleId);
@@ -169,7 +174,7 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
                 .andExpect(jsonPath("$._links.confirmationBase.href").doesNotExist());
 
-        mvc.perform(get(CONFIRMATION_BASE, tenantAware.getCurrentTenant(), controllerId, savedAction.getId())
+        mvc.perform(get(CONFIRMATION_BASE_ACTION, tenantAware.getCurrentTenant(), controllerId, savedAction.getId())
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isNotFound());
     }
@@ -194,7 +199,7 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
                 .andExpect(jsonPath("$._links.confirmationBase.href").exists())
                 .andExpect(jsonPath("$._links.deploymentBase.href").doesNotExist());
 
-        mvc.perform(get(CONFIRMATION_BASE, tenantAware.getCurrentTenant(), controllerId, savedAction.getId())
+        mvc.perform(get(CONFIRMATION_BASE_ACTION, tenantAware.getCurrentTenant(), controllerId, savedAction.getId())
                 .accept(MediaType.APPLICATION_JSON)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk());
 
         mvc.perform(get(DEPLOYMENT_BASE, tenantAware.getCurrentTenant(), controllerId, savedAction.getId())
@@ -240,6 +245,93 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
         // assert that deployment endpoint is working
         mvc.perform(get(expectedDeploymentBaseLink).accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk());
+    }
+
+    @Test
+    @Description("Confirmation base provides right values if auto-confirm not active.")
+    void getConfirmationBaseProvidesAutoConfirmStatusNotActive() throws Exception {
+        enableUserConsentFlow();
+
+        final String controllerId = testdataFactory.createTarget("989").getControllerId();
+        assignDistributionSet(testdataFactory.createDistributionSet("").getId(), controllerId);
+        final long actionId = deploymentManagement.findActiveActionsByTarget(PAGE, controllerId).getContent().get(0)
+                .getId();
+
+        final String confirmationBaseActionLink = String.format("/%s/controller/v1/%s/confirmationBase/%d",
+                tenantAware.getCurrentTenant(), controllerId, actionId);
+
+        final String activateAutoConfLink = String.format("/%s/controller/v1/%s/confirmationBase/activateAutoConfirm",
+                tenantAware.getCurrentTenant(), controllerId);
+
+        mvc.perform(
+                get(CONFIRMATION_BASE, tenantAware.getCurrentTenant(), controllerId).accept(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(jsonPath("autoConfirm.active", equalTo(Boolean.FALSE)))
+                .andExpect(jsonPath("$._links.confirmationBase.href", containsString(confirmationBaseActionLink)))
+                .andExpect(jsonPath("$._links.activateAutoConfirm.href", containsString(activateAutoConfLink)))
+                .andExpect(jsonPath("$._links.deactivateAutoConfirm").doesNotExist());
+    }
+
+    @ParameterizedTest
+    @MethodSource("possibleActiveStates")
+    @Description("Confirmation base provides right values if auto-confirm is active.")
+    void getConfirmationBaseProvidesAutoConfirmStatusActive(final String initiator, final String remark)
+            throws Exception {
+        final String controllerId = testdataFactory.createTarget("988").getControllerId();
+
+        confirmationManagement.activateAutoConfirmation(controllerId, initiator, remark);
+
+        final String deactivateAutoConfLink = String.format(
+                "/%s/controller/v1/%s/confirmationBase/deactivateAutoConfirm", tenantAware.getCurrentTenant(),
+                controllerId);
+
+        mvc.perform(
+                get(CONFIRMATION_BASE, tenantAware.getCurrentTenant(), controllerId).accept(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(jsonPath("autoConfirm.active", equalTo(Boolean.TRUE)))
+                .andExpect(initiator == null ? jsonPath("autoConfirm.initiator").doesNotExist()
+                        : jsonPath("autoConfirm.initiator", equalTo(initiator)))
+                .andExpect(remark == null ? jsonPath("autoConfirm.remark").doesNotExist()
+                        : jsonPath("autoConfirm.remark", equalTo(remark)))
+                .andExpect(jsonPath("$._links.deactivateAutoConfirm.href", containsString(deactivateAutoConfLink)))
+                .andExpect(jsonPath("$._links.activateAutoConfirm").doesNotExist());
+    }
+
+    private static Stream<Arguments> possibleActiveStates() {
+        return Stream.of(Arguments.of("someInitiator", "someRemark"), Arguments.of(null, "someRemark"),
+                Arguments.of("someInitiator", null), Arguments.of(null, null));
+    }
+
+    @ParameterizedTest
+    @MethodSource("possibleActiveStates")
+    @Description("Verify auto-confirm activation is handled correctly.")
+    void activateAutoConfirmation(final String initiator, final String remark) throws Exception {
+        final String controllerId = testdataFactory.createTarget("988").getControllerId();
+
+        final DdiActivateAutoConfirmation body = new DdiActivateAutoConfirmation(initiator, remark);
+
+        mvc.perform(post(ACTIVATE_AUTO_CONFIRM, tenantAware.getCurrentTenant(), controllerId)
+                .content(getMapper().writeValueAsString(body)).contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk());
+
+        assertThat(confirmationManagement.getStatus(controllerId)).hasValueSatisfying(status -> {
+            assertThat(status.getInitiator()).isEqualTo(initiator);
+            assertThat(status.getRemark()).isEqualTo(remark);
+            assertThat(status.getCreatedBy()).isEqualTo("bumlux");
+        });
+    }
+
+    @Test
+    @Description("Verify auto-confirm deactivation is handled correctly.")
+    void deactivateAutoConfirmation() throws Exception {
+        final String controllerId = testdataFactory.createTarget("988").getControllerId();
+
+        confirmationManagement.activateAutoConfirmation(controllerId, null, null);
+
+        mvc.perform(post(DEACTIVATE_AUTO_CONFIRM, tenantAware.getCurrentTenant(), controllerId))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk());
+
+        assertThat(confirmationManagement.getStatus(controllerId)).isEmpty();
     }
 
     @Test
@@ -318,7 +410,7 @@ public class DdiConfirmationBaseTest extends AbstractDDiApiIntegrationTest {
                 CONFIRMED_CODE, CONFIRMED_MESSAGE).andExpect(status().isOk());
 
         // confirmationBase not available in RUNNING state anymore
-        mvc.perform(get(CONFIRMATION_BASE, tenantAware.getCurrentTenant(), savedTarget.getControllerId(),
+        mvc.perform(get(CONFIRMATION_BASE_ACTION, tenantAware.getCurrentTenant(), savedTarget.getControllerId(),
                 savedAction.getId()).contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isNotFound());
 
