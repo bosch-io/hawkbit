@@ -50,7 +50,7 @@ public abstract class AbstractHttpControllerAuthenticationFilter extends Abstrac
      * containing the placeholder key for retrieving the principal from the URI
      * request. e.g."/{tenant}/controller/v1/{controllerId}
      */
-    private static final String CONTROLLER_REQUEST_ANT_PATTERN = "/{" + TENANT_PLACE_HOLDER + "}/controller/v?" + "/{"
+    private static final String CONTROLLER_REQUEST_ANT_PATTERN = "/{" + TENANT_PLACE_HOLDER + "}/controller/v1" + "/{"
             + CONTROLLER_ID_PLACE_HOLDER + "}/**";
 
     private static final String CONTROLLER_DL_REQUEST_ANT_PATTERN = "/{" + TENANT_PLACE_HOLDER
