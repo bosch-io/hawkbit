@@ -17,8 +17,9 @@ public class ProxyTargetConfirmationOptions {
 
     private boolean isAutoConfirmationEnabled;
     private final String controllerId;
-    private final String initiator;
+    private final String initiatedSystemUser;
     private final Long activatedAt;
+    private String initiator;
     private String remark;
 
     /**
@@ -26,7 +27,7 @@ public class ProxyTargetConfirmationOptions {
      */
     public ProxyTargetConfirmationOptions() {
         this.controllerId = null;
-        this.initiator = null;
+        this.initiatedSystemUser = null;
         this.activatedAt = null;
     }
 
@@ -43,21 +44,22 @@ public class ProxyTargetConfirmationOptions {
      *            optional remark
      */
     private ProxyTargetConfirmationOptions(final boolean isAutoConfirmationEnabled, final String controllerId,
-            final String initiator, final Long activatedAt, final String remark) {
+                                           final String initiator, final String initiatedSystemUser, final Long activatedAt, final String remark) {
         this.isAutoConfirmationEnabled = isAutoConfirmationEnabled;
         this.controllerId = controllerId;
         this.initiator = initiator;
+        this.initiatedSystemUser = initiatedSystemUser;
         this.activatedAt = activatedAt;
         this.remark = remark;
     }
 
     public static ProxyTargetConfirmationOptions disabled(final String controllerId) {
-        return new ProxyTargetConfirmationOptions(false, controllerId, null, null, null);
+        return new ProxyTargetConfirmationOptions(false, controllerId, null, null, null, null);
     }
 
     public static ProxyTargetConfirmationOptions active(final AutoConfirmationStatus status) {
         return new ProxyTargetConfirmationOptions(true, status.getTarget().getControllerId(), status.getInitiator(),
-                status.getActivatedAt(), status.getRemark());
+                status.getCreatedBy(), status.getActivatedAt(), status.getRemark());
     }
 
     /**
@@ -71,12 +73,12 @@ public class ProxyTargetConfirmationOptions {
         return isAutoConfirmationEnabled;
     }
 
-    public void setAutoConfirmationEnabled(final boolean autoConfirmationEnabled) {
-        isAutoConfirmationEnabled = autoConfirmationEnabled;
-    }
-
     public String getInitiator() {
         return initiator;
+    }
+
+    public void setInitiator(final String initiator) {
+        this.initiator = initiator;
     }
 
     public String getRemark() {
@@ -90,4 +92,9 @@ public class ProxyTargetConfirmationOptions {
     public Long getActivatedAt() {
         return activatedAt;
     }
+
+    public String getInitiatedSystemUser() {
+        return initiatedSystemUser;
+    }
+
 }

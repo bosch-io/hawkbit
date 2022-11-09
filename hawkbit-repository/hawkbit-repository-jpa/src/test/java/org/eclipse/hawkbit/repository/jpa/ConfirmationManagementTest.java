@@ -174,7 +174,8 @@ class ConfirmationManagementTest extends AbstractJpaIntegrationTest {
         assertThat(targetManagement.getByControllerID(controllerId)).hasValueSatisfying(target -> {
             assertThat(target.getAutoConfirmationStatus()).isNotNull()
                     .matches(status -> status.getTarget().getControllerId().equals(controllerId))
-                    .matches(status -> Objects.equals(status.getInitiator(), initiator == null ? "bumlux" : initiator))
+                    .matches(status -> Objects.equals(status.getInitiator(), initiator))
+                    .matches(status -> Objects.equals(status.getCreatedBy(), "bumlux"))
                     .matches(status -> Objects.equals(status.getRemark(), remark)).satisfies(status -> {
                         final Instant activationTime = Instant.ofEpochMilli(status.getActivatedAt());
                         assertThat(activationTime).isAfterOrEqualTo(activationTime.minusSeconds(3L));

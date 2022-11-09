@@ -1240,6 +1240,8 @@ public final class UIComponentIdProvider {
 
     public static final String AUTO_CONFIRMATION_DETAILS_INITIATOR = AUTO_CONFIRMATION_DETAILS + ".initiator";
 
+    public static final String AUTO_CONFIRMATION_DETAILS_ROLLOUTS_USER = AUTO_CONFIRMATION_DETAILS + ".rolloutsuser";
+
     public static final String AUTO_CONFIRMATION_DETAILS_ACTIVATEDAT = AUTO_CONFIRMATION_DETAILS + ".activatedat";
     public static final String AUTO_CONFIRMATION_DETAILS_REMARK = AUTO_CONFIRMATION_DETAILS + ".remark";
 

@@ -764,7 +764,7 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
             });
         });
     }
-    
+
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @Description("Verify auto confirmation assignments and check action status with messages")
@@ -796,11 +796,13 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
                                     // confirmation of assignment is basically required, but active
                                     // auto-confirmation will perform the confirmation
                                     assertThat(actionStatus.getMessages())
-                                            .contains("Assignment initiated by user 'bumlux'").contains(
-                                                    "Assignment automatically confirmed by initiator ''not_bumlux'' \n"
-                                                            + "Remark: my personal remark");
+                                            .contains("Assignment initiated by user 'bumlux'")
+                                            .contains("Assignment automatically confirmed by initiator 'not_bumlux'. \n"
+                                                    + "\n" + "Auto confirmation activated by system user: 'bumlux' \n"
+                                                    + "\n" + "Remark: my personal remark");
                                 } else {
-                                    // assignment never required confirmation, auto-confirmation will not be applied.
+                                    // assignment never required confirmation, auto-confirmation will not be
+                                    // applied.
                                     // assignment initiator has confirmed the action already
                                     assertThat(actionStatus.getMessages())
                                             .contains("Assignment initiated by user 'bumlux'")

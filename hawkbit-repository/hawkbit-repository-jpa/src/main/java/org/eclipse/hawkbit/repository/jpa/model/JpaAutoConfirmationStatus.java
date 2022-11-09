@@ -32,7 +32,7 @@ public class JpaAutoConfirmationStatus extends AbstractJpaTenantAwareBaseEntity 
     private JpaTarget target;
 
     @Column(name = "initiator", length = USERNAME_FIELD_LENGTH)
-    @Size(max = NamedEntity.DESCRIPTION_MAX_SIZE)
+    @Size(max = USERNAME_FIELD_LENGTH)
     private String initiator;
 
     @Column(name = "remark", length = NamedEntity.DESCRIPTION_MAX_SIZE)
@@ -48,8 +48,8 @@ public class JpaAutoConfirmationStatus extends AbstractJpaTenantAwareBaseEntity 
 
     public JpaAutoConfirmationStatus(final String initiator, final String remark, final Target target) {
         this.target = (JpaTarget) target;
-        this.initiator = initiator;
-        this.remark = remark;
+        this.initiator = StringUtils.isEmpty(initiator) ? null : initiator;
+        this.remark = StringUtils.isEmpty(remark) ? null : remark;
     }
 
     @Override
@@ -72,21 +72,21 @@ public class JpaAutoConfirmationStatus extends AbstractJpaTenantAwareBaseEntity 
         return remark;
     }
 
-    public void setRemark(final String remark) {
-        this.remark = remark;
-    }
-
     @Override
     public String constructActionMessage() {
         final String remarkMessage = StringUtils.hasText(remark) ? remark : "n/a";
-        return String.format("Assignment automatically confirmed by initiator ''%s'' %nRemark: %s", initiator,
-                remarkMessage);
+        final String formattedInitiator = StringUtils.hasText(initiator) ? initiator : "n/a";
+        final String createdByRolloutsUser = StringUtils.hasText(getCreatedBy()) ? getCreatedBy() : "n/a";
+        return String.format("Assignment automatically confirmed by initiator '%s'. %n%n" //
+                + "Auto confirmation activated by system user: '%s' %n%n" //
+                + "Remark: %s", formattedInitiator, createdByRolloutsUser, remarkMessage);
     }
 
     @Override
     public String toString() {
-        return "AutoConfirmationStatus [target=" + target.getControllerId() + ", initiator=" + initiator
-                + ", activatedAt=" + getCreatedAt() + ", remark=" + remark + "]";
+        return "AutoConfirmationStatus [id=" + getId() + ", target=" + target.getControllerId() + ", initiator="
+                + initiator + ", bosch_user=" + getCreatedBy() + ", activatedAt=" + getCreatedAt() + ", remark="
+                + remark + "]";
     }
 
 }
