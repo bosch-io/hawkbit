@@ -8,7 +8,6 @@
  */
 package org.eclipse.hawkbit.ddi.rest.resource;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -110,17 +109,30 @@ public final class DataConversionHelper {
         return file;
 
     }
-    
+
     public static DdiConfirmationBase createConfirmationBase(final Target target, final Action activeAction,
             final DdiAutoConfirmationState autoConfirmationState, final TenantAware tenantAware) {
+        final String controllerId = target.getControllerId();
         final DdiConfirmationBase confirmationBase = new DdiConfirmationBase(autoConfirmationState);
+        if (autoConfirmationState.isActive()) {
+            confirmationBase.add(WebMvcLinkBuilder
+                    .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
+                            .deactivateAutoConfirmation(tenantAware.getCurrentTenant(), controllerId))
+                    .withRel(DdiRestConstants.AUTO_CONFIRM_DEACTIVATE));
+        } else {
+            confirmationBase.add(WebMvcLinkBuilder
+                    .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
+                            .deactivateAutoConfirmation(tenantAware.getCurrentTenant(), controllerId))
+                    .withRel(DdiRestConstants.AUTO_CONFIRM_ACTIVATE));
+        }
         if (activeAction != null && activeAction.isWaitingConfirmation()) {
             confirmationBase.add(WebMvcLinkBuilder
                     .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
-                            .getConfirmationBaseAction(tenantAware.getCurrentTenant(), target.getControllerId(),
+                            .getConfirmationBaseAction(tenantAware.getCurrentTenant(), controllerId,
                                     activeAction.getId(), calculateEtag(activeAction), null))
-                    .withRel(DdiRestConstants.CONFIRMATION_BASE_ACTION));
+                    .withRel(DdiRestConstants.CONFIRMATION_BASE));
         }
+
         return confirmationBase;
     }
 
@@ -135,7 +147,7 @@ public final class DataConversionHelper {
                         .methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
                         .getConfirmationBaseAction(tenantAware.getCurrentTenant(), target.getControllerId(),
                                 activeAction.getId(), calculateEtag(activeAction), null))
-                        .withRel(DdiRestConstants.CONFIRMATION_BASE_ACTION));
+                        .withRel(DdiRestConstants.CONFIRMATION_BASE));
 
             } else if (activeAction.isCancelingOrCanceled()) {
                 result.add(WebMvcLinkBuilder

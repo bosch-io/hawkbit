@@ -286,7 +286,7 @@ public interface DdiRootControllerRestApi {
      *            to check the state for
      * @return the state as {@link DdiAutoConfirmationState}
      */
-    @GetMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION, produces = {
+    @GetMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE, produces = {
             MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR })
     ResponseEntity<DdiConfirmationBase> getConfirmationBase(@PathVariable("tenant") final String tenant,
             @PathVariable("controllerId") @NotEmpty final String controllerId);
@@ -323,7 +323,7 @@ public interface DdiRootControllerRestApi {
      *
      * @return the response
      */
-    @GetMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION + "/{actionId}", produces = {
+    @GetMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE + "/{actionId}", produces = {
             MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR })
     ResponseEntity<DdiConfirmationBaseAction> getConfirmationBaseAction(@PathVariable("tenant") final String tenant,
             @PathVariable("controllerId") @NotEmpty final String controllerId,
@@ -346,7 +346,7 @@ public interface DdiRootControllerRestApi {
      *
      * @return the response
      */
-    @PostMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION + "/{actionId}/"
+    @PostMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE + "/{actionId}/"
             + DdiRestConstants.FEEDBACK, consumes = { MediaType.APPLICATION_JSON_VALUE,
                     DdiRestConstants.MEDIA_TYPE_CBOR })
     ResponseEntity<Void> postConfirmationActionFeedback(@Valid final DdiConfirmationFeedback feedback,
@@ -369,7 +369,7 @@ public interface DdiRootControllerRestApi {
      *         {@link org.springframework.http.HttpStatus#CONFLICT} in case
      *         auto-confirmation was active already.
      */
-    @PostMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION + "/"
+    @PostMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE + "/"
             + DdiRestConstants.AUTO_CONFIRM_ACTIVATE, produces = { MediaTypes.HAL_JSON_VALUE,
                     MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR })
     ResponseEntity<Void> activateAutoConfirmation(@PathVariable("tenant") final String tenant,
@@ -386,7 +386,7 @@ public interface DdiRootControllerRestApi {
      * @return {@link org.springframework.http.HttpStatus#OK} if successfully
      *         executed
      */
-    @PostMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION + "/"
+    @PostMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE + "/"
             + DdiRestConstants.AUTO_CONFIRM_DEACTIVATE, produces = { MediaTypes.HAL_JSON_VALUE,
                     MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR })
     ResponseEntity<Void> deactivateAutoConfirmation(@PathVariable("tenant") final String tenant,

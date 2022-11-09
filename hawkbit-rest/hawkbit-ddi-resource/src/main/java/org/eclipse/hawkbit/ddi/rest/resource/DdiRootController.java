@@ -754,21 +754,12 @@ public class DdiRootController implements DdiRootControllerRestApi {
             final DdiAutoConfirmationState state = DdiAutoConfirmationState.active(status.getActivatedAt());
             state.setInitiator(status.getInitiator());
             state.setRemark(status.getRemark());
-            state.add(WebMvcLinkBuilder
-                    .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
-                            .deactivateAutoConfirmation(tenantAware.getCurrentTenant(), controllerId))
-                    .withRel(DdiRestConstants.AUTO_CONFIRM_DEACTIVATE));
             LOG.trace("Returning state auto-conf state active [initiator='{}' | activatedAt={}] for device {}",
                     controllerId, status.getInitiator(), status.getActivatedAt());
             return state;
         }).orElseGet(() -> {
-            final DdiAutoConfirmationState state = DdiAutoConfirmationState.disabled();
-            state.add(WebMvcLinkBuilder
-                    .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
-                            .activateAutoConfirmation(tenantAware.getCurrentTenant(), controllerId, null))
-                    .withRel(DdiRestConstants.AUTO_CONFIRM_ACTIVATE));
             LOG.trace("Returning state auto-conf state disabled for device {}", controllerId);
-            return state;
+            return DdiAutoConfirmationState.disabled();
         });
     }
 

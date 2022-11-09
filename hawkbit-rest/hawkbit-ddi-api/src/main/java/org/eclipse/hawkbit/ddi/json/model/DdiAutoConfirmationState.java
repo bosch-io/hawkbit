@@ -15,14 +15,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.springframework.hateoas.RepresentationModel;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "active", "activatedAt", "initiator", "remark" })
+@JsonPropertyOrder({ "active", "initiator", "remark", "activatedAt" })
 public class DdiAutoConfirmationState extends RepresentationModel<DdiAutoConfirmationState> {
 
     @NotNull
     private boolean active;
-    private Long activatedAt;
     private String initiator;
     private String remark;
+
+    private Long activatedAt;
 
     /**
      * Constructor.

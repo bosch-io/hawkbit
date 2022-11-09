@@ -26,14 +26,9 @@ public final class DdiRestConstants {
     public static final String DEPLOYMENT_BASE_ACTION = "deploymentBase";
 
     /**
-     * Confirmation action resources.
+     * Confirmation base resource.
      */
-    public static final String CONFIRMATION_BASE_ACTION = "confirmationBase";
-
-    /**
-     * Auto confirmation resources.
-     */
-    public static final String AUTO_CONFIRMATION = CONFIRMATION_BASE_ACTION + "/autoConfirm";
+    public static final String CONFIRMATION_BASE = "confirmationBase";
 
     public static final String AUTO_CONFIRM_ACTIVATE = "activateAutoConfirm";
 
