@@ -22,6 +22,7 @@ import org.eclipse.hawkbit.ddi.json.model.DdiAutoConfirmationState;
 import org.eclipse.hawkbit.ddi.json.model.DdiCancel;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfigData;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationBase;
+import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationBaseAction;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationFeedback;
 import org.eclipse.hawkbit.ddi.json.model.DdiControllerBase;
 import org.eclipse.hawkbit.ddi.json.model.DdiDeploymentBase;
@@ -41,7 +42,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * REST resource handling for root controller CRUD operations.
  */
 @RequestMapping(DdiRestConstants.BASE_V1_REQUEST_MAPPING)
-public interface DdiRootControllerRest {
+public interface DdiRootControllerRestApi {
 
     /**
      * Returns all artifacts of a given software module and target.
@@ -275,6 +276,22 @@ public interface DdiRootControllerRest {
             @RequestParam(value = "actionHistory", defaultValue = DdiRestConstants.NO_ACTION_HISTORY) final Integer actionHistoryMessageCount);
 
     /**
+     * Returns the confirmation base with the current auto-confirmation state for a
+     * given controllerId and toggle links. In case there are actions present where
+     * the confirmation is required, a reference to it will be returned as well.
+     *
+     * @param tenant
+     *            the controllerId is corresponding too
+     * @param controllerId
+     *            to check the state for
+     * @return the state as {@link DdiAutoConfirmationState}
+     */
+    @GetMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION, produces = {
+            MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR })
+    ResponseEntity<DdiConfirmationBase> getConfirmationBase(@PathVariable("tenant") final String tenant,
+            @PathVariable("controllerId") @NotEmpty final String controllerId);
+
+    /**
      * Resource for confirmation of an action.
      *
      * @param tenant
@@ -282,17 +299,17 @@ public interface DdiRootControllerRest {
      * @param controllerId
      *            of the target
      * @param actionId
-     *            of the {@link DdiConfirmationBase} that matches to active
+     *            of the {@link DdiConfirmationBaseAction} that matches to active
      *            actions in WAITING_FOR_CONFIRMATION status.
      * @param resource
-     *            an hashcode of the resource which indicates if the action has
-     *            been changed, e.g. from 'soft' to 'force' and the eTag needs
-     *            to be re-generated
+     *            an hashcode of the resource which indicates if the action has been
+     *            changed, e.g. from 'soft' to 'force' and the eTag needs to be
+     *            re-generated
      * @param actionHistoryMessageCount
      *            specifies the number of messages to be returned from action
      *            history. Regardless of the passed value, in order to restrict
-     *            resource utilization by controllers, maximum number of
-     *            messages that are retrieved from database is limited by
+     *            resource utilization by controllers, maximum number of messages
+     *            that are retrieved from database is limited by
      *            {@link RepositoryConstants#MAX_ACTION_HISTORY_MSG_COUNT}.
      *
      *            actionHistoryMessageCount less than zero: retrieves the maximum
@@ -307,15 +324,16 @@ public interface DdiRootControllerRest {
      * @return the response
      */
     @GetMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION + "/{actionId}", produces = {
-            MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR})
-    ResponseEntity<DdiConfirmationBase> getControllerBaseConfirmationAction(@PathVariable("tenant") final String tenant,
+            MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR })
+    ResponseEntity<DdiConfirmationBaseAction> getConfirmationBaseAction(@PathVariable("tenant") final String tenant,
             @PathVariable("controllerId") @NotEmpty final String controllerId,
             @PathVariable("actionId") @NotEmpty final Long actionId,
             @RequestParam(value = "c", required = false, defaultValue = "-1") final int resource,
             @RequestParam(value = "actionHistory", defaultValue = DdiRestConstants.NO_ACTION_HISTORY) final Integer actionHistoryMessageCount);
 
     /**
-     * This is the feedback channel for the {@link DdiConfirmationBase} action.
+     * This is the feedback channel for the {@link DdiConfirmationBaseAction}
+     * action.
      *
      * @param tenant
      *            of the client
@@ -336,20 +354,6 @@ public interface DdiRootControllerRest {
             @PathVariable("actionId") @NotEmpty final Long actionId);
 
     /**
-     * Returns the current auto-confirmation state for a given controllerId.
-     *
-     * @param tenant
-     *            the controllerId is corresponding too
-     * @param controllerId
-     *            to check the state for
-     * @return the state as {@link DdiAutoConfirmationState}
-     */
-    @GetMapping(value = "/{controllerId}/" + DdiRestConstants.AUTO_CONFIRMATION, produces = { MediaTypes.HAL_JSON_VALUE,
-            MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR })
-    ResponseEntity<DdiAutoConfirmationState> getAutoConfirmationState(@PathVariable("tenant") final String tenant,
-            @PathVariable("controllerId") @NotEmpty final String controllerId);
-
-    /**
      * Activate auto confirmation for a given controllerId. Will use the provided
      * initiator and remark field from the provided
      * {@link DdiActivateAutoConfirmation}. If not present, the values will be
@@ -365,8 +369,9 @@ public interface DdiRootControllerRest {
      *         {@link org.springframework.http.HttpStatus#CONFLICT} in case
      *         auto-confirmation was active already.
      */
-    @PostMapping(value = "/{controllerId}/" + DdiRestConstants.AUTO_CONFIRMATION + "/activate", produces = {
-            MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR })
+    @PostMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION + "/"
+            + DdiRestConstants.AUTO_CONFIRM_ACTIVATE, produces = { MediaTypes.HAL_JSON_VALUE,
+                    MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR })
     ResponseEntity<Void> activateAutoConfirmation(@PathVariable("tenant") final String tenant,
             @PathVariable("controllerId") @NotEmpty final String controllerId,
             @Valid @RequestBody(required = false) final DdiActivateAutoConfirmation body);
@@ -381,8 +386,9 @@ public interface DdiRootControllerRest {
      * @return {@link org.springframework.http.HttpStatus#OK} if successfully
      *         executed
      */
-    @PostMapping(value = "/{controllerId}/" + DdiRestConstants.AUTO_CONFIRMATION + "/disable", produces = {
-            MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR })
-    ResponseEntity<Void> disableAutoConfirmation(@PathVariable("tenant") final String tenant,
+    @PostMapping(value = "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION + "/"
+            + DdiRestConstants.AUTO_CONFIRM_DEACTIVATE, produces = { MediaTypes.HAL_JSON_VALUE,
+                    MediaType.APPLICATION_JSON_VALUE, DdiRestConstants.MEDIA_TYPE_CBOR })
+    ResponseEntity<Void> deactivateAutoConfirmation(@PathVariable("tenant") final String tenant,
             @PathVariable("controllerId") @NotEmpty final String controllerId);
 }

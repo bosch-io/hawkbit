@@ -31,6 +31,7 @@ import org.eclipse.hawkbit.ddi.json.model.DdiCancelActionToStop;
 import org.eclipse.hawkbit.ddi.json.model.DdiChunk;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfigData;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationBase;
+import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationBaseAction;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationFeedback;
 import org.eclipse.hawkbit.ddi.json.model.DdiControllerBase;
 import org.eclipse.hawkbit.ddi.json.model.DdiDeployment;
@@ -40,14 +41,13 @@ import org.eclipse.hawkbit.ddi.json.model.DdiDeploymentBase;
 import org.eclipse.hawkbit.ddi.json.model.DdiResult.FinalResult;
 import org.eclipse.hawkbit.ddi.json.model.DdiUpdateMode;
 import org.eclipse.hawkbit.ddi.rest.api.DdiRestConstants;
-import org.eclipse.hawkbit.ddi.rest.api.DdiRootControllerRest;
+import org.eclipse.hawkbit.ddi.rest.api.DdiRootControllerRestApi;
 import org.eclipse.hawkbit.repository.ArtifactManagement;
 import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.ControllerManagement;
 import org.eclipse.hawkbit.repository.EntityFactory;
 import org.eclipse.hawkbit.repository.RepositoryConstants;
 import org.eclipse.hawkbit.repository.SystemManagement;
-import org.eclipse.hawkbit.repository.TenantConfigurationManagement;
 import org.eclipse.hawkbit.repository.UpdateMode;
 import org.eclipse.hawkbit.repository.builder.ActionStatusCreate;
 import org.eclipse.hawkbit.repository.event.remote.DownloadProgressEvent;
@@ -65,10 +65,8 @@ import org.eclipse.hawkbit.rest.util.FileStreamingUtil;
 import org.eclipse.hawkbit.rest.util.HttpUtil;
 import org.eclipse.hawkbit.rest.util.RequestResponseContextHolder;
 import org.eclipse.hawkbit.security.HawkbitSecurityProperties;
-import org.eclipse.hawkbit.security.SystemSecurityContext;
 import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.util.IpUtil;
-import org.eclipse.hawkbit.utils.TenantConfigHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,7 +95,7 @@ import org.springframework.web.context.WebApplicationContext;
  */
 @RestController
 @Scope(value = WebApplicationContext.SCOPE_REQUEST)
-public class DdiRootController implements DdiRootControllerRest {
+public class DdiRootController implements DdiRootControllerRestApi {
 
     private static final Logger LOG = LoggerFactory.getLogger(DdiRootController.class);
     private static final String GIVEN_ACTION_IS_NOT_ASSIGNED_TO_GIVEN_TARGET = "given action ({}) is not assigned to given target ({}).";
@@ -141,12 +139,6 @@ public class DdiRootController implements DdiRootControllerRest {
     @Autowired
     private EntityFactory entityFactory;
 
-    @Autowired
-    private TenantConfigurationManagement tenantConfigurationManagement;
-
-    @Autowired
-    private SystemSecurityContext securityContext;
-
     @Override
     public ResponseEntity<List<DdiArtifact>> getSoftwareModulesArtifacts(@PathVariable("tenant") final String tenant,
             @PathVariable("controllerId") final String controllerId,
@@ -176,13 +168,12 @@ public class DdiRootController implements DdiRootControllerRest {
         final Action installedAction = controllerManagement.getInstalledActionByTarget(controllerId).orElse(null);
 
         checkAndCancelExpiredAction(activeAction);
-        //activeAction
-        return new ResponseEntity<>(
-                DataConversionHelper.fromTarget(target, installedAction, activeAction,
-                        activeAction == null ? controllerManagement.getPollingTime()
-                                : controllerManagement.getPollingTimeForAction(activeAction.getId()),
-                        tenantAware, isUserConsentFlowEnabled()),
-                HttpStatus.OK);
+
+        // activeAction
+        return new ResponseEntity<>(DataConversionHelper.fromTarget(target, installedAction, activeAction,
+                activeAction == null ? controllerManagement.getPollingTime()
+                        : controllerManagement.getPollingTimeForAction(activeAction.getId()),
+                tenantAware), HttpStatus.OK);
     }
 
     @Override
@@ -513,10 +504,6 @@ public class DdiRootController implements DdiRootControllerRest {
         return new ResponseEntity<>(base, HttpStatus.OK);
 
     }
-    
-    private boolean isUserConsentFlowEnabled(){
-        return TenantConfigHelper.usingContext(securityContext, tenantConfigurationManagement).isUserConsentEnabled();
-    }
 
     private static ActionStatusCreate generateActionCancelStatus(final DdiActionFeedback feedback, final Target target,
             final Long actionId, final EntityFactory entityFactory) {
@@ -631,12 +618,12 @@ public class DdiRootController implements DdiRootControllerRest {
 
 
     @Override
-    public ResponseEntity<DdiConfirmationBase> getControllerBaseConfirmationAction(
+    public ResponseEntity<DdiConfirmationBaseAction> getConfirmationBaseAction(
             @PathVariable("tenant") final String tenant, @PathVariable("controllerId") final String controllerId,
             @PathVariable("actionId") final Long actionId,
             @RequestParam(value = "c", required = false, defaultValue = "-1") final int resource,
             @RequestParam(value = "actionHistory", defaultValue = DdiRestConstants.NO_ACTION_HISTORY) final Integer actionHistoryMessageCount) {
-        LOG.debug("getControllerBaseConfirmationAction({},{})", controllerId, resource);
+        LOG.debug("getConfirmationBaseAction({},{})", controllerId, resource);
 
         final Target target = findTarget(controllerId);
         final Action action = findActionForTarget(actionId, target);
@@ -645,7 +632,8 @@ public class DdiRootController implements DdiRootControllerRest {
 
         if (!action.isCancelingOrCanceled() && action.isWaitingConfirmation()) {
 
-            final DdiConfirmationBase base = generateDdiConfirmationBase(target, action, actionHistoryMessageCount);
+            final DdiConfirmationBaseAction base = generateDdiConfirmationBase(target, action,
+                    actionHistoryMessageCount);
 
             LOG.debug("Found an active UpdateAction for target {}. Returning confirmation: {}", controllerId, base);
 
@@ -655,19 +643,20 @@ public class DdiRootController implements DdiRootControllerRest {
         return ResponseEntity.notFound().build();
     }
 
-
     private DdiDeploymentBase generateDdiDeploymentBase(final Target target, final Action action,
             final Integer actionHistoryMessageCount) {
         final DdiActionHistory actionHistory = generateDdiActionHistory(action, actionHistoryMessageCount).orElse(null);
         final DdiDeployment ddiDeployment = generateDdiDeployment(target, action);
         return new DdiDeploymentBase(Long.toString(action.getId()), ddiDeployment, actionHistory);
     }
-    private DdiConfirmationBase generateDdiConfirmationBase(final Target target, final Action action,
+
+    private DdiConfirmationBaseAction generateDdiConfirmationBase(final Target target, final Action action,
             final Integer actionHistoryMessageCount) {
         final DdiActionHistory actionHistory = generateDdiActionHistory(action, actionHistoryMessageCount).orElse(null);
         final DdiDeployment ddiDeployment = generateDdiDeployment(target, action);
-        return new DdiConfirmationBase(Long.toString(action.getId()), ddiDeployment, actionHistory);
+        return new DdiConfirmationBaseAction(Long.toString(action.getId()), ddiDeployment, actionHistory);
     }
+
     private DdiDeployment generateDdiDeployment(final Target target, final Action action) {
         final List<DdiChunk> chunks = DataConversionHelper.createChunks(target, action, artifactUrlHandler,
                 systemManagement, new ServletServerHttpRequest(requestResponseContextHolder.getHttpServletRequest()),
@@ -677,6 +666,7 @@ public class DdiRootController implements DdiRootControllerRest {
         final DdiMaintenanceWindowStatus maintenanceWindow = calculateMaintenanceWindow(action);
         return new DdiDeployment(downloadType, updateType, chunks, maintenanceWindow);
     }
+
     private Optional<DdiActionHistory> generateDdiActionHistory(final Action action,
             final Integer actionHistoryMessageCount) {
         final List<String> actionHistoryMsgs = controllerManagement.getActionHistoryMessages(action.getId(),
@@ -687,11 +677,12 @@ public class DdiRootController implements DdiRootControllerRest {
     }
 
     @Override
-    public ResponseEntity<Void> postConfirmationActionFeedback(@Valid @RequestBody final DdiConfirmationFeedback feedback,
-            @PathVariable("tenant") final String tenant, @PathVariable("controllerId") final String controllerId,
+    public ResponseEntity<Void> postConfirmationActionFeedback(
+            @Valid @RequestBody final DdiConfirmationFeedback feedback, @PathVariable("tenant") final String tenant,
+            @PathVariable("controllerId") final String controllerId,
             @PathVariable("actionId") @NotEmpty final Long actionId) {
-        LOG.debug("provideConfirmationActionFeedback with feedback [controllerId={}, actionId={}]: {}",
-                controllerId, actionId, feedback);
+        LOG.debug("provideConfirmationActionFeedback with feedback [controllerId={}, actionId={}]: {}", controllerId,
+                actionId, feedback);
 
         final Target target = findTarget(controllerId);
         final Action action = findActionForTarget(actionId, target);
@@ -706,7 +697,6 @@ public class DdiRootController implements DdiRootControllerRest {
             LOG.debug("Action is not waiting for confirmation, deny request.");
             return ResponseEntity.notFound().build();
         }
-
 
         final ActionStatusCreate actionStatusCreate = entityFactory.actionStatus().create(actionId);
         final List<String> messages = new ArrayList<>();
@@ -723,21 +713,21 @@ public class DdiRootController implements DdiRootControllerRest {
 
         final Status status;
         switch (feedback.getConfirmation()) {
-            case CONFIRMED:
-                LOG.info("Controller confirmed the action (actionId: {}, controllerId: {}) as we got {} report.",
-                        actionId, controllerId, feedback.getConfirmation());
-                status = Status.RUNNING;
-                messages.add(RepositoryConstants.SERVER_MESSAGE_PREFIX + "Target confirmed action."
-                        + " Therefore, it will be set to the running state to proceed with the deployment.");
-                break;
-            case DENIED:
-            default:
-                LOG.debug("Controller denied the action (actionId: {}, controllerId: {}) as we got {} report.",
-                        actionId, controllerId, feedback.getConfirmation());
-                status = Status.WAIT_FOR_CONFIRMATION;
-                messages.add(RepositoryConstants.SERVER_MESSAGE_PREFIX + "Target rejected action."
-                        + " Action will stay in confirmation pending state.");
-                break;
+        case CONFIRMED:
+            LOG.info("Controller confirmed the action (actionId: {}, controllerId: {}) as we got {} report.", actionId,
+                    controllerId, feedback.getConfirmation());
+            status = Status.RUNNING;
+            messages.add(RepositoryConstants.SERVER_MESSAGE_PREFIX + "Target confirmed action."
+                    + " Therefore, it will be set to the running state to proceed with the deployment.");
+            break;
+        case DENIED:
+        default:
+            LOG.debug("Controller denied the action (actionId: {}, controllerId: {}) as we got {} report.", actionId,
+                    controllerId, feedback.getConfirmation());
+            status = Status.WAIT_FOR_CONFIRMATION;
+            messages.add(RepositoryConstants.SERVER_MESSAGE_PREFIX + "Target rejected action."
+                    + " Action will stay in confirmation pending state.");
+            break;
         }
 
         controllerManagement.addUpdateActionStatus(actionStatusCreate.status(status).messages(messages));
@@ -746,14 +736,28 @@ public class DdiRootController implements DdiRootControllerRest {
     }
 
     @Override
-    public ResponseEntity<DdiAutoConfirmationState> getAutoConfirmationState(final String tenant,
-            final String controllerId) {
-        final DdiAutoConfirmationState result = confirmationManagement.getStatus(controllerId).map(status -> {
+    public ResponseEntity<DdiConfirmationBase> getConfirmationBase(final String tenant, final String controllerId) {
+        LOG.debug("getConfirmationBase is called [controllerId={}].", controllerId);
+        final Target target = controllerManagement.findOrRegisterTargetIfItDoesNotExist(controllerId, IpUtil
+                .getClientIpFromRequest(requestResponseContextHolder.getHttpServletRequest(), securityProperties));
+        final Action activeAction = controllerManagement.findActiveActionWithHighestWeight(controllerId).orElse(null);
+
+        final DdiAutoConfirmationState autoConfirmationState = getAutoConfirmationState(controllerId);
+
+        final DdiConfirmationBase confirmationBase = DataConversionHelper.createConfirmationBase(target, activeAction,
+                autoConfirmationState, tenantAware);
+        return new ResponseEntity<>(confirmationBase, HttpStatus.OK);
+    }
+
+    private DdiAutoConfirmationState getAutoConfirmationState(final String controllerId) {
+        return confirmationManagement.getStatus(controllerId).map(status -> {
             final DdiAutoConfirmationState state = DdiAutoConfirmationState.active(status.getActivatedAt());
+            state.setInitiator(status.getInitiator());
+            state.setRemark(status.getRemark());
             state.add(WebMvcLinkBuilder
                     .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
-                            .disableAutoConfirmation(tenantAware.getCurrentTenant(), controllerId))
-                    .withRel(DdiRestConstants.AUTO_CONFIRMATION_DISABLE));
+                            .deactivateAutoConfirmation(tenantAware.getCurrentTenant(), controllerId))
+                    .withRel(DdiRestConstants.AUTO_CONFIRM_DEACTIVATE));
             LOG.trace("Returning state auto-conf state active [initiator='{}' | activatedAt={}] for device {}",
                     controllerId, status.getInitiator(), status.getActivatedAt());
             return state;
@@ -762,11 +766,10 @@ public class DdiRootController implements DdiRootControllerRest {
             state.add(WebMvcLinkBuilder
                     .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
                             .activateAutoConfirmation(tenantAware.getCurrentTenant(), controllerId, null))
-                    .withRel(DdiRestConstants.AUTO_CONFIRMATION_ACTIVATE));
+                    .withRel(DdiRestConstants.AUTO_CONFIRM_ACTIVATE));
             LOG.trace("Returning state auto-conf state disabled for device {}", controllerId);
             return state;
         });
-        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     @Override
@@ -781,7 +784,7 @@ public class DdiRootController implements DdiRootControllerRest {
     }
 
     @Override
-    public ResponseEntity<Void> disableAutoConfirmation(final String tenant, final String controllerId) {
+    public ResponseEntity<Void> deactivateAutoConfirmation(final String tenant, final String controllerId) {
         LOG.debug("Deactivate auto-confirmation request for device ‘{}‘", controllerId);
         confirmationManagement.deactivateAutoConfirmation(controllerId);
         return new ResponseEntity<>(HttpStatus.OK);

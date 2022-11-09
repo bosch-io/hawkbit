@@ -14,16 +14,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.springframework.hateoas.RepresentationModel;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "active", "activatedAt" })
+@JsonPropertyOrder({ "active", "activatedAt", "initiator", "remark" })
 public class DdiAutoConfirmationState extends RepresentationModel<DdiAutoConfirmationState> {
 
     @NotNull
     private boolean active;
-
     private Long activatedAt;
+    private String initiator;
+    private String remark;
 
     /**
      * Constructor.
@@ -59,9 +58,20 @@ public class DdiAutoConfirmationState extends RepresentationModel<DdiAutoConfirm
         this.activatedAt = activatedAt;
     }
 
-    @Override
-    public String toString() {
-        return "DdiAutoConfirmationState [active=" + active + ", activatedAt=" + activatedAt + "]";
+    public String getInitiator() {
+        return initiator;
+    }
+
+    public void setInitiator(final String initiator) {
+        this.initiator = initiator;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(final String remark) {
+        this.remark = remark;
     }
 
 }

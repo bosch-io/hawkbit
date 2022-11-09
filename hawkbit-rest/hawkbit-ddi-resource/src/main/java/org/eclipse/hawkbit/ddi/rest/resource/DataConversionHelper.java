@@ -8,6 +8,7 @@
  */
 package org.eclipse.hawkbit.ddi.rest.resource;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -18,8 +19,10 @@ import org.eclipse.hawkbit.api.URLPlaceholder;
 import org.eclipse.hawkbit.api.URLPlaceholder.SoftwareData;
 import org.eclipse.hawkbit.ddi.json.model.DdiArtifact;
 import org.eclipse.hawkbit.ddi.json.model.DdiArtifactHash;
+import org.eclipse.hawkbit.ddi.json.model.DdiAutoConfirmationState;
 import org.eclipse.hawkbit.ddi.json.model.DdiChunk;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfig;
+import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationBase;
 import org.eclipse.hawkbit.ddi.json.model.DdiControllerBase;
 import org.eclipse.hawkbit.ddi.json.model.DdiMetadata;
 import org.eclipse.hawkbit.ddi.json.model.DdiPolling;
@@ -107,19 +110,31 @@ public final class DataConversionHelper {
         return file;
 
     }
+    
+    public static DdiConfirmationBase createConfirmationBase(final Target target, final Action activeAction,
+            final DdiAutoConfirmationState autoConfirmationState, final TenantAware tenantAware) {
+        final DdiConfirmationBase confirmationBase = new DdiConfirmationBase(autoConfirmationState);
+        if (activeAction != null && activeAction.isWaitingConfirmation()) {
+            confirmationBase.add(WebMvcLinkBuilder
+                    .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
+                            .getConfirmationBaseAction(tenantAware.getCurrentTenant(), target.getControllerId(),
+                                    activeAction.getId(), calculateEtag(activeAction), null))
+                    .withRel(DdiRestConstants.CONFIRMATION_BASE_ACTION));
+        }
+        return confirmationBase;
+    }
 
     public static DdiControllerBase fromTarget(final Target target, final Action installedAction,
-            final Action activeAction, final String defaultControllerPollTime, final TenantAware tenantAware,
-            final boolean userConsentFlowActive) {
+            final Action activeAction, final String defaultControllerPollTime, final TenantAware tenantAware) {
         final DdiControllerBase result = new DdiControllerBase(
                 new DdiConfig(new DdiPolling(defaultControllerPollTime)));
 
         if (activeAction != null) {
             if (activeAction.isWaitingConfirmation()) {
-                result.add(WebMvcLinkBuilder
-                        .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
-                                .getControllerBaseConfirmationAction(tenantAware.getCurrentTenant(),
-                                        target.getControllerId(), activeAction.getId(), calculateEtag(activeAction), null))
+                result.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder
+                        .methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
+                        .getConfirmationBaseAction(tenantAware.getCurrentTenant(), target.getControllerId(),
+                                activeAction.getId(), calculateEtag(activeAction), null))
                         .withRel(DdiRestConstants.CONFIRMATION_BASE_ACTION));
 
             } else if (activeAction.isCancelingOrCanceled()) {
@@ -156,15 +171,6 @@ public final class DataConversionHelper {
                     .linkTo(WebMvcLinkBuilder.methodOn(DdiRootController.class, tenantAware.getCurrentTenant())
                             .putConfigData(null, tenantAware.getCurrentTenant(), target.getControllerId()))
                     .withRel(DdiRestConstants.CONFIG_DATA_ACTION));
-        }
-
-        if (userConsentFlowActive) {
-            result.add(WebMvcLinkBuilder
-                    .linkTo(WebMvcLinkBuilder
-                            .methodOn(DdiRootController.class,
-                                    tenantAware.getCurrentTenant())
-                            .getAutoConfirmationState(tenantAware.getCurrentTenant(), target.getControllerId()))
-                    .withRel(DdiRestConstants.AUTO_CONFIRMATION));
         }
 
         return result;

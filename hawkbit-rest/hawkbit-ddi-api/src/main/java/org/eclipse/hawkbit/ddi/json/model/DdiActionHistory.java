@@ -10,7 +10,7 @@ package org.eclipse.hawkbit.ddi.json.model;
 
 import java.util.List;
 
-import org.eclipse.hawkbit.ddi.rest.api.DdiRootControllerRest;
+import org.eclipse.hawkbit.ddi.rest.api.DdiRootControllerRestApi;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Provide action history information to the controller as part of response to
- * {@link DdiRootControllerRest#getControllerBasedeploymentAction} and
+ * {@link DdiRootControllerRestApi#getControllerBasedeploymentAction} and
  * {@link DdiRootControllerRestApi#getControllerBaseconfirmationAction}:
  * 1. Current action status at the server; 2. List of messages from action history
  * that were sent to server earlier by the controller using

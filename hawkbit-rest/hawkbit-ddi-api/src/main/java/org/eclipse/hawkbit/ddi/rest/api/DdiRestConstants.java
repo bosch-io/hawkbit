@@ -33,11 +33,11 @@ public final class DdiRestConstants {
     /**
      * Auto confirmation resources.
      */
-    public static final String AUTO_CONFIRMATION = "autoConfirm";
+    public static final String AUTO_CONFIRMATION = CONFIRMATION_BASE_ACTION + "/autoConfirm";
 
-    public static final String AUTO_CONFIRMATION_ACTIVATE = "activate";
+    public static final String AUTO_CONFIRM_ACTIVATE = "activateAutoConfirm";
 
-    public static final String AUTO_CONFIRMATION_DISABLE = "disable";
+    public static final String AUTO_CONFIRM_DEACTIVATE = "deactivateAutoConfirm";
 
     /**
      * Installed action resources.
@@ -67,8 +67,8 @@ public final class DdiRestConstants {
     /**
      * Default value specifying that no action history to be sent as part of
      * response to deploymentBase
-     * {@link DdiRootControllerRest#getControllerBasedeploymentAction}.
-     * {@link DdiRootControllerRest#getControllerBaseConfirmationAction}.
+     * {@link DdiRootControllerRestApi#getControllerBasedeploymentAction}.
+     * {@link DdiRootControllerRestApi#getConfirmationBaseAction}.
      */
     public static final String NO_ACTION_HISTORY = "0";
 
