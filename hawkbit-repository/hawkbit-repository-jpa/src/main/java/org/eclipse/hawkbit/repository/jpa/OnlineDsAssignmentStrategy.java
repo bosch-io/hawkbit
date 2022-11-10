@@ -132,7 +132,9 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
             final List<JpaTarget> targets, final JpaDistributionSet set) {
         final JpaAction result = super.createTargetAction(initiatedBy, targetWithActionType, targets, set);
         if (result != null) {
-            if (isUserConsentEnabled() && targetWithActionType.isConfirmationRequired()) {
+            final boolean confirmationRequired = targetWithActionType.isConfirmationRequired()
+                    && result.getTarget().getAutoConfirmationStatus() == null;
+            if (isUserConsentEnabled() && confirmationRequired) {
                 result.setStatus(Status.WAIT_FOR_CONFIRMATION);
             } else {
                 result.setStatus(Status.RUNNING);
@@ -149,13 +151,6 @@ public class OnlineDsAssignmentStrategy extends AbstractDsAssignmentStrategy {
         final JpaActionStatus result = super.createActionStatus(action, actionMessage);
         if (isUserConsentEnabled()) {
             result.setStatus(Status.WAIT_FOR_CONFIRMATION);
-            if (action.getStatus().equals(Status.RUNNING)) {
-                // action is in RUNNING state only if it's confirmed during assignment already
-                result.addMessage(String.format("Assignment confirmed by initiator [%s].", action.getInitiatedBy()));
-            } else {
-                result.addMessage(RepositoryConstants.SERVER_MESSAGE_PREFIX
-                        + "Waiting for the confirmation by the device before processing with the deployment");
-            }
         } else {
             result.setStatus(Status.RUNNING);
         }

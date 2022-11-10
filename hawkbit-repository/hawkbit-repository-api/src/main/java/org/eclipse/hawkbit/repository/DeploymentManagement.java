@@ -426,8 +426,8 @@ public interface DeploymentManagement {
     Page<Action> findInActiveActionsByTarget(@NotNull Pageable pageable, @NotEmpty String controllerId);
 
     /**
-     * Retrieves active {@link Action}s with highest weight that are assigned to
-     * a {@link Target}.
+     * Retrieves active {@link Action}s with highest weight that are assigned to a
+     * {@link Target}.
      *
      * @param controllerId
      *            identifies the target to retrieve the action from

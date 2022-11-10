@@ -10,6 +10,8 @@ package org.eclipse.hawkbit.repository.jpa;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.eclipse.hawkbit.repository.model.Action.Status.RUNNING;
+import static org.eclipse.hawkbit.repository.model.Action.Status.WAIT_FOR_CONFIRMATION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -60,6 +62,7 @@ import org.eclipse.hawkbit.repository.model.Action.ActionType;
 import org.eclipse.hawkbit.repository.model.Action.Status;
 import org.eclipse.hawkbit.repository.model.ActionStatus;
 import org.eclipse.hawkbit.repository.model.DeploymentRequest;
+import org.eclipse.hawkbit.repository.model.DeploymentRequestBuilder;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.DistributionSetAssignmentResult;
 import org.eclipse.hawkbit.repository.model.DistributionSetTag;
@@ -288,7 +291,8 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
         assignDistributionSet(cancelDs, targets).getAssignedEntity();
         assertThat(deploymentManagement.countActionsAll()).isEqualTo(quotaManagement.getMaxTargetsPerAutoAssignment());
         assignDistributionSet(cancelDs2, targets).getAssignedEntity();
-        assertThat(deploymentManagement.countActionsAll()).isEqualTo(2L * quotaManagement.getMaxTargetsPerAutoAssignment());
+        assertThat(deploymentManagement.countActionsAll())
+                .isEqualTo(2L * quotaManagement.getMaxTargetsPerAutoAssignment());
     }
 
     @Test
@@ -550,13 +554,13 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
             final DistributionSet ds1 = testdataFactory.createDistributionSet("1");
             assignDistributionSet(ds1, targets);
 
-            assertDsExclusivelyAssignedToTargets(targets, ds1.getId(), STATE_ACTIVE, Status.RUNNING);
+            assertDsExclusivelyAssignedToTargets(targets, ds1.getId(), STATE_ACTIVE, RUNNING);
 
             // Second assignment
             final DistributionSet ds2 = testdataFactory.createDistributionSet("2");
             assignDistributionSet(ds2, targets);
 
-            assertDsExclusivelyAssignedToTargets(targets, ds2.getId(), STATE_ACTIVE, Status.RUNNING);
+            assertDsExclusivelyAssignedToTargets(targets, ds2.getId(), STATE_ACTIVE, RUNNING);
             assertDsExclusivelyAssignedToTargets(targets, ds1.getId(), STATE_INACTIVE, Status.CANCELED);
 
             assertThat(targetManagement.findByAssignedDistributionSet(PAGE, ds2.getId()).getContent()).hasSize(10)
@@ -587,14 +591,14 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
         final DistributionSet ds1 = testdataFactory.createDistributionSet("Multi-assign-1");
         assignDistributionSet(ds1.getId(), targetIds, 77);
 
-        assertDsExclusivelyAssignedToTargets(targets, ds1.getId(), STATE_ACTIVE, Status.RUNNING);
+        assertDsExclusivelyAssignedToTargets(targets, ds1.getId(), STATE_ACTIVE, RUNNING);
 
         // Second assignment
         final DistributionSet ds2 = testdataFactory.createDistributionSet("Multi-assign-2");
         assignDistributionSet(ds2.getId(), targetIds, 45);
 
-        assertDsExclusivelyAssignedToTargets(targets, ds2.getId(), STATE_ACTIVE, Status.RUNNING);
-        assertDsExclusivelyAssignedToTargets(targets, ds1.getId(), STATE_ACTIVE, Status.RUNNING);
+        assertDsExclusivelyAssignedToTargets(targets, ds2.getId(), STATE_ACTIVE, RUNNING);
+        assertDsExclusivelyAssignedToTargets(targets, ds1.getId(), STATE_ACTIVE, RUNNING);
     }
 
     private void assertDsExclusivelyAssignedToTargets(final List<Target> targets, final long dsId, final boolean active,
@@ -738,12 +742,12 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
     @Description("Assignments with user consent flow active will result in actions in 'WAIT_FOR_CONFIRMATION' state")
     void assignmentWithUserConsentFlowActive(final boolean confirmationRequired) {
         final List<String> controllerIds = testdataFactory.createTargets(1).stream().map(Target::getControllerId)
-              .collect(Collectors.toList());
+                .collect(Collectors.toList());
         final DistributionSet distributionSet = testdataFactory.createDistributionSet();
 
         enableUserConsentFlow();
         List<DistributionSetAssignmentResult> results = assignDistributionSetToTargets(distributionSet, controllerIds,
-              confirmationRequired);
+                confirmationRequired);
 
         assertThat(getResultingActionCount(results)).isEqualTo(controllerIds.size());
 
@@ -751,14 +755,61 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
             actionRepository.findByTargetControllerId(PAGE, controllerId).forEach(action -> {
                 assertThat(action.getDistributionSet().getId()).isIn(distributionSet.getId());
                 assertThat(action.getInitiatedBy()).as("Should be Initiated by current user")
-                      .isEqualTo(tenantAware.getCurrentUsername());
+                        .isEqualTo(tenantAware.getCurrentUsername());
                 if (confirmationRequired) {
                     assertThat(action.getStatus()).isEqualTo(Status.WAIT_FOR_CONFIRMATION);
                 } else {
-                    assertThat(action.getStatus()).isEqualTo(Status.RUNNING);
+                    assertThat(action.getStatus()).isEqualTo(RUNNING);
                 }
             });
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @Description("Verify auto confirmation assignments and check action status with messages")
+    void assignmentWithAutoConfirmationWillBeHandledCorrectly(final boolean confirmationRequired) {
+        enableUserConsentFlow();
+
+        final Target target = testdataFactory.createTarget();
+        assertThat(target.getAutoConfirmationStatus()).isNull();
+
+        confirmationManagement.activateAutoConfirmation(target.getControllerId(), "not_bumlux", "my personal remark");
+
+        assertThat(targetManagement.getByControllerID(target.getControllerId()))
+                .hasValueSatisfying(t -> assertThat(t.getAutoConfirmationStatus()).isNotNull());
+
+        final DistributionSet distributionSet = testdataFactory.createDistributionSet();
+
+        assignDistributionSets(Collections
+                .singletonList(new DeploymentRequestBuilder(target.getControllerId(), distributionSet.getId())
+                        .setConfirmationRequired(confirmationRequired).build()));
+
+        assertThat(deploymentManagement.findActionsByTarget(target.getControllerId(), PAGE).getContent()).hasSize(1)
+                .allSatisfy(action -> {
+                    assertThat(action.getStatus()).isEqualTo(RUNNING);
+                    assertThat(actionStatusRepository.getByActionId(PAGE, action.getId())).hasSize(1)
+                            .allSatisfy(status -> {
+                                final JpaActionStatus actionStatus = (JpaActionStatus) status;
+                                assertThat(actionStatus.getStatus()).isEqualTo(WAIT_FOR_CONFIRMATION);
+                                if (confirmationRequired) {
+                                    // confirmation of assignment is basically required, but active
+                                    // auto-confirmation will perform the confirmation
+                                    assertThat(actionStatus.getMessages())
+                                            .contains("Assignment initiated by user 'bumlux'")
+                                            .contains("Assignment automatically confirmed by initiator 'not_bumlux'. \n"
+                                                    + "\n" + "Auto confirmation activated by system user: 'bumlux' \n"
+                                                    + "\n" + "Remark: my personal remark");
+                                } else {
+                                    // assignment never required confirmation, auto-confirmation will not be
+                                    // applied.
+                                    // assignment initiator has confirmed the action already
+                                    assertThat(actionStatus.getMessages())
+                                            .contains("Assignment initiated by user 'bumlux'")
+                                            .contains("Assignment confirmed by initiator [bumlux].");
+                                }
+                            });
+                });
     }
 
     @Test
@@ -821,7 +872,7 @@ class DeploymentManagementTest extends AbstractJpaIntegrationTest {
                 assertThat(action.getDistributionSet().getId()).isIn(distributionSet.getId());
                 assertThat(action.getInitiatedBy()).as("Should be Initiated by current user")
                         .isEqualTo(tenantAware.getCurrentUsername());
-                assertThat(action.getStatus()).isEqualTo(Status.RUNNING);
+                assertThat(action.getStatus()).isEqualTo(RUNNING);
             });
         });
     }

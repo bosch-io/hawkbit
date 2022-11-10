@@ -1232,6 +1232,23 @@ public final class UIComponentIdProvider {
      */
     public static final String CONFIRMATION_POPUP_ID = "action.confirmation.popup.id";
 
+    public static final String AUTO_CONFIRMATION_DETAILS = "target.details.auto.confirmation";
+
+    public static final String AUTO_CONFIRMATION_DETAILS_TOGGLE = "target.details.auto.confirmation.toggle";
+
+    public static final String AUTO_CONFIRMATION_DETAILS_STATE = AUTO_CONFIRMATION_DETAILS + ".state";
+
+    public static final String AUTO_CONFIRMATION_DETAILS_INITIATOR = AUTO_CONFIRMATION_DETAILS + ".initiator";
+
+    public static final String AUTO_CONFIRMATION_DETAILS_ROLLOUTS_USER = AUTO_CONFIRMATION_DETAILS + ".rolloutsuser";
+
+    public static final String AUTO_CONFIRMATION_DETAILS_ACTIVATEDAT = AUTO_CONFIRMATION_DETAILS + ".activatedat";
+    public static final String AUTO_CONFIRMATION_DETAILS_REMARK = AUTO_CONFIRMATION_DETAILS + ".remark";
+
+    public static final String AUTO_CONFIRMATION_ACTIVATION_DIALOG = "target.auto.confirmation.activation.dialog";
+    public static final String AUTO_CONFIRMATION_ACTIVATION_DIALOG_INITIATOR = AUTO_CONFIRMATION_ACTIVATION_DIALOG + ".initiator";
+    public static final String AUTO_CONFIRMATION_ACTIVATION_DIALOG_REMARK = AUTO_CONFIRMATION_ACTIVATION_DIALOG + ".remark";
+
     /**
      * Validation status icon .
      */

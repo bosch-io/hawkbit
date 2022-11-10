@@ -22,6 +22,7 @@ import org.eclipse.hawkbit.repository.ArtifactEncryptionSecretsStore;
 import org.eclipse.hawkbit.repository.ArtifactEncryptionService;
 import org.eclipse.hawkbit.repository.ArtifactManagement;
 import org.eclipse.hawkbit.repository.BaseRepositoryTypeProvider;
+import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.ControllerManagement;
 import org.eclipse.hawkbit.repository.DeploymentManagement;
 import org.eclipse.hawkbit.repository.DistributionSetManagement;
@@ -740,6 +741,16 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
                 distributionSetRepository, targetRepository, actionStatusRepository, auditorProvider,
                 eventPublisherHolder, afterCommit, virtualPropertyReplacer, txManager, tenantConfigurationManagement,
                 quotaManagement, systemSecurityContext, tenantAware, properties.getDatabase(), repositoryProperties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    ConfirmationManagement confirmationManagement(final TargetRepository targetRepository,
+            final ActionRepository actionRepository, final RepositoryProperties repositoryProperties,
+            final ControllerManagement controllerManagement, final EntityFactory entityFactory,
+            final SystemSecurityContext securityContext) {
+        return new JpaConfirmationManagement(targetRepository, actionRepository, repositoryProperties,
+                controllerManagement, entityFactory, securityContext);
     }
 
     /**
