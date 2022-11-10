@@ -50,7 +50,7 @@ public class JpaActionManagement {
         return actions.stream().sorted(actionImportance).limit(maxActionCount).collect(Collectors.toList());
     }
 
-    protected List<Action> findActiveActionHavingStatus(final String controllerId, final Action.Status status) {
+    protected List<Action> findActiveActionsHavingStatus(final String controllerId, final Action.Status status) {
         if (!actionRepository.activeActionExistsForControllerId(controllerId)) {
             return Collections.emptyList();
         }
