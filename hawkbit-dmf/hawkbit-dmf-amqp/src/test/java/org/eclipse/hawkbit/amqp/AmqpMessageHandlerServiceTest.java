@@ -18,7 +18,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
@@ -645,7 +644,7 @@ public class AmqpMessageHandlerServiceTest {
 
         final MessageProperties messageProperties = createMessageProperties(MessageType.EVENT);
         messageProperties.setHeader(MessageHeaderKey.THING_ID, knownThingId);
-        messageProperties.setHeader(MessageHeaderKey.TOPIC, "UPDATE_AUTO_CONFIRMATION");
+        messageProperties.setHeader(MessageHeaderKey.TOPIC, "UPDATE_AUTO_CONFIRM");
         final DmfAutoConfirmation autoConfirmation = new DmfAutoConfirmation();
         autoConfirmation.setEnabled(true);
         autoConfirmation.setInitiator(initiator);
@@ -673,7 +672,7 @@ public class AmqpMessageHandlerServiceTest {
 
         final MessageProperties messageProperties = createMessageProperties(MessageType.EVENT);
         messageProperties.setHeader(MessageHeaderKey.THING_ID, knownThingId);
-        messageProperties.setHeader(MessageHeaderKey.TOPIC, "UPDATE_AUTO_CONFIRMATION");
+        messageProperties.setHeader(MessageHeaderKey.TOPIC, "UPDATE_AUTO_CONFIRM");
         final DmfAutoConfirmation autoConfirmation = new DmfAutoConfirmation();
 
         final Message message = createMessage(autoConfirmation, messageProperties);

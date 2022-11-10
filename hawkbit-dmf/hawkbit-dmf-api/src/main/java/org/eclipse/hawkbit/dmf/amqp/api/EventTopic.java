@@ -36,7 +36,7 @@ public enum EventTopic {
     /**
      * Topic when updating auto-confirmation state.
      */
-    UPDATE_AUTO_CONFIRMATION,
+    UPDATE_AUTO_CONFIRM,
 
     /**
      * Topic when sending a download only task, skipping the install.

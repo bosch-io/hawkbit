@@ -316,7 +316,7 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
         case UPDATE_ATTRIBUTES:
             updateAttributes(message);
             break;
-        case UPDATE_AUTO_CONFIRMATION:
+        case UPDATE_AUTO_CONFIRM:
             setAutoConfirmationState(message);
             break;
         default:
@@ -343,11 +343,14 @@ public class AmqpMessageHandlerService extends BaseAmqpService {
         final DmfAutoConfirmation autoConfirmation = convertMessage(message, DmfAutoConfirmation.class);
         final String thingId = getStringHeaderKey(message, MessageHeaderKey.THING_ID, THING_ID_NULL);
         if (autoConfirmation.isEnabled()) {
+            LOG.debug("Activate auto-confirmation for device {} using DMF. Initiator: {}. Remark: {}", thingId,
+                    autoConfirmation.getInitiator(), autoConfirmation.getRemark());
             final String remark = autoConfirmation.getRemark() == null
                     ? "Activated using Device Management Federation API."
                     : autoConfirmation.getRemark();
             controllerManagement.activateAutoConfirmation(thingId, autoConfirmation.getInitiator(), remark);
         } else {
+            LOG.debug("Deactivate auto-confirmation for device {} using DMF.", thingId);
             controllerManagement.deactivateAutoConfirmation(thingId);
         }
     }
