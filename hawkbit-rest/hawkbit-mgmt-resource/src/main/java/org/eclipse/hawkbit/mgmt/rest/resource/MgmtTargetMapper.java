@@ -26,6 +26,7 @@ import org.eclipse.hawkbit.mgmt.json.model.MgmtPollStatus;
 import org.eclipse.hawkbit.mgmt.json.model.action.MgmtAction;
 import org.eclipse.hawkbit.mgmt.json.model.action.MgmtActionStatus;
 import org.eclipse.hawkbit.mgmt.json.model.target.MgmtTarget;
+import org.eclipse.hawkbit.mgmt.json.model.target.MgmtTargetAutoConfirm;
 import org.eclipse.hawkbit.mgmt.json.model.target.MgmtTargetRequestBody;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtDistributionSetRestApi;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants;
@@ -40,6 +41,7 @@ import org.eclipse.hawkbit.repository.builder.TargetCreate;
 import org.eclipse.hawkbit.repository.model.Action;
 import org.eclipse.hawkbit.repository.model.Action.ActionType;
 import org.eclipse.hawkbit.repository.model.ActionStatus;
+import org.eclipse.hawkbit.repository.model.AutoConfirmationStatus;
 import org.eclipse.hawkbit.repository.model.MetaData;
 import org.eclipse.hawkbit.repository.model.PollStatus;
 import org.eclipse.hawkbit.repository.model.Rollout;
@@ -82,9 +84,34 @@ public final class MgmtTargetMapper {
                 MgmtRestConstants.REQUEST_PARAMETER_PAGING_DEFAULT_OFFSET_VALUE,
                 MgmtRestConstants.REQUEST_PARAMETER_PAGING_DEFAULT_LIMIT_VALUE, null, null)).withRel("metadata"));
         if (response.getTargetType() != null) {
-            response.add(linkTo(methodOn(MgmtTargetTypeRestApi.class)
-                    .getTargetType(response.getTargetType())).withRel(MgmtRestConstants.TARGET_V1_ASSIGNED_TARGET_TYPE));
+            response.add(linkTo(methodOn(MgmtTargetTypeRestApi.class).getTargetType(response.getTargetType()))
+                    .withRel(MgmtRestConstants.TARGET_V1_ASSIGNED_TARGET_TYPE));
         }
+        if (response.getAutoConfirmActive() != null) {
+            response.add(linkTo(methodOn(MgmtTargetRestApi.class).getAutoConfirmStatus(response.getControllerId()))
+                    .withRel(MgmtRestConstants.TARGET_V1_AUTO_CONFIRM));
+        }
+    }
+
+    public static void addAutoConfirmState(final Target target, final MgmtTarget response) {
+        response.setAutoConfirmActive(target.getAutoConfirmationStatus() != null);
+    }
+
+    public static MgmtTargetAutoConfirm getTargetAutoConfirmResponse(final Target target) {
+        final AutoConfirmationStatus status = target.getAutoConfirmationStatus();
+        final MgmtTargetAutoConfirm response;
+        if (status != null) {
+            response = MgmtTargetAutoConfirm.active(status.getActivatedAt());
+            response.setInitiator(status.getInitiator());
+            response.setRemark(status.getRemark());
+            response.add(linkTo(methodOn(MgmtTargetRestApi.class).deactivateAutoConfirm(target.getControllerId()))
+                    .withRel(MgmtRestConstants.TARGET_V1_DEACTIVATE_AUTO_CONFIRM));
+        } else {
+            response = MgmtTargetAutoConfirm.disabled();
+            response.add(linkTo(methodOn(MgmtTargetRestApi.class).activateAutoConfirm(target.getControllerId(), null))
+                    .withRel(MgmtRestConstants.TARGET_V1_ACTIVATE_AUTO_CONFIRM));
+        }
+        return response;
     }
 
     static void addPollStatus(final Target target, final MgmtTarget targetRest) {

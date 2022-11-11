@@ -31,9 +31,12 @@ import org.eclipse.hawkbit.mgmt.json.model.distributionset.MgmtTargetAssignmentR
 import org.eclipse.hawkbit.mgmt.json.model.target.MgmtDistributionSetAssignments;
 import org.eclipse.hawkbit.mgmt.json.model.target.MgmtTarget;
 import org.eclipse.hawkbit.mgmt.json.model.target.MgmtTargetAttributes;
+import org.eclipse.hawkbit.mgmt.json.model.target.MgmtTargetAutoConfirm;
+import org.eclipse.hawkbit.mgmt.json.model.target.MgmtTargetAutoConfirmUpdate;
 import org.eclipse.hawkbit.mgmt.json.model.target.MgmtTargetRequestBody;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtTargetRestApi;
+import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.DeploymentManagement;
 import org.eclipse.hawkbit.repository.EntityFactory;
 import org.eclipse.hawkbit.repository.OffsetBasedPageRequest;
@@ -72,17 +75,21 @@ public class MgmtTargetResource implements MgmtTargetRestApi {
 
     private final TargetManagement targetManagement;
 
+    private final ConfirmationManagement confirmationManagement;
+
     private final DeploymentManagement deploymentManagement;
 
     private final EntityFactory entityFactory;
-    
+
     private final TenantConfigHelper tenantConfigHelper;
 
     MgmtTargetResource(final TargetManagement targetManagement, final DeploymentManagement deploymentManagement,
-            final EntityFactory entityFactory, final SystemSecurityContext systemSecurityContext,
+            final ConfirmationManagement confirmationManagement, final EntityFactory entityFactory,
+            final SystemSecurityContext systemSecurityContext,
             final TenantConfigurationManagement tenantConfigurationManagement) {
         this.targetManagement = targetManagement;
         this.deploymentManagement = deploymentManagement;
+        this.confirmationManagement = confirmationManagement;
         this.entityFactory = entityFactory;
         this.tenantConfigHelper = TenantConfigHelper.usingContext(systemSecurityContext, tenantConfigurationManagement);
     }
@@ -93,6 +100,9 @@ public class MgmtTargetResource implements MgmtTargetRestApi {
         // to single response include poll status
         final MgmtTarget response = MgmtTargetMapper.toResponse(findTarget);
         MgmtTargetMapper.addPollStatus(findTarget, response);
+        if (tenantConfigHelper.isUserConsentEnabled()) {
+            MgmtTargetMapper.addAutoConfirmState(findTarget, response);
+        }
         MgmtTargetMapper.addTargetLinks(response);
 
         return ResponseEntity.ok(response);
@@ -152,6 +162,9 @@ public class MgmtTargetResource implements MgmtTargetRestApi {
 
         final MgmtTarget response = MgmtTargetMapper.toResponse(updateTarget);
         MgmtTargetMapper.addPollStatus(updateTarget, response);
+        if (tenantConfigHelper.isUserConsentEnabled()) {
+            MgmtTargetMapper.addAutoConfirmState(updateTarget, response);
+        }
         MgmtTargetMapper.addTargetLinks(response);
 
         return ResponseEntity.ok(response);
@@ -425,6 +438,26 @@ public class MgmtTargetResource implements MgmtTargetRestApi {
         final List<TargetMetadata> created = targetManagement.createMetaData(targetId,
                 MgmtTargetMapper.fromRequestTargetMetadata(metadataRest, entityFactory));
         return new ResponseEntity<>(MgmtTargetMapper.toResponseTargetMetadata(created), HttpStatus.CREATED);
+    }
+
+    @Override
+    public ResponseEntity<MgmtTargetAutoConfirm> getAutoConfirmStatus(@PathVariable("targetId") final String targetId) {
+        final Target findTarget = findTargetWithExceptionIfNotFound(targetId);
+        final MgmtTargetAutoConfirm state = MgmtTargetMapper.getTargetAutoConfirmResponse(findTarget);
+        return ResponseEntity.ok(state);
+    }
+
+    @Override
+    public ResponseEntity<Void> activateAutoConfirm(@PathVariable("targetId") final String targetId,
+            @RequestBody final MgmtTargetAutoConfirmUpdate update) {
+        confirmationManagement.activateAutoConfirmation(targetId, update.getInitiator(), update.getRemark());
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<Void> deactivateAutoConfirm(@PathVariable("targetId") final String targetId) {
+        confirmationManagement.deactivateAutoConfirmation(targetId);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 }
