@@ -50,6 +50,7 @@ import org.eclipse.hawkbit.repository.model.TargetMetadata;
 import org.eclipse.hawkbit.rest.data.ResponseList;
 import org.eclipse.hawkbit.rest.data.SortDirection;
 import org.eclipse.hawkbit.util.IpUtil;
+import org.eclipse.hawkbit.utils.TenantConfigHelper;
 import org.springframework.data.domain.PageRequest;
 
 /**
@@ -93,10 +94,6 @@ public final class MgmtTargetMapper {
         }
     }
 
-    public static void addAutoConfirmState(final Target target, final MgmtTarget response) {
-        response.setAutoConfirmActive(target.getAutoConfirmationStatus() != null);
-    }
-
     public static MgmtTargetAutoConfirm getTargetAutoConfirmResponse(final Target target) {
         final AutoConfirmationStatus status = target.getAutoConfirmationStatus();
         final MgmtTargetAutoConfirm response;
@@ -134,12 +131,13 @@ public final class MgmtTargetMapper {
      *            list of targets
      * @return the response
      */
-    public static List<MgmtTarget> toResponse(final Collection<Target> targets) {
+    public static List<MgmtTarget> toResponse(final Collection<Target> targets, final TenantConfigHelper configHelper) {
         if (targets == null) {
             return Collections.emptyList();
         }
 
-        return new ResponseList<>(targets.stream().map(MgmtTargetMapper::toResponse).collect(Collectors.toList()));
+        return new ResponseList<>(
+                targets.stream().map(target -> toResponse(target, configHelper)).collect(Collectors.toList()));
     }
 
     /**
@@ -149,7 +147,7 @@ public final class MgmtTargetMapper {
      *            the target
      * @return the response
      */
-    public static MgmtTarget toResponse(final Target target) {
+    public static MgmtTarget toResponse(final Target target, final TenantConfigHelper configHelper) {
         if (target == null) {
             return null;
         }
@@ -186,8 +184,11 @@ public final class MgmtTargetMapper {
         if (installationDate != null) {
             targetRest.setInstalledAt(installationDate);
         }
-        if (target.getTargetType() != null){
+        if (target.getTargetType() != null) {
             targetRest.setTargetType(target.getTargetType().getId());
+        }
+        if (configHelper.isUserConsentEnabled()) {
+            targetRest.setAutoConfirmActive(target.getAutoConfirmationStatus() != null);
         }
 
         targetRest.add(linkTo(methodOn(MgmtTargetRestApi.class).getTarget(target.getControllerId())).withSelfRel());

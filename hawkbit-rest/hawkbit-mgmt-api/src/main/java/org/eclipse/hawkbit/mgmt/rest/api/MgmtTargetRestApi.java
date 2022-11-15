@@ -414,7 +414,8 @@ public interface MgmtTargetRestApi {
      *            to check the state for
      * @return the current state as {@link MgmtTargetAutoConfirm}
      */
-    @GetMapping(value = "/{targetId}/autoConfirm", produces = { MediaType.APPLICATION_JSON_VALUE })
+    @GetMapping(value = "/{targetId}/autoConfirm", produces = { MediaTypes.HAL_JSON_VALUE,
+            MediaType.APPLICATION_JSON_VALUE })
     ResponseEntity<MgmtTargetAutoConfirm> getAutoConfirmStatus(@PathVariable("targetId") String targetId);
 
     /**

@@ -98,11 +98,8 @@ public class MgmtTargetResource implements MgmtTargetRestApi {
     public ResponseEntity<MgmtTarget> getTarget(@PathVariable("targetId") final String targetId) {
         final Target findTarget = findTargetWithExceptionIfNotFound(targetId);
         // to single response include poll status
-        final MgmtTarget response = MgmtTargetMapper.toResponse(findTarget);
+        final MgmtTarget response = MgmtTargetMapper.toResponse(findTarget, tenantConfigHelper);
         MgmtTargetMapper.addPollStatus(findTarget, response);
-        if (tenantConfigHelper.isUserConsentEnabled()) {
-            MgmtTargetMapper.addAutoConfirmState(findTarget, response);
-        }
         MgmtTargetMapper.addTargetLinks(response);
 
         return ResponseEntity.ok(response);
@@ -130,7 +127,7 @@ public class MgmtTargetResource implements MgmtTargetRestApi {
             countTargetsAll = targetManagement.count();
         }
 
-        final List<MgmtTarget> rest = MgmtTargetMapper.toResponse(findTargetsAll.getContent());
+        final List<MgmtTarget> rest = MgmtTargetMapper.toResponse(findTargetsAll.getContent(), tenantConfigHelper);
         return ResponseEntity.ok(new PagedList<>(rest, countTargetsAll));
     }
 
@@ -140,7 +137,8 @@ public class MgmtTargetResource implements MgmtTargetRestApi {
         final Collection<Target> createdTargets = this.targetManagement
                 .create(MgmtTargetMapper.fromRequest(entityFactory, targets));
         LOG.debug("{} targets created, return status {}", targets.size(), HttpStatus.CREATED);
-        return new ResponseEntity<>(MgmtTargetMapper.toResponse(createdTargets), HttpStatus.CREATED);
+        return new ResponseEntity<>(MgmtTargetMapper.toResponse(createdTargets, tenantConfigHelper),
+                HttpStatus.CREATED);
     }
 
     @Override
@@ -160,11 +158,8 @@ public class MgmtTargetResource implements MgmtTargetRestApi {
                 .targetType(targetRest.getTargetType()).securityToken(targetRest.getSecurityToken())
                 .requestAttributes(targetRest.isRequestAttributes()));
 
-        final MgmtTarget response = MgmtTargetMapper.toResponse(updateTarget);
+        final MgmtTarget response = MgmtTargetMapper.toResponse(updateTarget, tenantConfigHelper);
         MgmtTargetMapper.addPollStatus(updateTarget, response);
-        if (tenantConfigHelper.isUserConsentEnabled()) {
-            MgmtTargetMapper.addAutoConfirmState(updateTarget, response);
-        }
         MgmtTargetMapper.addTargetLinks(response);
 
         return ResponseEntity.ok(response);

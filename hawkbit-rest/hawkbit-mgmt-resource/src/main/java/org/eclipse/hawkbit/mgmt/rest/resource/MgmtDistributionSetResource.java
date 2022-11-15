@@ -209,8 +209,9 @@ public class MgmtDistributionSetResource implements MgmtDistributionSetRestApi {
             targetsAssignedDS = this.targetManagement.findByAssignedDistributionSet(pageable, distributionSetId);
         }
 
-        return ResponseEntity.ok(new PagedList<>(MgmtTargetMapper.toResponse(targetsAssignedDS.getContent()),
-                targetsAssignedDS.getTotalElements()));
+        return ResponseEntity
+                .ok(new PagedList<>(MgmtTargetMapper.toResponse(targetsAssignedDS.getContent(), tenantConfigHelper),
+                        targetsAssignedDS.getTotalElements()));
     }
 
     @Override
@@ -237,8 +238,9 @@ public class MgmtDistributionSetResource implements MgmtDistributionSetRestApi {
             targetsInstalledDS = this.targetManagement.findByInstalledDistributionSet(pageable, distributionSetId);
         }
 
-        return ResponseEntity.ok(new PagedList<>(MgmtTargetMapper.toResponse(targetsInstalledDS.getContent()),
-                targetsInstalledDS.getTotalElements()));
+        return ResponseEntity
+                .ok(new PagedList<>(MgmtTargetMapper.toResponse(targetsInstalledDS.getContent(), tenantConfigHelper),
+                        targetsInstalledDS.getTotalElements()));
     }
 
     @Override
