@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -444,9 +445,15 @@ public class MgmtTargetResource implements MgmtTargetRestApi {
 
     @Override
     public ResponseEntity<Void> activateAutoConfirm(@PathVariable("targetId") final String targetId,
-            @RequestBody final MgmtTargetAutoConfirmUpdate update) {
-        confirmationManagement.activateAutoConfirmation(targetId, update.getInitiator(), update.getRemark());
+            @RequestBody(required = false) final MgmtTargetAutoConfirmUpdate update) {
+        final String initiator = getNullIfEmpty(update, MgmtTargetAutoConfirmUpdate::getInitiator);
+        final String remark = getNullIfEmpty(update, MgmtTargetAutoConfirmUpdate::getRemark);
+        confirmationManagement.activateAutoConfirmation(targetId, initiator, remark);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    private <T, R> R getNullIfEmpty(final T object, final Function<T, R> extractMethod) {
+        return object == null ? null : extractMethod.apply(object);
     }
 
     @Override

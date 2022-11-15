@@ -9,6 +9,9 @@
 package org.eclipse.hawkbit.rest.mgmt.documentation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants.TARGET_V1_ACTIVATE_AUTO_CONFIRM;
+import static org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants.TARGET_V1_AUTO_CONFIRM;
+import static org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants.TARGET_V1_DEACTIVATE_AUTO_CONFIRM;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
@@ -31,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.hawkbit.im.authentication.SpPermission;
+import org.eclipse.hawkbit.mgmt.json.model.target.MgmtTargetAutoConfirmUpdate;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants;
 import org.eclipse.hawkbit.repository.ActionStatusFields;
 import org.eclipse.hawkbit.repository.model.Action;
@@ -78,6 +82,8 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
     @Test
     @Description("Handles the GET request of retrieving all targets within SP. Required Permission: READ_TARGET.")
     public void getTargets() throws Exception {
+        enableUserConsentFlow();
+
         createTargetByGivenNameWithAttributes(targetId, createDistributionSet());
 
         mockMvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING)).andExpect(status().isOk())
@@ -98,9 +104,11 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
                         fieldWithPath("content[].securityToken").description(MgmtApiModelProperties.SECURITY_TOKEN),
                         fieldWithPath("content[].requestAttributes")
                                 .description(MgmtApiModelProperties.REQUEST_ATTRIBUTES),
+                        fieldWithPath("content[].autoConfirmActive")
+                                .description(MgmtApiModelProperties.AUTO_CONFIRM_ACTIVE),
                         fieldWithPath("content[].installedAt").description(MgmtApiModelProperties.INSTALLED_AT),
-                        fieldWithPath("content[].lastModifiedAt")
-                                .description(ApiModelPropertiesGeneric.LAST_MODIFIED_AT).type("Number"),
+                        fieldWithPath("content[].lastModifiedAt").description(
+                                ApiModelPropertiesGeneric.LAST_MODIFIED_AT).type("Number"),
                         fieldWithPath("content[].lastModifiedBy")
                                 .description(ApiModelPropertiesGeneric.LAST_MODIFIED_BY).type("String"),
                         fieldWithPath("content[].ipAddress").description(MgmtApiModelProperties.IP_ADDRESS)
@@ -123,6 +131,8 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
     @Test
     @Description("Handles the POST request of creating new targets within SP. The request body must always be a list of targets. Required Permission: CREATE_TARGET.")
     public void postTargets() throws Exception {
+        enableUserConsentFlow();
+
         final TargetType defaultType = testdataFactory.createTargetType("defaultType", Collections.emptyList());
         final String target = createTargetJsonForPostRequest("123456", "controllerId", "test", defaultType);
 
@@ -156,8 +166,9 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
                                 fieldWithPath("[]securityToken").description(MgmtApiModelProperties.SECURITY_TOKEN),
                                 fieldWithPath("[]requestAttributes")
                                         .description(MgmtApiModelProperties.REQUEST_ATTRIBUTES),
-                                fieldWithPath("[]targetType")
-                                        .description(MgmtApiModelProperties.TARGETTYPE_ID),
+                                fieldWithPath("[]autoConfirmActive")
+                                        .description(MgmtApiModelProperties.AUTO_CONFIRM_ACTIVE),
+                                fieldWithPath("[]targetType").description(MgmtApiModelProperties.TARGETTYPE_ID),
                                 fieldWithPath("[]_links.self").ignored())));
     }
 
@@ -174,6 +185,8 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
     @Test
     @Description("Handles the GET request of retrieving a single target within SP. Required Permission: READ_TARGET.")
     public void getTarget() throws Exception {
+        enableUserConsentFlow();
+
         final Target target = createTargetByGivenNameWithAttributes(targetId, createDistributionSet());
 
         mockMvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}", target.getControllerId()))
@@ -186,6 +199,8 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
     @Test
     @Description("Handles the PUT request of updating a target within SP. Required Permission: UPDATE_TARGET.")
     public void putTarget() throws Exception {
+        enableUserConsentFlow();
+
         final Target target = createTargetByGivenNameWithAttributes(targetId, createDistributionSet());
         final String targetAsJson = createJsonTarget(targetId, "newTargetName", "I've been updated");
 
@@ -854,11 +869,80 @@ public class TargetResourceDocumentationTest extends AbstractApiRestDocumentatio
         targetManagement.assignType(testTarget.getControllerId(), targetType.getId());
 
         mockMvc.perform(delete(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}/targettype",
-                        testTarget.getControllerId()).contentType(MediaType.APPLICATION_JSON))
-                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                testTarget.getControllerId()).contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk()).andDo(this.document.document(
+                        pathParameters(parameterWithName("targetId").description(ApiModelPropertiesGeneric.ITEM_ID))));
+    }
+
+    @Test
+    @Description("Handles the GET request of retrieving the auto-confirm state of a target. In this case auto-confirm is active for the requested target. Required Permission: READ_TARGET.")
+    public void getTargetAutoConfirmStateActive() throws Exception {
+        final Target testTarget = testdataFactory.createTarget(targetId);
+        confirmationManagement.activateAutoConfirmation(testTarget.getControllerId(), "custom_initiator_value",
+                "custom_remark");
+
+        mockMvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}/" + TARGET_V1_AUTO_CONFIRM,
+                testTarget.getControllerId())).andExpect(status().isOk()).andDo(MockMvcResultPrinter.print())
                 .andDo(this.document.document(
-                        pathParameters(parameterWithName("targetId").description(ApiModelPropertiesGeneric.ITEM_ID))
-                        ));
+                        pathParameters(parameterWithName("targetId").description(ApiModelPropertiesGeneric.ITEM_ID)),
+                        responseFields(
+                                fieldWithPath("active").description(MgmtApiModelProperties.AUTO_CONFIRM_STATE_ACTIVE),
+                                fieldWithPath("initiator")
+                                        .description(MgmtApiModelProperties.AUTO_CONFIRM_STATE_INITIATOR),
+                                fieldWithPath("remark").description(MgmtApiModelProperties.AUTO_CONFIRM_STATE_REMARK),
+                                fieldWithPath("activatedAt")
+                                        .description(MgmtApiModelProperties.AUTO_CONFIRM_STATE_ACTIVATED_AT),
+                                fieldWithPath("_links.deactivate").optional().description(
+                                        MgmtApiModelProperties.AUTO_CONFIRM_STATE_REFERENCE_DEACTIVATE_AUTO_CONFIRM))));
+    }
+
+    @Test
+    @Description("Handles the GET request of retrieving the auto-confirm state of a target. In this case auto-confirm is not active for the requested target. Required Permission: READ_TARGET.")
+    public void getTargetAutoConfirmStateNotActive() throws Exception {
+        final Target testTarget = testdataFactory.createTarget(targetId);
+
+        mockMvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}/" + TARGET_V1_AUTO_CONFIRM,
+                testTarget.getControllerId())).andExpect(status().isOk()).andDo(MockMvcResultPrinter.print())
+                .andDo(this.document.document(
+                        pathParameters(parameterWithName("targetId").description(ApiModelPropertiesGeneric.ITEM_ID)),
+                        responseFields(
+                                fieldWithPath("active").description(MgmtApiModelProperties.AUTO_CONFIRM_STATE_ACTIVE),
+                                fieldWithPath("_links.activate").optional().description(
+                                        MgmtApiModelProperties.AUTO_CONFIRM_STATE_REFERENCE_ACTIVATE_AUTO_CONFIRM))));
+    }
+
+    @Test
+    @Description("Handles the POST request to activate auto-confirm on a target. Payload can be provided to specify more details about the operation. Required Permission: UPDATE_TARGET.")
+    public void postActivateAutoConfirm() throws Exception {
+        final Target testTarget = testdataFactory.createTarget(targetId);
+
+        final MgmtTargetAutoConfirmUpdate body = new MgmtTargetAutoConfirmUpdate("custom_initiator_value",
+                "custom_remark_value");
+
+        mockMvc.perform(post(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}/" + TARGET_V1_AUTO_CONFIRM + "/"
+                + TARGET_V1_ACTIVATE_AUTO_CONFIRM, testTarget.getControllerId())
+                        .content(this.objectMapper.writeValueAsString(body)).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk()).andDo(MockMvcResultPrinter.print())
+                .andDo(this.document.document(
+                        pathParameters(parameterWithName("targetId").description(ApiModelPropertiesGeneric.ITEM_ID)),
+                        requestFields(
+                                optionalRequestFieldWithPath("initiator")
+                                        .description(MgmtApiModelProperties.AUTO_CONFIRM_ACTIVATE_INITIATOR),
+                                optionalRequestFieldWithPath("remark")
+                                        .description(MgmtApiModelProperties.AUTO_CONFIRM_ACTIVATE_REMARK),
+                                requestFieldWithPath("links").ignored())));
+    }
+
+    @Test
+    @Description("Handles the POST request to deactivate auto-confirm on a target. Required Permission: UPDATE_TARGET.")
+    public void postDeactivateAutoConfirm() throws Exception {
+        final Target testTarget = testdataFactory.createTarget(targetId);
+        confirmationManagement.activateAutoConfirmation(testTarget.getControllerId(), null, null);
+
+        mockMvc.perform(post(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}/" + TARGET_V1_AUTO_CONFIRM + "/"
+                + TARGET_V1_DEACTIVATE_AUTO_CONFIRM, testTarget.getControllerId())).andExpect(status().isOk())
+                .andDo(MockMvcResultPrinter.print()).andDo(this.document.document(
+                        pathParameters(parameterWithName("targetId").description(ApiModelPropertiesGeneric.ITEM_ID))));
     }
 
     private String createTargetJsonForPostRequest(final String controllerId, final String name,

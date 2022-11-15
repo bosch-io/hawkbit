@@ -429,7 +429,7 @@ public interface MgmtTargetRestApi {
      */
     @PostMapping(value = "/{targetId}/autoConfirm/activate", produces = { MediaType.APPLICATION_JSON_VALUE })
     ResponseEntity<Void> activateAutoConfirm(@PathVariable("targetId") String targetId,
-            @RequestBody MgmtTargetAutoConfirmUpdate update);
+            @RequestBody(required = false) MgmtTargetAutoConfirmUpdate update);
 
     /**
      * Deactivate auto-confirm on a specific target.
