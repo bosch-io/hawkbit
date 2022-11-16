@@ -8,6 +8,7 @@
  */
 package org.eclipse.hawkbit.ui.management.targettable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -120,32 +121,30 @@ public class TargetConfirmationOptionsComponent extends CustomField<ProxyTargetC
     }
 
     private KeyValueDetailsComponent buildAutoConfirmationDetailsLayout(final ProxyTargetConfirmationOptions options) {
-        final String initiator = notApplicableIfEmpty(options.getInitiator());
-        final String remark = notApplicableIfEmpty(options.getRemark());
-        final List<ProxyKeyValueDetails> values = Arrays.asList(
-                new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_STATE,
-                        i18n.getMessage("label.target.auto.confirmation.state"),
-                        i18n.getMessage("label.target.auto.confirmation.active")),
-                new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_INITIATOR,
-                        i18n.getMessage("label.target.auto.confirmation.initiator"), initiator),
-                new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_ROLLOUTS_USER,
-                        i18n.getMessage("label.target.auto.confirmation.systemuser"),
-                        options.getInitiatedSystemUser()),
-                new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_REMARK,
-                        i18n.getMessage("label.target.auto.confirmation.remark"), remark),
-                new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_ACTIVATEDAT,
-                        i18n.getMessage("label.target.auto.confirmation.activatedat"),
-                        SPDateTimeUtil.getFormattedDate(options.getActivatedAt())));
+        final List<ProxyKeyValueDetails> values = new ArrayList<>();
+        values.add(new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_STATE,
+                i18n.getMessage("label.target.auto.confirmation.state"),
+                i18n.getMessage("label.target.auto.confirmation.active")));
+
+        if (StringUtils.hasText(options.getInitiator())) {
+            values.add(new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_INITIATOR,
+                    i18n.getMessage("label.target.auto.confirmation.initiator"), options.getInitiator()));
+        }
+        values.add(new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_ROLLOUTS_USER,
+                i18n.getMessage("label.target.auto.confirmation.systemuser"), options.getInitiatedSystemUser()));
+        if (StringUtils.hasText(options.getRemark())) {
+            values.add(new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_REMARK,
+                    i18n.getMessage("label.target.auto.confirmation.remark"), options.getRemark()));
+        }
+        values.add(new ProxyKeyValueDetails(AUTO_CONFIRMATION_DETAILS_ACTIVATEDAT,
+                i18n.getMessage("label.target.auto.confirmation.activatedat"),
+                SPDateTimeUtil.getFormattedDate(options.getActivatedAt())));
 
         final KeyValueDetailsComponent details = new KeyValueDetailsComponent();
         details.disableSpacing();
         details.setValue(values);
 
         return details;
-    }
-
-    private static String notApplicableIfEmpty(final String text) {
-        return StringUtils.hasText(text) ? text : "n/a";
     }
 
     private Label buildConfirmationRequiredLabel() {
