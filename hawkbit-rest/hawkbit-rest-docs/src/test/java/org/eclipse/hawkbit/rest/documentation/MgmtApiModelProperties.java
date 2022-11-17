@@ -34,6 +34,8 @@ public final class MgmtApiModelProperties {
     public static final String LINK_TO_ROLLOUT = "The link to the rollout.";
     public static final String LINK_TO_TARGET_TYPE = "The link to the target type.";
 
+    public static final String LINK_TO_AUTO_CONFIRM = "The link to the detailed auto confirm state.";
+
     // software module types
     public static final String SMT_TYPE = "The type of the software module identified by its key.";
     public static final String SMT_VENDOR = "The software vendor of the entity.";
@@ -176,6 +178,8 @@ public final class MgmtApiModelProperties {
 
     public static final String REQUEST_ATTRIBUTES = "Request re-transmission of target attributes.";
 
+    public static final String AUTO_CONFIRM_ACTIVE = "Present if user consent flow active. Indicates if auto-confirm is active";
+
     public static final String META_DATA = "List of metadata.";
 
     public static final String META_DATA_KEY = "Metadata property key.";
@@ -183,6 +187,21 @@ public final class MgmtApiModelProperties {
     public static final String META_DATA_VALUE = "Metadata property value.";
 
     public static final String SM_META_DATA_TARGET_VISIBLE = "Metadata property is visible to targets as part of software update action.";
+
+    public static final String AUTO_CONFIRM_STATE_ACTIVE = "Flag if auto confirm is active";
+
+    public static final String AUTO_CONFIRM_STATE_INITIATOR = "(Optional) initiator set on activation";
+
+    public static final String AUTO_CONFIRM_STATE_REMARK = "(Optional) remark set on activation";
+
+    public static final String AUTO_CONFIRM_STATE_ACTIVATED_AT = "timestamp of the activation";
+
+    public static final String AUTO_CONFIRM_STATE_REFERENCE_ACTIVATE_AUTO_CONFIRM = "reference link to activate auto confirm (present if not active)";
+
+    public static final String AUTO_CONFIRM_STATE_REFERENCE_DEACTIVATE_AUTO_CONFIRM = "reference link to deactivate auto confirm (present if active)";
+
+    public static final String AUTO_CONFIRM_ACTIVATE_INITIATOR = "individual value (e.g. username) stored as initiator and automatically used as confirmed user in future actions";
+    public static final String AUTO_CONFIRM_ACTIVATE_REMARK = "individual value to attach a remark which will be persisted when automatically confirming future actions";
 
     public static final String SM_TYPE_KEY = "Key that can be interpreted by the target.";
 

@@ -280,6 +280,8 @@ public abstract class AbstractApiRestDocumentation extends AbstractRestIntegrati
                 fieldWithPath(fieldArrayPrefix + "securityToken").description(MgmtApiModelProperties.SECURITY_TOKEN),
                 fieldWithPath(fieldArrayPrefix + "requestAttributes")
                         .description(MgmtApiModelProperties.REQUEST_ATTRIBUTES),
+                fieldWithPath(fieldArrayPrefix + "autoConfirmActive")
+                        .description(MgmtApiModelProperties.AUTO_CONFIRM_ACTIVE),
                 fieldWithPath(fieldArrayPrefix + "installedAt").description(MgmtApiModelProperties.INSTALLED_AT),
                 fieldWithPath(fieldArrayPrefix + "lastModifiedAt")
                         .description(ApiModelPropertiesGeneric.LAST_MODIFIED_AT).type("Number"),
@@ -289,8 +291,8 @@ public abstract class AbstractApiRestDocumentation extends AbstractRestIntegrati
                         .type("String"),
                 fieldWithPath(fieldArrayPrefix + "lastControllerRequestAt")
                         .description(MgmtApiModelProperties.LAST_REQUEST_AT).type("Number"),
-                fieldWithPath(fieldArrayPrefix + "targetType")
-                        .description(MgmtApiModelProperties.TARGETTYPE_ID).type("Number"),
+                fieldWithPath(fieldArrayPrefix + "targetType").description(MgmtApiModelProperties.TARGETTYPE_ID)
+                        .type("Number"),
                 fieldWithPath(fieldArrayPrefix + "_links.self").ignored());
 
         if (!isArray) {
@@ -312,7 +314,9 @@ public abstract class AbstractApiRestDocumentation extends AbstractRestIntegrati
                             .description(MgmtApiModelProperties.LINKS_ACTIONS),
                     fieldWithPath(fieldArrayPrefix + "_links.metadata").description(MgmtApiModelProperties.META_DATA),
                     fieldWithPath(fieldArrayPrefix + "_links.targetType")
-                            .description(MgmtApiModelProperties.LINK_TO_TARGET_TYPE)));
+                            .description(MgmtApiModelProperties.LINK_TO_TARGET_TYPE),
+                    fieldWithPath(fieldArrayPrefix + "_links.autoConfirm")
+                            .description(MgmtApiModelProperties.LINK_TO_AUTO_CONFIRM)));
 
         }
         fields.addAll(Arrays.asList(descriptors));
