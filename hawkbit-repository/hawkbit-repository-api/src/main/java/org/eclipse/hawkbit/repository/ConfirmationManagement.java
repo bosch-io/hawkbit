@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service layer for all confirmation related operations.
@@ -49,6 +50,16 @@ public interface ConfirmationManagement {
     @PreAuthorize(SpPermission.SpringEvalExpressions.HAS_AUTH_UPDATE_TARGET)
     AutoConfirmationStatus activateAutoConfirmation(@NotEmpty String controllerId, final String initiator,
             final String remark);
+
+    /**
+     * Get the current state of auto-confirmation for a given controllerId
+     * 
+     * @param controllerId
+     *            to check the state for
+     * @return instance of {@link AutoConfirmationStatus} wrapped in an
+     *         {@link Optional}. Present if active and empty if disabled.
+     */
+    Optional<AutoConfirmationStatus> getStatus(@NotEmpty String controllerId);
 
     /**
      * Auto confirm active actions for a specific controller ID having the

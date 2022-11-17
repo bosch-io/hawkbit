@@ -10,6 +10,7 @@ package org.eclipse.hawkbit.repository.jpa;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.hawkbit.repository.ConfirmationManagement;
@@ -90,6 +91,11 @@ public class JpaConfirmationManagement extends JpaActionManagement implements Co
         }
         giveConfirmationForActiveActions(autoConfStatus);
         return autoConfStatus;
+    }
+
+    @Override
+    public Optional<AutoConfirmationStatus> getStatus(final String controllerId) {
+        return Optional.of(getByControllerIdAndThrowIfNotFound(controllerId)).map(JpaTarget::getAutoConfirmationStatus);
     }
 
     @Override
