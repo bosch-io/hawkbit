@@ -15,6 +15,9 @@ import org.springframework.hateoas.RepresentationModel;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * Response representing the current state of auto-confirmation for a specific target
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonPropertyOrder({ "active", "initiator", "remark", "activatedAt" })
