@@ -9,6 +9,7 @@
 package org.eclipse.hawkbit.mgmt.rest.resource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants.TARGET_V1_AUTO_CONFIRM;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
@@ -2372,5 +2373,88 @@ class MgmtTargetResourceTest extends AbstractManagementApiIntegrationTest {
                 MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + MgmtRestConstants.TARGET_TARGET_TYPE_V1_REQUEST_MAPPING,
                 knownTargetId).content("{\"unknownfield\":123}").contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isBadRequest());
+    }
+
+    @ParameterizedTest
+    @MethodSource("possibleActiveStates")
+    void getAutoConfirmActive(final String initiator, final String remark) throws Exception {
+        final String knownTargetId = "targetId";
+        testdataFactory.createTarget(knownTargetId);
+        confirmationManagement.activateAutoConfirmation(knownTargetId, initiator, remark);
+
+        // GET with all possible responses
+        mvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}/" + TARGET_V1_AUTO_CONFIRM,
+                    knownTargetId)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+              .andExpect(jsonPath("active", equalTo(Boolean.TRUE)))
+              .andExpect(initiator == null ? jsonPath("initiator").doesNotExist()
+                    : jsonPath("initiator", equalTo(initiator)))
+              .andExpect(remark == null ? jsonPath("remark").doesNotExist() : jsonPath("remark", equalTo(remark)))
+              .andExpect(jsonPath("_links.deactivate").exists())
+              .andExpect(jsonPath("_links.activate").doesNotExist());
+    }
+
+
+    @Test
+    void getAutoConfirmStateFromTargetsEndpoint() throws Exception {
+        final String knownTargetId = "targetId";
+        testdataFactory.createTarget(knownTargetId);
+
+        // GET if active
+        mvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING)).andDo(MockMvcResultPrinter.print())
+                .andExpect(status().isOk()).andExpect(jsonPath("content.[0].autoConfirmActive").doesNotExist());
+
+        enableUserConsentFlow();
+
+        // GET if not active
+        mvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING)).andDo(MockMvcResultPrinter.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("content.[0].autoConfirmActive", equalTo(Boolean.FALSE)));
+
+        confirmationManagement.activateAutoConfirmation(knownTargetId, "test", "remark");
+
+        // GET if active
+        mvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING)).andDo(MockMvcResultPrinter.print())
+                .andExpect(status().isOk()).andExpect(jsonPath("content.[0].autoConfirmActive", equalTo(Boolean.TRUE)));
+    }
+
+    @Test
+    void getAutoConfirmNotActive() throws Exception {
+        final String knownTargetId = "targetId";
+
+        // GET for not existing target
+        mvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}/" + TARGET_V1_AUTO_CONFIRM,
+                knownTargetId)).andDo(MockMvcResultPrinter.print()).andExpect(status().isNotFound());
+
+        testdataFactory.createTarget(knownTargetId);
+
+        // GET for auto-confirm not active
+        mvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}/" + TARGET_V1_AUTO_CONFIRM,
+                knownTargetId)).andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(jsonPath("active", equalTo(Boolean.FALSE))).andExpect(jsonPath("initiator").doesNotExist())
+                .andExpect(jsonPath("remark").doesNotExist()).andExpect(jsonPath("_links.activate").exists());
+    }
+
+    @Test
+    void autoConfirmStateReferenceOnTarget() throws Exception {
+        final String knownTargetId = "targetId";
+        testdataFactory.createTarget(knownTargetId);
+
+        // GET with consent flow not active should not expose
+        mvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}", knownTargetId))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(jsonPath("autoConfirmActive").doesNotExist())
+                .andExpect(jsonPath("_links.autoConfirm").doesNotExist());
+
+        enableUserConsentFlow();
+
+        // GET with consent flow active should expose
+        mvc.perform(get(MgmtRestConstants.TARGET_V1_REQUEST_MAPPING + "/{targetId}", knownTargetId))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(jsonPath("autoConfirmActive").exists()).andExpect(jsonPath("_links.autoConfirm").exists());
+    }
+
+    private static Stream<Arguments> possibleActiveStates() {
+        return Stream.of(Arguments.of("someInitiator", "someRemark"), Arguments.of(null, "someRemark"),
+                Arguments.of("someInitiator", null), Arguments.of(null, null));
     }
 }

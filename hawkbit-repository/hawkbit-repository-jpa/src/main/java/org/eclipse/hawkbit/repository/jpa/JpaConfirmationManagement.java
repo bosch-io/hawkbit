@@ -64,7 +64,7 @@ public class JpaConfirmationManagement extends JpaActionManagement implements Co
 
     @Override
     public List<Action> findActiveActionsWaitingConfirmation(final String controllerId) {
-        return findActiveActionHavingStatus(controllerId, Status.WAIT_FOR_CONFIRMATION);
+        return findActiveActionsHavingStatus(controllerId, Status.WAIT_FOR_CONFIRMATION);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class JpaConfirmationManagement extends JpaActionManagement implements Co
 
     private List<Action> giveConfirmationForActiveActions(final AutoConfirmationStatus autoConfirmationStatus) {
         final Target target = autoConfirmationStatus.getTarget();
-        return findActiveActionHavingStatus(target.getControllerId(), Status.WAIT_FOR_CONFIRMATION).stream()
+        return findActiveActionsHavingStatus(target.getControllerId(), Status.WAIT_FOR_CONFIRMATION).stream()
                 .map(action -> autoConfirmAction(action.getId(), autoConfirmationStatus)).collect(Collectors.toList());
     }
 

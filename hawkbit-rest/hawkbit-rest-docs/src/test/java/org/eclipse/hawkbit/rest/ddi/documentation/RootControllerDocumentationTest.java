@@ -28,6 +28,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.hawkbit.ddi.json.model.DdiActionFeedback;
+import org.eclipse.hawkbit.ddi.json.model.DdiActivateAutoConfirmation;
 import org.eclipse.hawkbit.ddi.json.model.DdiConfirmationFeedback;
 import org.eclipse.hawkbit.ddi.json.model.DdiProgress;
 import org.eclipse.hawkbit.ddi.json.model.DdiResult;
@@ -195,14 +196,13 @@ public class RootControllerDocumentationTest extends AbstractApiRestDocumentatio
                 tenantAware.getCurrentTenant(), target.getControllerId(), cancelAction.getId())
                         .content(objectMapper.writeValueAsString(feedback))
                         .contentType(MediaType.APPLICATION_JSON_UTF8))
-                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk()).andDo(this.document
-                        .document(
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andDo(this.document.document(
                         pathParameters(parameterWithName("tenant").description(ApiModelPropertiesGeneric.TENANT),
                                 parameterWithName("controllerId").description(DdiApiModelProperties.CONTROLLER_ID),
                                 parameterWithName("actionId").description(DdiApiModelProperties.ACTION_ID_CANCELED)),
                         requestFields(
-                                optionalRequestFieldWithPath("id")
-                                        .description(DdiApiModelProperties.FEEDBACK_ACTION_ID)
+                                optionalRequestFieldWithPath("id").description(DdiApiModelProperties.FEEDBACK_ACTION_ID)
                                         .type(JsonFieldType.NUMBER),
                                 optionalRequestFieldWithPath("time")
                                         .description(DdiApiModelProperties.FEEDBACK_ACTION_TIME),
@@ -410,14 +410,14 @@ public class RootControllerDocumentationTest extends AbstractApiRestDocumentatio
                 + DdiRestConstants.DEPLOYMENT_BASE_ACTION + "/{actionId}/feedback", tenantAware.getCurrentTenant(),
                 target.getControllerId(), actionId).content(objectMapper.writeValueAsString(feedback))
                         .contentType(MediaType.APPLICATION_JSON_UTF8).accept(MediaTypes.HAL_JSON_VALUE))
-                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk()).andDo(this.document.document(
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andDo(this.document.document(
                         pathParameters(parameterWithName("tenant").description(ApiModelPropertiesGeneric.TENANT),
                                 parameterWithName("controllerId").description(DdiApiModelProperties.CONTROLLER_ID),
                                 parameterWithName("actionId").description(DdiApiModelProperties.ACTION_ID)),
 
                         requestFields(
-                                optionalRequestFieldWithPath("id")
-                                        .description(DdiApiModelProperties.FEEDBACK_ACTION_ID)
+                                optionalRequestFieldWithPath("id").description(DdiApiModelProperties.FEEDBACK_ACTION_ID)
                                         .type(JsonFieldType.NUMBER),
                                 optionalRequestFieldWithPath("time")
                                         .description(DdiApiModelProperties.FEEDBACK_ACTION_TIME),
@@ -582,9 +582,72 @@ public class RootControllerDocumentationTest extends AbstractApiRestDocumentatio
     }
 
     @Test
+    @Description("Resource to retrieve the current state of auto confirmation. In case auto-confirm is active a reference to disable it will be provided.")
+    @WithUser(tenantId = "TENANT_ID", authorities = "ROLE_CONTROLLER", allSpPermissions = true)
+    public void getConfirmationBaseWithAutoConfirmActive() throws Exception {
+        enableUserConsentFlow();
+
+        final DistributionSet set = testdataFactory.createDistributionSet("one");
+        final Target target = targetManagement.create(entityFactory.target().create().controllerId(CONTROLLER_ID));
+        confirmationManagement.activateAutoConfirmation(target.getControllerId(), "exampleUserId", "exampleRemark");
+        assignDistributionSetWithMaintenanceWindow(set.getId(), target.getControllerId(), getTestSchedule(-5),
+                getTestDuration(10), getTestTimeZone());
+
+        mockMvc.perform(
+                get(DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE,
+                        tenantAware.getCurrentTenant(), target.getControllerId()).accept(MediaTypes.HAL_JSON_VALUE))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
+                .andDo(this.document.document(
+                        pathParameters(parameterWithName("tenant").description(ApiModelPropertiesGeneric.TENANT),
+                                parameterWithName("controllerId").description(DdiApiModelProperties.CONTROLLER_ID)),
+                        responseFields(
+                                fieldWithPath("autoConfirm").description(DdiApiModelProperties.TARGET_AUTO_CONFIRM),
+                                fieldWithPath("autoConfirm.active")
+                                        .description(DdiApiModelProperties.TARGET_AUTO_CONFIRM_STATE),
+                                fieldWithPath("autoConfirm.initiator")
+                                        .description(DdiApiModelProperties.TARGET_AUTO_CONFIRM_INITIATOR_RESPONSE),
+                                fieldWithPath("autoConfirm.remark")
+                                        .description(DdiApiModelProperties.TARGET_AUTO_CONFIRM_REMARK_RESPONSE),
+                                fieldWithPath("autoConfirm.activatedAt")
+                                        .description(DdiApiModelProperties.TARGET_AUTO_CONFIRM_ACTIVATED_AT),
+                                fieldWithPath("_links.deactivateAutoConfirm").description(
+                                        DdiApiModelProperties.TARGET_AUTO_CONFIRM_REFERENCE_DEACTIVATE_AUTO_CONFIRM))));
+    }
+
+    @Test
+    @Description("Resource to retrieve the current state of auto confirmation. In case actions are waiting for a confirmation, they will be referenced.")
+    @WithUser(tenantId = "TENANT_ID", authorities = "ROLE_CONTROLLER", allSpPermissions = true)
+    public void getConfirmationBaseWithAutoConfirmDeactivated() throws Exception {
+        enableUserConsentFlow();
+
+        final DistributionSet set = testdataFactory.createDistributionSet("one");
+        final Target target = targetManagement.create(entityFactory.target().create().controllerId(CONTROLLER_ID));
+        assignDistributionSetWithMaintenanceWindow(set.getId(), target.getControllerId(), getTestSchedule(-5),
+                getTestDuration(10), getTestTimeZone());
+
+        mockMvc.perform(
+                get(DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE,
+                        tenantAware.getCurrentTenant(), target.getControllerId()).accept(MediaTypes.HAL_JSON_VALUE))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaTypes.HAL_JSON))
+                .andDo(this.document.document(
+                        pathParameters(parameterWithName("tenant").description(ApiModelPropertiesGeneric.TENANT),
+                                parameterWithName("controllerId").description(DdiApiModelProperties.CONTROLLER_ID)),
+                        responseFields(
+                                fieldWithPath("autoConfirm").description(DdiApiModelProperties.TARGET_AUTO_CONFIRM),
+                                fieldWithPath("autoConfirm.active")
+                                        .description(DdiApiModelProperties.TARGET_AUTO_CONFIRM_STATE),
+                                fieldWithPath("_links.activateAutoConfirm").description(
+                                        DdiApiModelProperties.TARGET_AUTO_CONFIRM_REFERENCE_ACTIVATE_AUTO_CONFIRM),
+                                fieldWithPath("_links.confirmationBase").description(
+                                        DdiApiModelProperties.TARGET_AUTO_CONFIRM_REFERENCE_CONFIRMATION_BASE_ACTION))));
+    }
+
+    @Test
     @Description("Core resource for confirmation of actions. Contains all necessary information for confirmation.")
     @WithUser(tenantId = "TENANT_ID", authorities = "ROLE_CONTROLLER", allSpPermissions = true)
-    public void getControllerBaseConfirmationAction() throws Exception {
+    public void getConfirmationBaseAction() throws Exception {
         enableUserConsentFlow();
 
         final DistributionSet set = testdataFactory.createDistributionSet("one");
@@ -607,9 +670,9 @@ public class RootControllerDocumentationTest extends AbstractApiRestDocumentatio
                 target.getControllerId(), getTestSchedule(-5), getTestDuration(10), getTestTimeZone()));
 
         mockMvc.perform(get(
-                        DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE_ACTION
-                                + "/{actionId}?actionHistory=10",
-                        tenantAware.getCurrentTenant(), target.getControllerId(), actionId).accept(MediaTypes.HAL_JSON_VALUE))
+                DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE
+                        + "/{actionId}?actionHistory=10",
+                tenantAware.getCurrentTenant(), target.getControllerId(), actionId).accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
                 .andExpect(content().contentType(MediaTypes.HAL_JSON))
                 .andDo(this.document.document(
@@ -635,8 +698,10 @@ public class RootControllerDocumentationTest extends AbstractApiRestDocumentatio
                                         .description(DdiApiModelProperties.CHUNK_META_DATA_KEY).optional(),
                                 fieldWithPath("confirmation.chunks[].metadata[].value")
                                         .description(DdiApiModelProperties.CHUNK_META_DATA_VALUE).optional(),
-                                fieldWithPath("confirmation.chunks[].part").description(DdiApiModelProperties.CHUNK_TYPE),
-                                fieldWithPath("confirmation.chunks[].name").description(DdiApiModelProperties.CHUNK_NAME),
+                                fieldWithPath("confirmation.chunks[].part")
+                                        .description(DdiApiModelProperties.CHUNK_TYPE),
+                                fieldWithPath("confirmation.chunks[].name")
+                                        .description(DdiApiModelProperties.CHUNK_NAME),
                                 fieldWithPath("confirmation.chunks[].version")
                                         .description(DdiApiModelProperties.CHUNK_VERSION),
                                 fieldWithPath("confirmation.chunks[].artifacts")
@@ -679,15 +744,17 @@ public class RootControllerDocumentationTest extends AbstractApiRestDocumentatio
         final Target target = targetManagement.create(entityFactory.target().create().controllerId(CONTROLLER_ID));
         final Long actionId = getFirstAssignedActionId(assignDistributionSet(set.getId(), target.getControllerId()));
 
+        final DdiConfirmationFeedback feedback = new DdiConfirmationFeedback(
+                DdiConfirmationFeedback.Confirmation.CONFIRMED, 33, List.of("Feedback message"));
 
-        final DdiConfirmationFeedback feedback =
-                new DdiConfirmationFeedback(DdiConfirmationFeedback.Confirmation.CONFIRMED, 33, List.of("Feedback message"));
-
-        mockMvc.perform(post(DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/"
-                                + DdiRestConstants.CONFIRMATION_BASE_ACTION + "/{actionId}/feedback", tenantAware.getCurrentTenant(),
-                        target.getControllerId(), actionId).content(objectMapper.writeValueAsString(feedback))
-                        .contentType(MediaType.APPLICATION_JSON_UTF8).accept(MediaTypes.HAL_JSON_VALUE))
-                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk()).andDo(this.document.document(
+        mockMvc.perform(
+                post(DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE
+                        + "/{actionId}/feedback", tenantAware.getCurrentTenant(), target.getControllerId(), actionId)
+                                .content(objectMapper.writeValueAsString(feedback))
+                                .contentType(MediaType.APPLICATION_JSON_UTF8).accept(MediaTypes.HAL_JSON_VALUE))
+                .andDo(MockMvcResultPrinter.print()).andExpect(
+                        status().isOk())
+                .andDo(this.document.document(
                         pathParameters(parameterWithName("tenant").description(ApiModelPropertiesGeneric.TENANT),
                                 parameterWithName("controllerId").description(DdiApiModelProperties.CONTROLLER_ID),
                                 parameterWithName("actionId").description(DdiApiModelProperties.ACTION_ID)),
@@ -702,6 +769,44 @@ public class RootControllerDocumentationTest extends AbstractApiRestDocumentatio
 
                                 optionalRequestFieldWithPath("details")
                                         .description(DdiApiModelProperties.TARGET_CONFIRMATION_DETAILS))));
+    }
+
+    @Test
+    @Description("Resource to activate auto-confirmation on a target.")
+    @WithUser(tenantId = "TENANT_ID", authorities = "ROLE_CONTROLLER", allSpPermissions = true)
+    public void activateAutoConfirmation() throws Exception {
+        final Target target = targetManagement.create(entityFactory.target().create().controllerId(CONTROLLER_ID));
+
+        final DdiActivateAutoConfirmation body = new DdiActivateAutoConfirmation("exampleUser", "exampleRemark");
+
+        mockMvc.perform(post(
+                DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE + "/"
+                        + DdiRestConstants.AUTO_CONFIRM_ACTIVATE,
+                tenantAware.getCurrentTenant(), target.getControllerId()).content(objectMapper.writeValueAsString(body))
+                        .contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andDo(MockMvcResultPrinter.print()).andExpect(status().isOk())
+                .andDo(this.document.document(
+                        pathParameters(parameterWithName("tenant").description(ApiModelPropertiesGeneric.TENANT),
+                                parameterWithName("controllerId").description(DdiApiModelProperties.CONTROLLER_ID)),
+                        requestFields(
+                                optionalRequestFieldWithPath("initiator")
+                                        .description(DdiApiModelProperties.TARGET_AUTO_CONFIRM_ACTIVATE_INITIATOR),
+
+                                optionalRequestFieldWithPath("remark")
+                                        .description(DdiApiModelProperties.TARGET_AUTO_CONFIRM_ACTIVATE_REMARK))));
+    }
+
+    @Test
+    @Description("Resource to deactivate auto-confirmation on a target.")
+    @WithUser(tenantId = "TENANT_ID", authorities = "ROLE_CONTROLLER", allSpPermissions = true)
+    public void deactivateAutoConfirmation() throws Exception {
+        final Target target = targetManagement.create(entityFactory.target().create().controllerId(CONTROLLER_ID));
+
+        mockMvc.perform(post(
+                DdiRestConstants.BASE_V1_REQUEST_MAPPING + "/{controllerId}/" + DdiRestConstants.CONFIRMATION_BASE + "/"
+                        + DdiRestConstants.AUTO_CONFIRM_DEACTIVATE,
+                tenantAware.getCurrentTenant(), target.getControllerId())).andDo(MockMvcResultPrinter.print())
+                .andExpect(status().isOk());
     }
 
 }

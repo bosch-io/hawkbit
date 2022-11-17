@@ -265,7 +265,7 @@ public class MgmtRolloutResource implements MgmtRolloutRestApi {
             final Page<Target> pageTargets = this.rolloutGroupManagement.findTargetsOfRolloutGroup(pageable, groupId);
             rolloutGroupTargets = pageTargets;
         }
-        final List<MgmtTarget> rest = MgmtTargetMapper.toResponse(rolloutGroupTargets.getContent());
+        final List<MgmtTarget> rest = MgmtTargetMapper.toResponse(rolloutGroupTargets.getContent(), tenantConfigHelper);
         return ResponseEntity.ok(new PagedList<>(rest, rolloutGroupTargets.getTotalElements()));
     }
 }

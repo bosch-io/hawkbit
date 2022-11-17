@@ -30,8 +30,8 @@ import static org.eclipse.hawkbit.ddi.json.model.DdiDeployment.HandlingType.FORC
  * Test serializability of DDI api model 'DdiConfirmationBase'
  */
 @Feature("Unit Tests - Direct Device Integration API")
-@Story("Serializability of DDI api Models")
-public class DdiConfirmationBaseTest {
+@Story("CHeck JSON serialization of DDI api confirmation models")
+class DdiConfirmationBaseTest {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -44,20 +44,23 @@ public class DdiConfirmationBaseTest {
         final String actionStatus = "TestAction";
         final DdiActionHistory ddiActionHistory = new DdiActionHistory(actionStatus,
                 Arrays.asList("Action status message 1", "Action status message 2"));
-        final DdiConfirmationBase ddiConfirmationBase = new DdiConfirmationBase(id, ddiDeployment, ddiActionHistory);
+        final DdiConfirmationBaseAction ddiConfirmationBaseAction = new DdiConfirmationBaseAction(id, ddiDeployment,
+                ddiActionHistory);
 
         // Test
-        String serializedDdiConfirmationBase = mapper.writeValueAsString(ddiConfirmationBase);
-        final DdiConfirmationBase deserializedDdiConfigurationBase = mapper.readValue(serializedDdiConfirmationBase,
-                DdiConfirmationBase.class);
+        String serializedDdiConfirmationBase = mapper.writeValueAsString(ddiConfirmationBaseAction);
+        final DdiConfirmationBaseAction deserializedDdiConfigurationBase = mapper
+                .readValue(serializedDdiConfirmationBase, DdiConfirmationBaseAction.class);
 
-        assertThat(serializedDdiConfirmationBase).contains(id, FORCED.getName(), ATTEMPT.getName(), AVAILABLE.getStatus(),
-                actionStatus);
-        assertThat(deserializedDdiConfigurationBase.getConfirmation().getDownload()).isEqualTo(ddiDeployment.getDownload());
+        assertThat(serializedDdiConfirmationBase).contains(id, FORCED.getName(), ATTEMPT.getName(),
+                AVAILABLE.getStatus(), actionStatus);
+        assertThat(deserializedDdiConfigurationBase.getConfirmation().getDownload())
+                .isEqualTo(ddiDeployment.getDownload());
         assertThat(deserializedDdiConfigurationBase.getConfirmation().getUpdate()).isEqualTo(ddiDeployment.getUpdate());
-        assertThat(deserializedDdiConfigurationBase.getConfirmation().getMaintenanceWindow()).isEqualTo(
-                ddiDeployment.getMaintenanceWindow());
-        assertThat(deserializedDdiConfigurationBase.getActionHistory().toString()).isEqualTo(ddiActionHistory.toString());
+        assertThat(deserializedDdiConfigurationBase.getConfirmation().getMaintenanceWindow())
+                .isEqualTo(ddiDeployment.getMaintenanceWindow());
+        assertThat(deserializedDdiConfigurationBase.getActionHistory().toString())
+                .isEqualTo(ddiActionHistory.toString());
     }
 
     @Test
@@ -70,12 +73,13 @@ public class DdiConfirmationBaseTest {
                 + "\"Action status message 2\"]},\"links\":[],\"unknownProperty\":\"test\"}";
 
         // Test
-        DdiConfirmationBase ddiConfirmationBase = mapper.readValue(serializedDdiConfirmationBase, DdiConfirmationBase.class);
+        DdiConfirmationBaseAction ddiConfirmationBaseAction = mapper.readValue(serializedDdiConfirmationBase,
+                DdiConfirmationBaseAction.class);
 
-        assertThat(ddiConfirmationBase.getConfirmation().getDownload().getName()).isEqualTo(FORCED.getName());
-        assertThat(ddiConfirmationBase.getConfirmation().getUpdate().getName()).isEqualTo(ATTEMPT.getName());
-        assertThat(ddiConfirmationBase.getConfirmation().getMaintenanceWindow().getStatus()).isEqualTo(
-                AVAILABLE.getStatus());
+        assertThat(ddiConfirmationBaseAction.getConfirmation().getDownload().getName()).isEqualTo(FORCED.getName());
+        assertThat(ddiConfirmationBaseAction.getConfirmation().getUpdate().getName()).isEqualTo(ATTEMPT.getName());
+        assertThat(ddiConfirmationBaseAction.getConfirmation().getMaintenanceWindow().getStatus())
+                .isEqualTo(AVAILABLE.getStatus());
     }
 
     @Test
@@ -88,7 +92,7 @@ public class DdiConfirmationBaseTest {
                 + "\"Action status message 2\"]},\"links\":[]}";
 
         // Test
-        assertThatExceptionOfType(MismatchedInputException.class).isThrownBy(
-                () -> mapper.readValue(serializedDdiConfirmationBase, DdiConfirmationBase.class));
+        assertThatExceptionOfType(MismatchedInputException.class)
+                .isThrownBy(() -> mapper.readValue(serializedDdiConfirmationBase, DdiConfirmationBaseAction.class));
     }
 }
