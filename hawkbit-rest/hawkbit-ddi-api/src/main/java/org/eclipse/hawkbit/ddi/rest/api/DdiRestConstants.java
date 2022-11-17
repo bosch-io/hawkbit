@@ -18,8 +18,6 @@ public final class DdiRestConstants {
      */
     public static final String BASE_V1_REQUEST_MAPPING = "/{tenant}/controller/v1";
 
-    public static final String BASE_V2_REQUEST_MAPPING = "/{tenant}/controller/v2";
-
     /**
      * Deployment action resources.
      */
@@ -30,8 +28,14 @@ public final class DdiRestConstants {
      */
     public static final String CONFIRMATION_BASE = "confirmationBase";
 
+    /**
+     * Activate auto-confirm
+     */
     public static final String AUTO_CONFIRM_ACTIVATE = "activateAutoConfirm";
 
+    /**
+     * Deactivate auto-confirm
+     */
     public static final String AUTO_CONFIRM_DEACTIVATE = "deactivateAutoConfirm";
 
     /**

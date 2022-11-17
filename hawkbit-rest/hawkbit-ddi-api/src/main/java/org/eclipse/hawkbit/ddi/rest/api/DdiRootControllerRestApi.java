@@ -377,7 +377,7 @@ public interface DdiRootControllerRestApi {
             @Valid @RequestBody(required = false) final DdiActivateAutoConfirmation body);
 
     /**
-     * Disable auto confirmation for a given controller id.
+     * Deactivate auto confirmation for a given controller id.
      *
      * @param tenant
      *            the controllerId is corresponding too

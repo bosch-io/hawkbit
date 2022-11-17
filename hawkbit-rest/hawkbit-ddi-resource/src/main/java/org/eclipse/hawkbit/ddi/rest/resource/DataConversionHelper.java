@@ -49,7 +49,7 @@ public final class DataConversionHelper {
 
     }
 
-    public static List<DdiChunk> createChunks(final Target target, final Action uAction,
+    static List<DdiChunk> createChunks(final Target target, final Action uAction,
             final ArtifactUrlHandler artifactUrlHandler, final SystemManagement systemManagement,
             final HttpRequest request, final ControllerManagement controllerManagement) {
 
@@ -82,7 +82,7 @@ public final class DataConversionHelper {
         return key;
     }
 
-    public static List<DdiArtifact> createArtifacts(final Target target, final SoftwareModule module,
+    static List<DdiArtifact> createArtifacts(final Target target, final SoftwareModule module,
             final ArtifactUrlHandler artifactUrlHandler, final SystemManagement systemManagement,
             final HttpRequest request) {
 
