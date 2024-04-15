@@ -11,37 +11,22 @@ package org.eclipse.hawkbit.mgmt.json.model.softwaremoduletype;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
 /**
  * Request Body for SoftwareModuleType PUT.
- *
  */
+@Data
+@Accessors(chain = true)
+@ToString
 public class MgmtSoftwareModuleTypeRequestBodyPut {
 
     @JsonProperty
     @Schema(example = "Example description")
     private String description;
-
     @JsonProperty
     @Schema(example = "rgb(0,0,255")
     private String colour;
-
-    public String getDescription() {
-        return description;
-    }
-
-    public MgmtSoftwareModuleTypeRequestBodyPut setDescription(final String description) {
-        this.description = description;
-        return this;
-    }
-
-    public String getColour() {
-        return colour;
-    }
-
-    public MgmtSoftwareModuleTypeRequestBodyPut setColour(final String colour) {
-        this.colour = colour;
-        return this;
-    }
-
 }

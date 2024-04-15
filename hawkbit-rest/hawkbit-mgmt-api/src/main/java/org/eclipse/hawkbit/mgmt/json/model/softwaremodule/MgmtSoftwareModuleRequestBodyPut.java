@@ -11,11 +11,16 @@ package org.eclipse.hawkbit.mgmt.json.model.softwaremodule;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
 /**
  * Request Body for SoftwareModule PUT.
- *
  */
+@Data
+@Accessors(chain = true)
+@ToString
 public class MgmtSoftwareModuleRequestBodyPut {
 
     @JsonProperty
@@ -26,40 +31,12 @@ public class MgmtSoftwareModuleRequestBodyPut {
     @Schema(example = "SM Vendor Name")
     private String vendor;
 
-    /**
-     * @return the description
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description
-     *            the description to set
-     *
-     * @return updated body
-     */
-    public MgmtSoftwareModuleRequestBodyPut setDescription(final String description) {
-        this.description = description;
-        return this;
-    }
-
-    /**
-     * @return the vendor
-     */
-    public String getVendor() {
-        return vendor;
-    }
-
-    /**
-     * @param vendor
-     *            the vendor to set
-     *
-     * @return updated body
-     */
-    public MgmtSoftwareModuleRequestBodyPut setVendor(final String vendor) {
-        this.vendor = vendor;
-        return this;
-    }
-
+    @JsonProperty
+    @Schema(description = """
+            Should be set only if change of locked state is requested. If put, the software module locked flag will be
+            set to the requested. Note: unlock (i.e. set this property to false) with extreme care!
+            In general once software module is locked it shall not be unlocked. Note that it could have been assigned /
+            deployed to targets.""",
+            example = "true")
+    private Boolean locked;
 }

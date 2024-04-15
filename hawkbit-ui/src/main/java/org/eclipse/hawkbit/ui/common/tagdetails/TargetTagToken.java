@@ -75,7 +75,7 @@ public class TargetTagToken extends AbstractTagToken<ProxyTarget> {
     }
 
     @Override
-    public void unassignTag(final ProxyTag tagData) {
+    public void unаssignTag(final ProxyTag tagData) {
         getMasterEntity().ifPresent(masterEntity -> {
             final Long masterEntityId = masterEntity.getId();
 

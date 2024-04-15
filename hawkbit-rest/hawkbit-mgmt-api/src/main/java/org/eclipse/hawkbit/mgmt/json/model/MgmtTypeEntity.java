@@ -11,46 +11,30 @@ package org.eclipse.hawkbit.mgmt.json.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
 /**
  * A json annotated rest model for Type to RESTful API representation.
- *
  */
+@Data
+@Accessors(chain = true)
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public abstract class MgmtTypeEntity extends MgmtNamedEntity {
 
     @JsonProperty(required = true)
-    @Schema(example = "id.t23")
+    @Schema(name = "Key that can be interpreted by the target", example = "id.t23")
     private String key;
 
     @JsonProperty
-    @Schema(example = "brown")
+    @Schema(description = "Colour assigned to the entity that could be used for representation purposes",
+            example = "brown")
     private String colour;
 
     @JsonProperty
-    @Schema(example = "false")
+    @Schema(description = "Deleted flag, used for soft deleted entities", example = "false")
     private boolean deleted;
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
-    public String getColour() {
-        return colour;
-    }
-
-    public void setColour(String colour) {
-        this.colour = colour;
-    }
-
-    public boolean isDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(final boolean deleted) {
-        this.deleted = deleted;
-    }
 }

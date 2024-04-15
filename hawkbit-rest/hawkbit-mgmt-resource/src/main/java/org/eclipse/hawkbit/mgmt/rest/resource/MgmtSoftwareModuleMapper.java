@@ -17,6 +17,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.eclipse.hawkbit.api.ApiType;
 import org.eclipse.hawkbit.api.ArtifactUrl;
 import org.eclipse.hawkbit.api.ArtifactUrlHandler;
@@ -42,12 +44,9 @@ import org.springframework.hateoas.Link;
 /**
  * A mapper which maps repository model to RESTful model representation and
  * back.
- *
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class MgmtSoftwareModuleMapper {
-    private MgmtSoftwareModuleMapper() {
-        // Utility class
-    }
 
     private static SoftwareModuleCreate fromRequest(final EntityFactory entityFactory,
             final MgmtSoftwareModuleRequestBodyPost smsRest) {
@@ -115,6 +114,7 @@ public final class MgmtSoftwareModuleMapper {
         response.setType(softwareModule.getType().getKey());
         response.setTypeName(softwareModule.getType().getName());
         response.setVendor(softwareModule.getVendor());
+        response.setLocked(softwareModule.isLocked());
         response.setDeleted(softwareModule.isDeleted());
         response.setEncrypted(softwareModule.isEncrypted());
 
@@ -156,7 +156,6 @@ public final class MgmtSoftwareModuleMapper {
     }
 
     static void addLinks(final Artifact artifact, final MgmtArtifact response) {
-
         response.add(linkTo(methodOn(MgmtDownloadArtifactResource.class)
                 .downloadArtifact(artifact.getSoftwareModule().getId(), artifact.getId())).withRel("download")
                         .expand());
@@ -164,7 +163,6 @@ public final class MgmtSoftwareModuleMapper {
 
     static void addLinks(final Artifact artifact, final MgmtArtifact response,
             final ArtifactUrlHandler artifactUrlHandler, final SystemManagement systemManagement) {
-
         final List<ArtifactUrl> urls = artifactUrlHandler.getUrls(
                 new URLPlaceholder(systemManagement.getTenantMetadata().getTenant(),
                         systemManagement.getTenantMetadata().getId(), null, null,
@@ -172,5 +170,4 @@ public final class MgmtSoftwareModuleMapper {
                                 artifact.getId(), artifact.getSha1Hash())), ApiType.MGMT, null);
         urls.forEach(entry -> response.add(Link.of(entry.getRef()).withRel(entry.getRel()).expand()));
     }
-
 }

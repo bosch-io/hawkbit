@@ -155,7 +155,7 @@ public class TagPanelLayout extends VerticalLayout {
          * @param tagData
          *            the tag that should be unassigned.
          */
-        void unassignTag(ProxyTag tagData);
+        void unаssignTag(ProxyTag tagData);
     }
 
     /**

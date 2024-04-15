@@ -9,6 +9,7 @@
  */
 package org.eclipse.hawkbit.repository.jpa;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -162,6 +163,8 @@ import org.eclipse.hawkbit.security.HawkbitSecurityProperties;
 import org.eclipse.hawkbit.security.SecurityTokenGenerator;
 import org.eclipse.hawkbit.security.SystemSecurityContext;
 import org.eclipse.hawkbit.tenancy.TenantAware;
+import org.eclipse.hawkbit.tenancy.UserAuthoritiesResolver;
+import org.eclipse.hawkbit.utils.TenantConfigHelper;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
 import org.hibernate.validator.BaseHibernateValidatorConfiguration;
 import org.springframework.beans.BeansException;
@@ -192,13 +195,10 @@ import org.springframework.orm.jpa.vendor.EclipseLinkJpaDialect;
 import org.springframework.orm.jpa.vendor.EclipseLinkJpaVendorAdapter;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.jta.JtaTransactionManager;
 import org.springframework.validation.beanvalidation.MethodValidationPostProcessor;
-
-import com.google.common.collect.Maps;
 
 /**
  * General configuration for hawkBit's Repository.
@@ -482,15 +482,14 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
 
     @Override
     protected Map<String, Object> getVendorProperties() {
-
-        final Map<String, Object> properties = Maps.newHashMapWithExpectedSize(7);
+        final Map<String, Object> properties = new HashMap<>(7);
         // Turn off dynamic weaving to disable LTW lookup in static weaving mode
         properties.put(PersistenceUnitProperties.WEAVING, "false");
         // needed for reports
         properties.put(PersistenceUnitProperties.ALLOW_NATIVE_SQL_QUERIES, "true");
         // flyway
         properties.put(PersistenceUnitProperties.DDL_GENERATION, "none");
-        // Embeed into hawkBit logging
+        // Embed into hawkBit logging
         properties.put(PersistenceUnitProperties.LOGGING_LOGGER, "JavaLogger");
         // Ensure that we flush only at the end of the transaction
         properties.put(PersistenceUnitProperties.PERSISTENCE_CONTEXT_FLUSH_MODE, "COMMIT");
@@ -498,7 +497,6 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
         properties.put(PersistenceUnitProperties.BATCH_WRITING, "JDBC");
         // Batch size
         properties.put(PersistenceUnitProperties.BATCH_WRITING_SIZE, "500");
-
         return properties;
     }
 
@@ -533,25 +531,24 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    DistributionSetManagement distributionSetManagement(final EntityManager entityManager,
-                                                        final DistributionSetRepository distributionSetRepository,
-                                                        final DistributionSetTagManagement distributionSetTagManagement, final SystemManagement systemManagement,
-                                                        final DistributionSetTypeManagement distributionSetTypeManagement, final QuotaManagement quotaManagement,
-                                                        final DistributionSetMetadataRepository distributionSetMetadataRepository,
-                                                        final TargetRepository targetRepository,
-                                                        final TargetFilterQueryRepository targetFilterQueryRepository, final ActionRepository actionRepository,
-                                                        final EventPublisherHolder eventPublisherHolder, final TenantAware tenantAware,
-                                                        final VirtualPropertyReplacer virtualPropertyReplacer,
-                                                        final SoftwareModuleRepository softwareModuleRepository,
-                                                        final DistributionSetTagRepository distributionSetTagRepository,
-                                                        final AfterTransactionCommitExecutor afterCommit,
-                                                        final JpaProperties properties) {
+    DistributionSetManagement distributionSetManagement(
+            final EntityManager entityManager,
+            final DistributionSetRepository distributionSetRepository,
+            final DistributionSetTagManagement distributionSetTagManagement, final SystemManagement systemManagement,
+            final DistributionSetTypeManagement distributionSetTypeManagement, final QuotaManagement quotaManagement,
+            final DistributionSetMetadataRepository distributionSetMetadataRepository,
+            final TargetRepository targetRepository,
+            final TargetFilterQueryRepository targetFilterQueryRepository, final ActionRepository actionRepository,
+            final SystemSecurityContext systemSecurityContext, final TenantConfigurationManagement tenantConfigurationManagement,
+            final VirtualPropertyReplacer virtualPropertyReplacer, final SoftwareModuleRepository softwareModuleRepository,
+            final DistributionSetTagRepository distributionSetTagRepository,
+            final JpaProperties properties, final RepositoryProperties repositoryProperties) {
         return new JpaDistributionSetManagement(entityManager, distributionSetRepository, distributionSetTagManagement,
                 systemManagement, distributionSetTypeManagement, quotaManagement, distributionSetMetadataRepository,
-                targetRepository, targetFilterQueryRepository, actionRepository, eventPublisherHolder, tenantAware,
-                virtualPropertyReplacer, softwareModuleRepository, distributionSetTagRepository, afterCommit,
-                properties.getDatabase());
-
+                targetRepository, targetFilterQueryRepository, actionRepository,
+                TenantConfigHelper.usingContext(systemSecurityContext, tenantConfigurationManagement),
+                virtualPropertyReplacer, softwareModuleRepository, distributionSetTagRepository,
+                properties.getDatabase(), repositoryProperties);
     }
 
     /**
@@ -779,10 +776,10 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    RolloutApprovalStrategy rolloutApprovalStrategy(final UserDetailsService userDetailsService,
+    RolloutApprovalStrategy rolloutApprovalStrategy(final UserAuthoritiesResolver userAuthoritiesResolver,
             final TenantConfigurationManagement tenantConfigurationManagement,
             final SystemSecurityContext systemSecurityContext) {
-        return new DefaultRolloutApprovalStrategy(userDetailsService, tenantConfigurationManagement,
+        return new DefaultRolloutApprovalStrategy(userAuthoritiesResolver, tenantConfigurationManagement,
                 systemSecurityContext);
     }
 
@@ -810,7 +807,7 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
     @Bean
     @ConditionalOnMissingBean
     DeploymentManagement deploymentManagement(final EntityManager entityManager,
-                                              final ActionRepository actionRepository, final DistributionSetRepository distributionSetRepository,
+                                              final ActionRepository actionRepository,
                                               final DistributionSetManagement distributionSetManagement, final TargetRepository targetRepository,
                                               final ActionStatusRepository actionStatusRepository, final AuditorAware<String> auditorProvider,
                                               final EventPublisherHolder eventPublisherHolder, final AfterTransactionCommitExecutor afterCommit,
@@ -818,8 +815,7 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
                                               final TenantConfigurationManagement tenantConfigurationManagement, final QuotaManagement quotaManagement,
                                               final SystemSecurityContext systemSecurityContext, final TenantAware tenantAware,
                                               final JpaProperties properties, final RepositoryProperties repositoryProperties) {
-        return new JpaDeploymentManagement(entityManager, actionRepository, distributionSetManagement,
-                distributionSetRepository, targetRepository, actionStatusRepository, auditorProvider,
+        return new JpaDeploymentManagement(entityManager, actionRepository, distributionSetManagement, targetRepository, actionStatusRepository, auditorProvider,
                 eventPublisherHolder, afterCommit, virtualPropertyReplacer, txManager, tenantConfigurationManagement,
                 quotaManagement, systemSecurityContext, tenantAware, properties.getDatabase(), repositoryProperties);
     }

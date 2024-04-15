@@ -53,10 +53,10 @@ public class DistributionSetDistributionsStateDataProvider
     }
 
     private DistributionSetFilter buildDsFilter(final DsDistributionsFilterParams filter) {
-        final DistributionSetFilterBuilder builder = new DistributionSetFilterBuilder().setIsDeleted(false);
+        final DistributionSetFilterBuilder builder = DistributionSetFilter.builder().isDeleted(false);
 
         if (filter != null) {
-            builder.setSearchText(filter.getSearchText()).setSelectDSWithNoTag(false).setTypeId(filter.getDsTypeId());
+            builder.searchText(filter.getSearchText()).selectDSWithNoTag(false).typeId(filter.getDsTypeId());
         }
 
         return builder.build();

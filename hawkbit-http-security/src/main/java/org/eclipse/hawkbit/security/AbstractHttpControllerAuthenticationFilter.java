@@ -22,12 +22,12 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.hawkbit.repository.TenantConfigurationManagement;
 import org.eclipse.hawkbit.security.DmfTenantSecurityToken.FileResource;
 import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.util.UrlUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -41,9 +41,7 @@ import org.springframework.util.AntPathMatcher;
  * based on this information.
  */
 public abstract class AbstractHttpControllerAuthenticationFilter extends AbstractPreAuthenticatedProcessingFilter {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractHttpControllerAuthenticationFilter.class);
-
+    
     private static final String TENANT_PLACE_HOLDER = "tenant";
     private static final String CONTROLLER_ID_PLACE_HOLDER = "controllerId";
 
@@ -66,14 +64,11 @@ public abstract class AbstractHttpControllerAuthenticationFilter extends Abstrac
     private PreAuthenticationFilter abstractControllerAuthenticationFilter;
 
     /**
-     * Constructor for sub-classes.
+     * Constructor for subclasses.
      * 
-     * @param tenantConfigurationManagement
-     *            the tenant configuration service
-     * @param tenantAware
-     *            the tenant aware service
-     * @param systemSecurityContext
-     *            the system secruity context
+     * @param tenantConfigurationManagement the tenant configuration service
+     * @param tenantAware the tenant aware service
+     * @param systemSecurityContext the system security context
      */
     protected AbstractHttpControllerAuthenticationFilter(
             final TenantConfigurationManagement tenantConfigurationManagement, final TenantAware tenantAware,
@@ -87,6 +82,11 @@ public abstract class AbstractHttpControllerAuthenticationFilter extends Abstrac
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            log().trace("Request is already authenticated. Skip filter");
+            chain.doFilter(request, response);
+            return;
+        }
 
         if (!(request instanceof HttpServletRequest)) {
             chain.doFilter(request, response);
@@ -98,11 +98,12 @@ public abstract class AbstractHttpControllerAuthenticationFilter extends Abstrac
             chain.doFilter(request, response);
             return;
         }
+
         abstractControllerAuthenticationFilter = createControllerAuthenticationFilter();
-        if (abstractControllerAuthenticationFilter.isEnable(securityToken)
-                && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (abstractControllerAuthenticationFilter.isEnable(securityToken)) {
             super.doFilter(request, response, chain);
         } else {
+            log().debug("Filter is disabled for the tenant {}", securityToken.getTenant());
             chain.doFilter(request, response);
         }
     }
@@ -121,11 +122,12 @@ public abstract class AbstractHttpControllerAuthenticationFilter extends Abstrac
         super.successfulAuthentication(request, response, authTokenWithGrantedAuthorities);
     }
 
+    protected abstract Logger log();
+
     /**
      * Extracts tenant and controllerId from the request URI as path variables.
      * 
-     * @param request
-     *            the Http request to extract the path variables.
+     * @param request the Http request to extract the path variables.
      * @return the extracted {@link DmfTenantSecurityToken} or {@code null} if the
      *         request does not match the pattern and no variables could be
      *         extracted
@@ -134,30 +136,23 @@ public abstract class AbstractHttpControllerAuthenticationFilter extends Abstrac
         final String requestURI = request.getRequestURI();
 
         if (pathExtractor.match(request.getContextPath() + CONTROLLER_REQUEST_ANT_PATTERN, requestURI)) {
-            LOG.debug("retrieving principal from URI request {}", requestURI);
+            log().debug("retrieving principal from URI request {}", requestURI);
             final Map<String, String> extractUriTemplateVariables = pathExtractor
                     .extractUriTemplateVariables(request.getContextPath() + CONTROLLER_REQUEST_ANT_PATTERN, requestURI);
             final String controllerId = UrlUtils.decodeUriValue(extractUriTemplateVariables.get(CONTROLLER_ID_PLACE_HOLDER));
             final String tenant = UrlUtils.decodeUriValue(extractUriTemplateVariables.get(TENANT_PLACE_HOLDER));
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Parsed tenant {} and controllerId {} from path request {}", tenant, controllerId,
-                        requestURI);
-            }
+            log().trace("Parsed tenant {} and controllerId {} from path request {}", tenant, controllerId, requestURI);
             return createTenantSecurityTokenVariables(request, tenant, controllerId);
         } else if (pathExtractor.match(request.getContextPath() + CONTROLLER_DL_REQUEST_ANT_PATTERN, requestURI)) {
-            LOG.debug("retrieving path variables from URI request {}", requestURI);
+            log().debug("retrieving path variables from URI request {}", requestURI);
             final Map<String, String> extractUriTemplateVariables = pathExtractor.extractUriTemplateVariables(
                     request.getContextPath() + CONTROLLER_DL_REQUEST_ANT_PATTERN, requestURI);
             final String tenant = UrlUtils.decodeUriValue(extractUriTemplateVariables.get(TENANT_PLACE_HOLDER));
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Parsed tenant {} from path request {}", tenant, requestURI);
-            }
+            log().trace("Parsed tenant {} from path request {}", tenant, requestURI);
             return createTenantSecurityTokenVariables(request, tenant, "anonymous");
         } else {
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("request {} does not match the path pattern {}, request gets ignored", requestURI,
+            log().trace("request {} does not match the path pattern {}, request gets ignored", requestURI,
                         CONTROLLER_REQUEST_ANT_PATTERN);
-            }
             return null;
         }
     }

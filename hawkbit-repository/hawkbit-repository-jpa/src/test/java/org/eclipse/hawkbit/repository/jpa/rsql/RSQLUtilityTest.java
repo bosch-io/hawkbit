@@ -273,6 +273,7 @@ public class RSQLUtilityTest {
                 .thenReturn(pathOfString(baseSoftwareModuleRootMock));
         when(criteriaBuilderMock.like(any(Expression.class), anyString(), eq('\\'))).thenReturn(mock(Predicate.class));
         when(criteriaBuilderMock.equal(any(Expression.class), any(String.class))).thenReturn(mock(Predicate.class));
+        when(criteriaBuilderMock.and(any(Predicate[].class))).thenReturn(mock(Predicate.class));
 
         // test
         RSQLUtility.buildRsqlSpecification(correctRsql, SoftwareModuleFields.class, null, testDb)

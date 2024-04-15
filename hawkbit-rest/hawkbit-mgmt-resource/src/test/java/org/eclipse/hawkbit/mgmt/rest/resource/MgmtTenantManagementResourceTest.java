@@ -18,9 +18,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.hawkbit.im.authentication.SpPermission;
 import org.eclipse.hawkbit.mgmt.json.model.system.MgmtSystemTenantConfigurationValueRequest;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
+import org.eclipse.hawkbit.repository.test.util.SecurityContextSwitch;
 import org.eclipse.hawkbit.rest.util.MockMvcResultPrinter;
 import org.eclipse.hawkbit.tenancy.configuration.TenantConfigurationProperties;
 import org.json.JSONObject;
@@ -53,7 +55,7 @@ public class MgmtTenantManagementResourceTest extends AbstractManagementApiInteg
     @Test
     @Description("Handles GET request for receiving all tenant specific configurations.")
     public void getTenantConfigurations() throws Exception {
-        mvc.perform(get(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/"))
+        mvc.perform(get(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs"))
                 .andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isOk())
                 //check for TenantMetadata additional properties
@@ -63,10 +65,41 @@ public class MgmtTenantManagementResourceTest extends AbstractManagementApiInteg
     }
 
     @Test
+    @Description("Handles GET request for receiving all tenant specific configurations depending on read gateway token permissions.")
+    void getTenantConfigurationReadGWToken() throws Exception {
+        SecurityContextSwitch.runAs(SecurityContextSwitch.withUser("tenant_admin", SpPermission.TENANT_CONFIGURATION), () -> {
+                    tenantConfigurationManagement.addOrUpdateConfiguration(TenantConfigurationProperties.TenantConfigurationKey.AUTHENTICATION_MODE_GATEWAY_SECURITY_TOKEN_KEY,
+                            "123");
+                    return null;
+        });
+
+        // TODO - should be able to read with TENANT_CONFIGURATION but somehow here the role hierarchy doesn't play
+        // checked in mgmt / update server runtime PreAuthorizeEnabledTest
+        SecurityContextSwitch.runAs(SecurityContextSwitch.withUser("tenant_admin", SpPermission.READ_TENANT_CONFIGURATION, SpPermission.READ_GATEWAY_SEC_TOKEN), () -> {
+            mvc.perform(get(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs"))
+                    .andDo(MockMvcResultPrinter.print())
+                    .andDo(m -> System.out.println("-> 1: " + m.getResponse().getContentAsString()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.['" + AUTHENTICATION_GATEWAYTOKEN_KEY + "']").exists())
+                    .andExpect(jsonPath("$.['" + AUTHENTICATION_GATEWAYTOKEN_KEY + "'].value", equalTo("123")));
+            return null;
+        });
+
+        SecurityContextSwitch.runAs(SecurityContextSwitch.withUser("tenant_read", SpPermission.READ_TENANT_CONFIGURATION), () -> {
+            mvc.perform(get(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs"))
+                    .andDo(MockMvcResultPrinter.print())
+                    .andDo(m -> System.out.println("-> 2: " + m.getResponse().getContentAsString()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.['" + AUTHENTICATION_GATEWAYTOKEN_KEY + "']").doesNotExist());
+            return null;
+        });
+    }
+
+    @Test
     @Description("Handles GET request for receiving a tenant specific configuration.")
     public void getTenantConfiguration() throws Exception {
         //Test TenantConfiguration property
-        mvc.perform(get(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}/",
+        mvc.perform(get(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}",
                         TenantConfigurationProperties.TenantConfigurationKey.AUTHENTICATION_MODE_GATEWAY_SECURITY_TOKEN_KEY))
                 .andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isOk());
@@ -76,7 +109,7 @@ public class MgmtTenantManagementResourceTest extends AbstractManagementApiInteg
     @Description("Handles GET request for receiving (TenantMetadata - DefaultDsType) a tenant specific configuration.")
     public void getTenantMetadata() throws Exception {
         //Test TenantMetadata property
-        mvc.perform(get(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}/",
+        mvc.perform(get(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}",
                 DEFAULT_DISTRIBUTION_SET_TYPE_KEY))
             .andDo(MockMvcResultPrinter.print())
             .andExpect(status().isOk())
@@ -91,7 +124,7 @@ public class MgmtTenantManagementResourceTest extends AbstractManagementApiInteg
         final ObjectMapper mapper = new ObjectMapper();
         final String json = mapper.writeValueAsString(bodyPut);
 
-        mvc.perform(put(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}/",
+        mvc.perform(put(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}",
                         TenantConfigurationProperties.TenantConfigurationKey.AUTHENTICATION_MODE_GATEWAY_SECURITY_TOKEN_KEY).content(json)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print())
@@ -109,7 +142,7 @@ public class MgmtTenantManagementResourceTest extends AbstractManagementApiInteg
         final ObjectMapper mapper = new ObjectMapper();
         final String json = mapper.writeValueAsString(bodyPut);
 
-        mvc.perform(put(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}/",
+        mvc.perform(put(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}",
                 DEFAULT_DISTRIBUTION_SET_TYPE_KEY).content(json)
                 .contentType(MediaType.APPLICATION_JSON))
             .andDo(MockMvcResultPrinter.print())
@@ -143,7 +176,7 @@ public class MgmtTenantManagementResourceTest extends AbstractManagementApiInteg
     }
 
     private void assertDefaultDsTypeUpdateBadRequestFails(String newDefaultDsType, long oldDefaultDsType, ResultMatcher resultMatchers) throws Exception {
-        mvc.perform(put(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}/",
+        mvc.perform(put(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}",
                 DEFAULT_DISTRIBUTION_SET_TYPE_KEY).content(newDefaultDsType)
                 .contentType(MediaType.APPLICATION_JSON))
             .andDo(MockMvcResultPrinter.print())
@@ -281,7 +314,7 @@ public class MgmtTenantManagementResourceTest extends AbstractManagementApiInteg
     @Test
     @Description("Handles DELETE request deleting a tenant specific configuration.")
     public void deleteTenantConfiguration() throws Exception {
-        mvc.perform(delete(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}/",
+        mvc.perform(delete(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}",
                         TenantConfigurationProperties.TenantConfigurationKey.AUTHENTICATION_MODE_GATEWAY_SECURITY_TOKEN_KEY))
                 .andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isOk());
@@ -290,7 +323,7 @@ public class MgmtTenantManagementResourceTest extends AbstractManagementApiInteg
     @Test
     @Description("Tests DELETE request must Fail for TenantMetadata properties.")
     public void deleteTenantMetadataFail() throws Exception {
-        mvc.perform(delete(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}/",
+        mvc.perform(delete(MgmtRestConstants.SYSTEM_V1_REQUEST_MAPPING + "/configs/{keyName}",
                 DEFAULT_DISTRIBUTION_SET_TYPE_KEY))
             .andDo(MockMvcResultPrinter.print())
             .andExpect(status().isBadRequest());

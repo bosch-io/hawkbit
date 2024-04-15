@@ -15,7 +15,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eclipse.hawkbit.ContextAware;
-import org.eclipse.hawkbit.autoconfigure.security.MultiUserProperties.User;
+import org.eclipse.hawkbit.im.authentication.SpRole;
+import org.eclipse.hawkbit.im.authentication.TenantAwareUserProperties;
+import org.eclipse.hawkbit.im.authentication.TenantAwareUserProperties.User;
 import org.eclipse.hawkbit.im.authentication.PermissionService;
 import org.eclipse.hawkbit.security.DdiSecurityProperties;
 import org.eclipse.hawkbit.security.InMemoryUserAuthoritiesResolver;
@@ -35,6 +37,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
@@ -47,18 +53,17 @@ import org.springframework.util.CollectionUtils;
  * {@link EnableAutoConfiguration Auto-configuration} for security.
  */
 @Configuration
-@EnableConfigurationProperties({ SecurityProperties.class, DdiSecurityProperties.class, HawkbitSecurityProperties.class,
-        MultiUserProperties.class })
+@EnableConfigurationProperties({
+        SecurityProperties.class,
+        DdiSecurityProperties.class, HawkbitSecurityProperties.class, TenantAwareUserProperties.class })
 public class SecurityAutoConfiguration {
 
     /**
      * Creates a {@link ContextAware} (hence {@link TenantAware}) bean based on the given
      * {@link UserAuthoritiesResolver} and {@link SecurityContextSerializer}.
      *
-     * @param authoritiesResolver
-     *            The user authorities/roles resolver
-     * @param securityContextSerializer
-     *            The security context serializer.
+     * @param authoritiesResolver The user authorities/roles resolver
+     * @param securityContextSerializer The security context serializer.
      *
      * @return the {@link ContextAware} singleton bean.
      */
@@ -74,21 +79,19 @@ public class SecurityAutoConfiguration {
      * Creates a {@link UserAuthoritiesResolver} bean that is responsible for
      * resolving user authorities/roles.
      *
-     * @param securityProperties
-     *            The Spring {@link SecurityProperties} for the security user
-     * @param multiUserProperties
-     *            The {@link MultiUserProperties} for the managed users
-     *
+     * @param securityProperties The Spring {@link SecurityProperties} for the security user
+     * @param tenantAwareUserProperties The {@link TenantAwareUserProperties} for the managed users
      * @return an {@link InMemoryUserAuthoritiesResolver} bean
      */
     @Bean
     @ConditionalOnMissingBean
     public UserAuthoritiesResolver inMemoryAuthoritiesResolver(final SecurityProperties securityProperties,
-            final MultiUserProperties multiUserProperties) {
-        final List<User> multiUsers = multiUserProperties.getUsers();
+            final TenantAwareUserProperties tenantAwareUserProperties) {
+        final Map<String, User> tenantAwareUsers = tenantAwareUserProperties.getUser();
         final Map<String, List<String>> usersToPermissions;
-        if (!CollectionUtils.isEmpty(multiUsers)) {
-            usersToPermissions = multiUsers.stream().collect(Collectors.toMap(User::getUsername, User::getPermissions));
+        if (!CollectionUtils.isEmpty(tenantAwareUsers)) {
+            usersToPermissions = tenantAwareUsers.entrySet().stream().collect(
+                    Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getRoles()));
         } else {
             usersToPermissions = Collections.singletonMap(securityProperties.getUser().getName(),
                     securityProperties.getUser().getRoles());
@@ -102,13 +105,13 @@ public class SecurityAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public PermissionService permissionService() {
-        return new PermissionService();
+    public PermissionService permissionService(final RoleHierarchy roleHierarchy) {
+        return new PermissionService(roleHierarchy);
     }
 
     /**
      * Creates the auditor aware.
-     * 
+     *
      * @return the spring security auditor aware
      */
     @Bean
@@ -124,8 +127,9 @@ public class SecurityAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public SystemSecurityContext systemSecurityContext(final TenantAware tenantAware) {
-        return new SystemSecurityContext(tenantAware);
+    public SystemSecurityContext systemSecurityContext(
+            final TenantAware tenantAware, final RoleHierarchy roleHierarchy) {
+        return new SystemSecurityContext(tenantAware, roleHierarchy);
     }
 
     /**
@@ -166,4 +170,20 @@ public class SecurityAutoConfiguration {
         return simpleUrlLogoutSuccessHandler;
     }
 
+    @Bean
+    @ConditionalOnMissingBean
+    static RoleHierarchy roleHierarchy() {
+        final RoleHierarchyImpl hierarchy = new RoleHierarchyImpl();
+        hierarchy.setHierarchy(SpRole.DEFAULT_ROLE_HIERARCHY);
+        return hierarchy;
+    }
+
+    // and, if using method security also add
+    @Bean
+    @ConditionalOnMissingBean
+    static MethodSecurityExpressionHandler methodSecurityExpressionHandler(final RoleHierarchy roleHierarchy) {
+        final DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
+        expressionHandler.setRoleHierarchy(roleHierarchy);
+        return expressionHandler;
+    }
 }

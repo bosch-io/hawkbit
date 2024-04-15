@@ -18,13 +18,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
 import javax.validation.ValidationException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eclipse.hawkbit.exception.AbstractServerRtException;
 import org.eclipse.hawkbit.exception.SpServerError;
 import org.eclipse.hawkbit.rest.json.model.ExceptionInfo;
 import org.eclipse.hawkbit.rest.util.FileStreamingFailedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -38,10 +37,10 @@ import com.google.common.collect.Iterables;
 /**
  * General controller advice for exception handling.
  */
+@Slf4j
 @ControllerAdvice
 public class ResponseExceptionHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ResponseExceptionHandler.class);
     private static final Map<SpServerError, HttpStatus> ERROR_TO_HTTP_STATUS = new EnumMap<>(SpServerError.class);
     private static final HttpStatus DEFAULT_RESPONSE_STATUS = HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -95,6 +94,8 @@ public class ResponseExceptionHandler {
         ERROR_TO_HTTP_STATUS.put(SpServerError.SP_TARGET_TYPE_KEY_OR_NAME_REQUIRED, HttpStatus.BAD_REQUEST);
         ERROR_TO_HTTP_STATUS.put(SpServerError.SP_DS_INVALID, HttpStatus.BAD_REQUEST);
         ERROR_TO_HTTP_STATUS.put(SpServerError.SP_DS_INCOMPLETE, HttpStatus.BAD_REQUEST);
+        ERROR_TO_HTTP_STATUS.put(SpServerError.SP_LOCKED, HttpStatus.LOCKED);
+        ERROR_TO_HTTP_STATUS.put(SpServerError.SP_DELETED, HttpStatus.NOT_FOUND);
         ERROR_TO_HTTP_STATUS.put(SpServerError.SP_STOP_ROLLOUT_FAILED, HttpStatus.LOCKED);
     }
 
@@ -146,7 +147,7 @@ public class ResponseExceptionHandler {
     public ResponseEntity<Object> handleFileStreamingFailedException(final HttpServletRequest request,
             final Exception ex) {
         logRequest(request, ex);
-        LOG.warn("File streaming failed: {}", ex.getMessage());
+        log.warn("File streaming failed: {}", ex.getMessage());
         return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -246,7 +247,7 @@ public class ResponseExceptionHandler {
         final Throwable responseCause = Iterables.getLast(throwables);
 
         if (responseCause.getMessage().isEmpty()) {
-            LOG.warn("Request {} lead to MultipartException without root cause message:\n{}", request.getRequestURL(),
+            log.warn("Request {} lead to MultipartException without root cause message:\n{}", request.getRequestURL(),
                     ex.getStackTrace());
         }
 
@@ -255,7 +256,7 @@ public class ResponseExceptionHandler {
     }
 
     private void logRequest(final HttpServletRequest request, final Exception ex) {
-        LOG.debug("Handling exception {} of request {}", ex.getClass().getName(), request.getRequestURL());
+        log.debug("Handling exception {} of request {}", ex.getClass().getName(), request.getRequestURL());
     }
 
     private ExceptionInfo createExceptionInfo(final Exception ex) {

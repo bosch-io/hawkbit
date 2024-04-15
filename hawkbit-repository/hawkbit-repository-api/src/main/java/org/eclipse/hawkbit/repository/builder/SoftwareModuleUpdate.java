@@ -9,6 +9,7 @@
  */
 package org.eclipse.hawkbit.repository.builder;
 
+import javax.validation.constraints.Null;
 import javax.validation.constraints.Size;
 
 import org.eclipse.hawkbit.repository.model.NamedEntity;
@@ -34,4 +35,10 @@ public interface SoftwareModuleUpdate {
      * @return updated builder instance
      */
     SoftwareModuleUpdate vendor(@Size(max = SoftwareModule.VENDOR_MAX_SIZE) String vendor);
+
+    /**
+     * @param locked update request if any. If not empty shall be <code>true</code>
+     * @return updated builder instance
+     */
+    SoftwareModuleUpdate locked(@Null Boolean locked);
 }

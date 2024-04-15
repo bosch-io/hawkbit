@@ -46,7 +46,7 @@ public class TargetBulkTokenTags extends AbstractTagToken<ProxyTarget> {
     }
 
     @Override
-    public void unassignTag(final ProxyTag tagData) {
+    public void unаssignTag(final ProxyTag tagData) {
         tagPanelLayout.removeAssignedTag(tagData);
     }
 

@@ -10,9 +10,11 @@
 package org.eclipse.hawkbit.repository.test;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.eclipse.hawkbit.ContextAware;
 import org.eclipse.hawkbit.ControllerPollProperties;
@@ -26,6 +28,7 @@ import org.eclipse.hawkbit.cache.DefaultDownloadIdCache;
 import org.eclipse.hawkbit.cache.DownloadIdCache;
 import org.eclipse.hawkbit.cache.TenantAwareCacheManager;
 import org.eclipse.hawkbit.event.BusProtoStuffMessageConverter;
+import org.eclipse.hawkbit.im.authentication.SpRole;
 import org.eclipse.hawkbit.repository.RolloutApprovalStrategy;
 import org.eclipse.hawkbit.repository.RolloutStatusCache;
 import org.eclipse.hawkbit.repository.event.ApplicationEventFilter;
@@ -65,11 +68,12 @@ import org.springframework.integration.support.locks.DefaultLockRegistry;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 import org.springframework.security.concurrent.DelegatingSecurityContextScheduledExecutorService;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Spring context configuration required for Dev.Environment.
@@ -104,7 +108,9 @@ public class TestConfiguration implements AsyncConfigurer {
 
     @Bean
     SystemSecurityContext systemSecurityContext(final TenantAware tenantAware) {
-        return new SystemSecurityContext(tenantAware);
+        final RoleHierarchyImpl hierarchy = new RoleHierarchyImpl();
+        hierarchy.setHierarchy(SpRole.DEFAULT_ROLE_HIERARCHY);
+        return new SystemSecurityContext(tenantAware, hierarchy);
     }
 
     @Bean
@@ -209,8 +215,15 @@ public class TestConfiguration implements AsyncConfigurer {
 
     @Bean
     public ScheduledExecutorService scheduledExecutorService() {
-        return new DelegatingSecurityContextScheduledExecutorService(Executors.newScheduledThreadPool(1,
-                new ThreadFactoryBuilder().setNameFormat("central-scheduled-executor-pool-%d").build()));
+        final AtomicLong count = new AtomicLong(0);
+        return new DelegatingSecurityContextScheduledExecutorService(
+                Executors.newScheduledThreadPool(1, (runnable) -> {
+                    final Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+                    thread.setName(
+                            String.format(
+                                    Locale.ROOT, "central-scheduled-executor-pool-%d", count.getAndIncrement()));
+                    return thread;
+                }));
     }
 
     /**

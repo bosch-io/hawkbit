@@ -9,14 +9,27 @@
  */
 package org.eclipse.hawkbit.repository.builder;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+
+import java.util.Optional;
+
 /**
  * Update implementation.
  */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@Accessors(fluent = true)
 public class GenericDistributionSetUpdate extends AbstractDistributionSetUpdateCreate<DistributionSetUpdate>
         implements DistributionSetUpdate {
+
+//    @Nullable
+    protected Boolean locked;
 
     public GenericDistributionSetUpdate(final Long id) {
         super.id = id;
     }
-
 }

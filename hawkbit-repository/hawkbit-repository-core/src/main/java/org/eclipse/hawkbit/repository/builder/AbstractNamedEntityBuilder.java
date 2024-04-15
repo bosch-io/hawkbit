@@ -11,6 +11,7 @@ package org.eclipse.hawkbit.repository.builder;
 
 import java.util.Optional;
 
+import javax.validation.constraints.Null;
 import org.eclipse.hawkbit.repository.ValidString;
 import org.springframework.util.StringUtils;
 
@@ -39,5 +40,4 @@ public abstract class AbstractNamedEntityBuilder<T> extends AbstractBaseEntityBu
     public Optional<String> getDescription() {
         return Optional.ofNullable(description);
     }
-
 }

@@ -75,11 +75,11 @@ public class DistributionTagToken extends AbstractTagToken<ProxyDistributionSet>
     }
 
     @Override
-    public void unassignTag(final ProxyTag tagData) {
+    public void unаssignTag(final ProxyTag tagData) {
         getMasterEntity().ifPresent(masterEntity -> {
             final Long masterEntityId = masterEntity.getId();
 
-            final DistributionSet unAssignedDistributionSet = distributionSetManagement.unAssignTag(masterEntityId,
+            final DistributionSet unAssignedDistributionSet = distributionSetManagement.unassignTag(masterEntityId,
                     tagData.getId());
             if (checkUnassignmentResult(unAssignedDistributionSet, masterEntityId)) {
                 uiNotification.displaySuccess(getAssignmentMsgFor("message.unassigned.one",

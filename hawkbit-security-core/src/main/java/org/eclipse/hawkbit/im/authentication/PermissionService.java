@@ -10,18 +10,27 @@
 package org.eclipse.hawkbit.im.authentication;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.ObjectUtils;
 
 /**
  * Service to check permissions.
  *
  */
 public class PermissionService {
+
+    private final RoleHierarchy roleHierarchy;
+
+    public PermissionService(final RoleHierarchy roleHierarchy) {
+        this.roleHierarchy = roleHierarchy;
+    }
 
     /**
      * Checks if the given {@code permission} contains in the. In case no
@@ -35,37 +44,24 @@ public class PermissionService {
      */
     public boolean hasPermission(final String permission) {
         final SecurityContext context = SecurityContextHolder.getContext();
-        if (context == null) {
-            return false;
-        }
-        final Authentication authentication = context.getAuthentication();
-        if (authentication == null) {
-            return false;
-        }
-
-        for (final GrantedAuthority authority : authentication.getAuthorities()) {
-            if (authority.getAuthority().equals(permission)) {
-                return true;
+        if (context != null) {
+            final Authentication authentication = context.getAuthentication();
+            if (authentication != null) {
+                Collection<? extends GrantedAuthority> grantedAuthorities = authentication.getAuthorities();
+                if (!ObjectUtils.isEmpty(grantedAuthorities)) {
+                    if (roleHierarchy != null) {
+                        grantedAuthorities = roleHierarchy.getReachableGrantedAuthorities(grantedAuthorities);
+                    }
+                    for (final GrantedAuthority authority : grantedAuthorities) {
+                        if (authority.getAuthority().equals(permission)) {
+                            return true;
+                        }
+                    }
+                }
             }
         }
 
         return false;
-    }
-
-    public List<String> getAllPermission() {
-        final List<String> permissions = new ArrayList<>();
-        final SecurityContext context = SecurityContextHolder.getContext();
-        if (context == null) {
-            return permissions;
-        }
-        final Authentication authentication = context.getAuthentication();
-        if (authentication == null) {
-            return permissions;
-        }
-
-        authentication.getAuthorities().stream().forEach(authority -> permissions.add(authority.getAuthority()));
-
-        return permissions;
     }
 
     /**
@@ -81,23 +77,24 @@ public class PermissionService {
      */
     public boolean hasAtLeastOnePermission(final List<String> permissions) {
         final SecurityContext context = SecurityContextHolder.getContext();
-        if (context == null) {
-            return false;
-        }
-
-        final Authentication authentication = context.getAuthentication();
-        if (authentication == null) {
-            return false;
-        }
-
-        for (final GrantedAuthority authority : authentication.getAuthorities()) {
-            for (final String permission : permissions) {
-                if (authority.getAuthority().equals(permission)) {
-                    return true;
+        if (context != null) {
+            final Authentication authentication = context.getAuthentication();
+            if (authentication != null) {
+                Collection<? extends GrantedAuthority> grantedAuthorities = authentication.getAuthorities();
+                if (!ObjectUtils.isEmpty(grantedAuthorities)) {
+                    if (roleHierarchy != null) {
+                        grantedAuthorities = roleHierarchy.getReachableGrantedAuthorities(grantedAuthorities);
+                    }
+                    for (final GrantedAuthority authority : grantedAuthorities) {
+                        for (final String permission : permissions) {
+                            if (authority.getAuthority().equals(permission)) {
+                                return true;
+                            }
+                        }
+                    }
                 }
             }
         }
-
         return false;
     }
 

@@ -18,7 +18,7 @@ import java.util.concurrent.Callable;
 
 import org.eclipse.hawkbit.im.authentication.SpPermission;
 import org.eclipse.hawkbit.im.authentication.TenantAwareAuthenticationDetails;
-import org.eclipse.hawkbit.im.authentication.UserPrincipal;
+import org.eclipse.hawkbit.im.authentication.TenantAwareUser;
 import org.eclipse.hawkbit.repository.model.helper.SystemManagementHolder;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -57,26 +57,22 @@ public class SecurityContextSwitch {
         final SecurityContext oldContext = SecurityContextHolder.getContext();
         setSecurityContext(PRIVILEDGED_USER);
         try {
-            SystemManagementHolder.getInstance().getSystemManagement().getTenantMetadata(tenantId);
+            SystemManagementHolder.getInstance().getSystemManagement().createTenantMetadata(tenantId);
         } finally {
             SecurityContextHolder.setContext(oldContext);
         }
     }
 
     public static WithUser withController(final String principal, final String... authorities) {
-        return withUserAndTenant(principal, DEFAULT_TENANT, true, true, true, authorities);
+        return withUserAndTenant(principal, DEFAULT_TENANT, true, false, true, authorities);
     }
 
     public static WithUser withUser(final String principal, final String... authorities) {
-        return withUserAndTenant(principal, DEFAULT_TENANT, true, true, false, authorities);
+        return withUserAndTenant(principal, DEFAULT_TENANT, true, false, false, authorities);
     }
 
-    public static WithUser withUser(final String principal, final boolean allSpPermision, final String... authorities) {
-        return withUserAndTenant(principal, DEFAULT_TENANT, true, allSpPermision, false, authorities);
-    }
-
-    public static WithUser withUserAndTenant(final String principal, final String tenant, final String... authorities) {
-        return withUserAndTenant(principal, tenant, true, true, false, authorities);
+    public static WithUser withUserAndTenantAllSpPermissions(final String principal, final String tenant) {
+        return withUserAndTenant(principal, tenant, true, true, false);
     }
 
     public static WithUser withUserAndTenant(final String principal, final String tenant,
@@ -163,8 +159,7 @@ public class SecurityContextSwitch {
                 authorities = annotation.authorities();
             }
             final TestingAuthenticationToken testingAuthenticationToken = new TestingAuthenticationToken(
-                    new UserPrincipal(annotation.principal(), annotation.principal(), annotation.principal(),
-                            annotation.principal(), null, annotation.tenantId()),
+                    new TenantAwareUser(annotation.principal(), annotation.tenantId()),
                     annotation.credentials(), authorities);
             testingAuthenticationToken.setDetails(
                     new TenantAwareAuthenticationDetails(annotation.tenantId(), annotation.controller()));

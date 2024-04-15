@@ -14,8 +14,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.eclipse.hawkbit.im.authentication.SpRole;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants;
 
+import org.eclipse.hawkbit.repository.test.util.WithUser;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -44,9 +46,9 @@ public class CorsTest extends AbstractSecurityTest {
     private final static String INVALID_ORIGIN = "http://test.invalid.origin";
     private final static String INVALID_CORS_REQUEST = "Invalid CORS request";
 
-    @WithUserDetails("admin")
     @Test
     @Description("Ensures that Cors is working.")
+    @WithUser(authorities = SpRole.TENANT_ADMIN)
     public void validateCorsRequest() throws Exception {
         performOptionsRequestToRestWithOrigin(ALLOWED_ORIGIN_FIRST).andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, ALLOWED_ORIGIN_FIRST));

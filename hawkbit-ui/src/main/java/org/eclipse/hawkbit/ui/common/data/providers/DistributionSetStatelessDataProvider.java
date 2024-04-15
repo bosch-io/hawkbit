@@ -12,7 +12,6 @@ package org.eclipse.hawkbit.ui.common.data.providers;
 import org.eclipse.hawkbit.repository.DistributionSetManagement;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.DistributionSetFilter;
-import org.eclipse.hawkbit.repository.model.DistributionSetFilter.DistributionSetFilterBuilder;
 import org.eclipse.hawkbit.ui.common.data.mappers.DistributionSetToProxyDistributionMapper;
 import org.eclipse.hawkbit.ui.common.data.proxies.ProxyDistributionSet;
 import org.springframework.data.domain.PageRequest;
@@ -54,10 +53,10 @@ public class DistributionSetStatelessDataProvider
     }
 
     private DistributionSetFilter buildDsFilter(final String filter) {
-        final DistributionSetFilterBuilder dsFilterBuilder = new DistributionSetFilterBuilder().setIsDeleted(false)
-                .setIsComplete(true).setIsValid(true);
+        final DistributionSetFilter.DistributionSetFilterBuilder dsFilterBuilder = DistributionSetFilter.builder().isDeleted(false)
+                .isComplete(true).isValid(true);
         if (!StringUtils.isEmpty(filter)) {
-            dsFilterBuilder.setSearchText(filter);
+            dsFilterBuilder.searchText(filter);
         }
 
         return dsFilterBuilder.build();

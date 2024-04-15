@@ -71,10 +71,6 @@
       <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-context-support</artifactId>
-      </dependency>      
-      <dependency>
-         <groupId>com.google.guava</groupId>
-         <artifactId>guava</artifactId>
       </dependency>
       <dependency>
          <groupId>io.protostuff</groupId>
@@ -85,10 +81,6 @@
          <groupId>io.protostuff</groupId>
          <artifactId>protostuff-runtime</artifactId>
          <optional>true</optional>
-      </dependency>
-      <dependency>
-         <groupId>org.vaadin.spring.extensions</groupId>
-         <artifactId>vaadin-spring-ext-security</artifactId>
       </dependency>
       <dependency>
         <groupId>javax.servlet</groupId>

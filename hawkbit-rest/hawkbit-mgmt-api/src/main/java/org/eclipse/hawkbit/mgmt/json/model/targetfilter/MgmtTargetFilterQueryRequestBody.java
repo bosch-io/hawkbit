@@ -11,33 +11,22 @@ package org.eclipse.hawkbit.mgmt.json.model.targetfilter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
 /**
  * Request body for target PUT/POST commands.
- *
  */
+@Data
+@Accessors(chain = true)
+@ToString
 public class MgmtTargetFilterQueryRequestBody {
+
     @JsonProperty(required = true)
     @Schema(example = "filterName")
     private String name;
-
     @JsonProperty(required = true)
     @Schema(example = "controllerId==example-target-*")
     private String query;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    public String getQuery() {
-        return query;
-    }
-
-    public void setQuery(final String query) {
-        this.query = query;
-    }
 }

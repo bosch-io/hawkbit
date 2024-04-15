@@ -218,7 +218,7 @@ public class TagListField extends CssLayout {
     }
 
     private void notifyListenersTagAssignmentRemoved(final ProxyTag tagData) {
-        listeners.forEach(listener -> listener.unassignTag(tagData));
+        listeners.forEach(listener -> listener.unаssignTag(tagData));
     }
 
     /**

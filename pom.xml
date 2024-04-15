@@ -48,6 +48,8 @@
       <module>hawkbit-test-report</module>
       <module>hawkbit-runtime</module>
       <module>hawkbit-starters</module>
+
+      <module>hawkbit-sdk</module>
    </modules>
 
    <scm>
@@ -144,7 +146,7 @@
    </pluginRepositories>
 
    <properties>
-      <revision>0-SNAPSHOT</revision>
+      <revision>spring_2.7-SNAPSHOT</revision>
 
       <dash.skip>true</dash.skip>
       <dash.fail>true</dash.fail>
@@ -245,7 +247,7 @@
       <sonar.coverage.exclusions>
          **/src/main/java/org/eclipse/hawkbit/ui/**,**/target/generated-sources/apt/**,**/src/main/java/org/eclipse/hawkbit/repository/test/**,**/examples/**
       </sonar.coverage.exclusions>
-      <jacoco.version>0.8.11</jacoco.version>
+      <jacoco.maven.plugin.version>0.8.11</jacoco.maven.plugin.version>
       <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
       <sonar.coverage.jacoco.xmlReportPaths>
          ${project.basedir}/../hawkbit-test-report/target/jacoco-aggregate/jacoco.xml,
@@ -337,7 +339,7 @@
          <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>${jacoco.version}</version>
+            <version>${jacoco.maven.plugin.version}</version>
             <executions>
                <execution>
                   <id>prepare-ut-agent</id>
@@ -562,7 +564,7 @@
             <plugin>
                <groupId>org.jacoco</groupId>
                <artifactId>jacoco-maven-plugin</artifactId>
-               <version>${jacoco.version}</version>
+               <version>${jacoco.maven.plugin.version}</version>
             </plugin>
             <plugin>
                <groupId>org.bsc.maven</groupId>
@@ -943,4 +945,15 @@
          </dependency>
       </dependencies>
    </dependencyManagement>
+   <dependencies>
+      <dependency>
+         <groupId>org.projectlombok</groupId>
+         <artifactId>lombok</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>com.google.guava</groupId>
+         <artifactId>guava</artifactId>
+      </dependency>
+   </dependencies>
 </project>

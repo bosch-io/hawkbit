@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.hawkbit.im.authentication.TenantAwareAuthenticationDetails;
-import org.eclipse.hawkbit.im.authentication.UserPrincipal;
+import org.eclipse.hawkbit.im.authentication.TenantAwareUser;
 import org.eclipse.hawkbit.repository.event.entity.EntityIdEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.ActionCreatedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.ActionUpdatedEvent;
@@ -253,8 +253,8 @@ public class DelayedEventBusPushStrategy
             }
 
             final Object userPrincipalDetails = currentAuthentication.getPrincipal();
-            if (userPrincipalDetails instanceof UserPrincipal) {
-                return ((UserPrincipal) userPrincipalDetails).getTenant().equalsIgnoreCase(eventTenant);
+            if (userPrincipalDetails instanceof TenantAwareUser) {
+                return ((TenantAwareUser) userPrincipalDetails).getTenant().equalsIgnoreCase(eventTenant);
             }
 
             return false;

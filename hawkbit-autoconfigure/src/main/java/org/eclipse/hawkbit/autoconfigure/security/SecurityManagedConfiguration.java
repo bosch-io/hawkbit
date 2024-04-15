@@ -22,6 +22,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.hawkbit.cache.DownloadIdCache;
 import org.eclipse.hawkbit.ddi.rest.api.DdiRestConstants;
 import org.eclipse.hawkbit.ddi.rest.resource.DdiApiConfiguration;
@@ -45,8 +46,6 @@ import org.eclipse.hawkbit.security.HttpDownloadAuthenticationFilter;
 import org.eclipse.hawkbit.security.PreAuthTokenSourceTrustAuthenticationProvider;
 import org.eclipse.hawkbit.security.SystemSecurityContext;
 import org.eclipse.hawkbit.tenancy.TenantAware;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -96,6 +95,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
  * All configurations related to HawkBit's authentication and authorization
  * layer.
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, mode = AdviceMode.ASPECTJ, proxyTargetClass = true, securedEnabled = true)
@@ -103,16 +103,11 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @PropertySource("classpath:/hawkbit-security-defaults.properties")
 public class SecurityManagedConfiguration {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SecurityManagedConfiguration.class);
-
     private static final int DOS_FILTER_ORDER = -200;
 
     /**
-     * @return the {@link UserAuthenticationFilter} to include into the hawkBit
-     *         security configuration.
-     * @throws Exception
-     *             lazy bean exception maybe if the authentication manager
-     *             cannot be instantiated
+     * @return the {@link UserAuthenticationFilter} to include into the hawkBit security configuration.
+     * @throws Exception lazy bean exception maybe if the authentication manager cannot be instantiated
      */
     @Bean
     @ConditionalOnMissingBean
@@ -206,7 +201,7 @@ public class SecurityManagedConfiguration {
 
             final ControllerTenantAwareAuthenticationDetailsSource authenticationDetailsSource = new ControllerTenantAwareAuthenticationDetailsSource();
             if (ddiSecurityConfiguration.getAuthentication().getAnonymous().isEnabled()) {
-                LOG.info(
+                log.info(
                         """
                         ******************
                         ** Anonymous controller security enabled, should only be used for developing purposes **
@@ -325,7 +320,7 @@ public class SecurityManagedConfiguration {
             final ControllerTenantAwareAuthenticationDetailsSource authenticationDetailsSource = new ControllerTenantAwareAuthenticationDetailsSource();
 
             if (ddiSecurityConfiguration.getAuthentication().getAnonymous().isEnabled()) {
-                LOG.info(
+                log.info(
                     """
                     ******************
                     ** Anonymous controller security enabled, should only be used for developing purposes **
@@ -602,7 +597,7 @@ public class SecurityManagedConfiguration {
 
         if (!CollectionUtils.isEmpty(allowedHostNames)) {
             firewall.setAllowedHostnames(hostName -> {
-                LOG.debug("Firewall check host: {}, allowed: {}", hostName, allowedHostNames.contains(hostName));
+                log.debug("Firewall check host: {}, allowed: {}", hostName, allowedHostNames.contains(hostName));
                 return allowedHostNames.contains(hostName);
             });
         }

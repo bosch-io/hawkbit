@@ -14,8 +14,9 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -32,9 +33,9 @@ import org.springframework.security.core.GrantedAuthority;
  * etc.
  * </p>
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@Slf4j
 public final class SpPermission {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SpPermission.class);
 
     /**
      * Permission to read the targets (list and filter).
@@ -96,6 +97,19 @@ public final class SpPermission {
     public static final String DOWNLOAD_REPOSITORY_ARTIFACT = "DOWNLOAD_REPOSITORY_ARTIFACT";
 
     /**
+     * Permission to read the tenant settings.
+     */
+    public static final String READ_TENANT_CONFIGURATION = "READ_TENANT_CONFIGURATION";
+
+    /**
+     * Permission to read the gateway security token. The gateway security token is security
+     * concerned and should be protected. So in addition to {@linkplain #READ_TENANT_CONFIGURATION},
+     * {@code READ_GATEWAY_SEC_TOKEN} is necessary to read gateway security token. {@link #TENANT_CONFIGURATION}
+     * implies both permissions - so it is sufficient to read the gateway security token.
+     */
+    public static final String READ_GATEWAY_SEC_TOKEN = "READ_GATEWAY_SECURITY_TOKEN";
+
+    /**
      * Permission to administrate the tenant settings.
      */
     public static final String TENANT_CONFIGURATION = "TENANT_CONFIGURATION";
@@ -130,10 +144,6 @@ public final class SpPermission {
      */
     public static final String APPROVE_ROLLOUT = "APPROVE_ROLLOUT";
 
-    private SpPermission() {
-        // Constants only
-    }
-
     /**
      * Return all permission.
      * @return all permissions
@@ -147,7 +157,7 @@ public final class SpPermission {
                     final String role = (String) field.get(null);
                     allPermissions.add(role);
                 } catch (final IllegalAccessException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
         }
@@ -177,6 +187,7 @@ public final class SpPermission {
      * }
      * </p>
      */
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class SpringEvalExpressions {
         /*
          * Spring security eval expressions.
@@ -408,6 +419,14 @@ public final class SpPermission {
 
         /**
          * Spring security eval hasAuthority expression to check if spring
+         * context contains {@link SpPermission#READ_TENANT_CONFIGURATION} or
+         * {@link #IS_SYSTEM_CODE}.
+         */
+        public static final String HAS_AUTH_TENANT_CONFIGURATION_READ = HAS_AUTH_PREFIX + READ_TENANT_CONFIGURATION
+                + HAS_AUTH_SUFFIX + HAS_AUTH_OR + IS_SYSTEM_CODE;
+
+        /**
+         * Spring security eval hasAuthority expression to check if spring
          * context contains {@link SpPermission#TENANT_CONFIGURATION} or
          * {@link #IS_SYSTEM_CODE}.
          */
@@ -416,14 +435,10 @@ public final class SpPermission {
 
         /**
          * Spring security eval hasAuthority expression to check if spring
-         * context contains {@link SpPermission#IS_CONTROLLER} or
+         * context contains {@link #IS_CONTROLLER} or
          * {@link #HAS_AUTH_READ_REPOSITORY_AND_UPDATE_TARGET}.
          */
         public static final String IS_CONTROLLER_OR_HAS_AUTH_READ_REPOSITORY_AND_UPDATE_TARGET =
                 IS_CONTROLLER + HAS_AUTH_OR + HAS_AUTH_READ_REPOSITORY_AND_UPDATE_TARGET;
-
-        private SpringEvalExpressions() {
-            // utility class
-        }
     }
 }

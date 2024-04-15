@@ -18,6 +18,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.eclipse.hawkbit.mgmt.json.model.MgmtMetadata;
 import org.eclipse.hawkbit.mgmt.json.model.distributionset.MgmtActionId;
 import org.eclipse.hawkbit.mgmt.json.model.distributionset.MgmtDistributionSet;
@@ -38,55 +40,44 @@ import org.eclipse.hawkbit.rest.data.ResponseList;
  * A mapper which maps repository model to RESTful model representation and
  * back.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class MgmtDistributionSetMapper {
-    private MgmtDistributionSetMapper() {
-        // Utility class
-    }
 
     /**
      * {@link MgmtDistributionSetRequestBodyPost}s to {@link DistributionSet}s.
      *
-     * @param sets
-     *            to convert
+     * @param sets to convert
      * @return converted list of {@link DistributionSet}s
      */
     static List<DistributionSetCreate> dsFromRequest(final Collection<MgmtDistributionSetRequestBodyPost> sets,
             final EntityFactory entityFactory) {
-
         return sets.stream().map(dsRest -> fromRequest(dsRest, entityFactory)).collect(Collectors.toList());
     }
 
     /**
      * {@link MgmtDistributionSetRequestBodyPost} to {@link DistributionSet}.
      *
-     * @param dsRest
-     *            to convert
+     * @param dsRest to convert
      * @return converted {@link DistributionSet}
      */
     private static DistributionSetCreate fromRequest(final MgmtDistributionSetRequestBodyPost dsRest,
             final EntityFactory entityFactory) {
-
         final List<Long> modules = new ArrayList<>();
-
         if (dsRest.getOs() != null) {
             modules.add(dsRest.getOs().getId());
         }
-
         if (dsRest.getApplication() != null) {
             modules.add(dsRest.getApplication().getId());
         }
-
         if (dsRest.getRuntime() != null) {
             modules.add(dsRest.getRuntime().getId());
         }
-
         if (dsRest.getModules() != null) {
             dsRest.getModules().forEach(module -> modules.add(module.getId()));
         }
-
         return entityFactory.distributionSet().create().name(dsRest.getName()).version(dsRest.getVersion())
                 .description(dsRest.getDescription()).type(dsRest.getType()).modules(modules)
-                .requiredMigrationStep(dsRest.isRequiredMigrationStep());
+                .requiredMigrationStep(dsRest.getRequiredMigrationStep());
     }
 
     static List<MetaData> fromRequestDsMetadata(final List<MgmtMetadata> metadata, final EntityFactory entityFactory) {
@@ -103,6 +94,7 @@ public final class MgmtDistributionSetMapper {
         if (distributionSet == null) {
             return null;
         }
+
         final MgmtDistributionSet response = new MgmtDistributionSet();
         MgmtRestModelMapper.mapNamedToNamed(response, distributionSet);
 
@@ -111,6 +103,7 @@ public final class MgmtDistributionSetMapper {
         response.setComplete(distributionSet.isComplete());
         response.setType(distributionSet.getType().getKey());
         response.setTypeName(distributionSet.getType().getName());
+        response.setLocked(distributionSet.isLocked());
         response.setDeleted(distributionSet.isDeleted());
         response.setValid(distributionSet.isValid());
 
@@ -179,7 +172,6 @@ public final class MgmtDistributionSetMapper {
     }
 
     static List<MgmtMetadata> toResponseDsMetadata(final List<DistributionSetMetadata> metadata) {
-
         final List<MgmtMetadata> mappedList = new ArrayList<>(metadata.size());
         for (final DistributionSetMetadata distributionSetMetadata : metadata) {
             mappedList.add(toResponseDsMetadata(distributionSetMetadata));

@@ -64,9 +64,9 @@ public class DistributionSetManagementStateDataProvider
     }
 
     private DistributionSetFilter buildDsFilter(final DsManagementFilterParams filter) {
-        return new DistributionSetFilterBuilder().setIsDeleted(false).setIsComplete(true)
-                .setSearchText(filter.getSearchText()).setSelectDSWithNoTag(filter.isNoTagClicked())
-                .setTagNames(filter.getDistributionSetTags()).build();
+        return DistributionSetFilter.builder().isDeleted(false).isComplete(true)
+                .searchText(filter.getSearchText()).selectDSWithNoTag(filter.isNoTagClicked())
+                .tagNames(filter.getDistributionSetTags()).build();
     }
 
     @Override

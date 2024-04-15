@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -29,11 +30,12 @@ import org.eclipse.hawkbit.repository.DistributionSetTagManagement;
 import org.eclipse.hawkbit.repository.DistributionSetTypeManagement;
 import org.eclipse.hawkbit.repository.OffsetBasedPageRequest;
 import org.eclipse.hawkbit.repository.QuotaManagement;
+import org.eclipse.hawkbit.repository.RepositoryProperties;
 import org.eclipse.hawkbit.repository.SystemManagement;
 import org.eclipse.hawkbit.repository.builder.DistributionSetCreate;
 import org.eclipse.hawkbit.repository.builder.DistributionSetUpdate;
 import org.eclipse.hawkbit.repository.builder.GenericDistributionSetUpdate;
-import org.eclipse.hawkbit.repository.event.remote.DistributionSetDeletedEvent;
+import org.eclipse.hawkbit.repository.exception.DeletedException;
 import org.eclipse.hawkbit.repository.exception.EntityAlreadyExistsException;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
 import org.eclipse.hawkbit.repository.exception.EntityReadOnlyException;
@@ -44,7 +46,6 @@ import org.eclipse.hawkbit.repository.jpa.JpaManagementHelper;
 import org.eclipse.hawkbit.repository.jpa.acm.AccessController;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaDistributionSetCreate;
 import org.eclipse.hawkbit.repository.jpa.configuration.Constants;
-import org.eclipse.hawkbit.repository.jpa.executor.AfterTransactionCommitExecutor;
 import org.eclipse.hawkbit.repository.jpa.model.DsMetadataCompositeKey;
 import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSet;
 import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSetMetadata;
@@ -61,6 +62,7 @@ import org.eclipse.hawkbit.repository.jpa.repository.TargetRepository;
 import org.eclipse.hawkbit.repository.jpa.rsql.RSQLUtility;
 import org.eclipse.hawkbit.repository.jpa.specifications.DistributionSetSpecification;
 import org.eclipse.hawkbit.repository.jpa.specifications.TargetSpecifications;
+import org.eclipse.hawkbit.repository.jpa.utils.DeploymentHelper;
 import org.eclipse.hawkbit.repository.jpa.utils.QuotaHelper;
 import org.eclipse.hawkbit.repository.model.Action;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
@@ -72,9 +74,8 @@ import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.MetaData;
 import org.eclipse.hawkbit.repository.model.SoftwareModule;
 import org.eclipse.hawkbit.repository.model.Statistic;
-import org.eclipse.hawkbit.repository.model.helper.EventPublisherHolder;
 import org.eclipse.hawkbit.repository.rsql.VirtualPropertyReplacer;
-import org.eclipse.hawkbit.tenancy.TenantAware;
+import org.eclipse.hawkbit.utils.TenantConfigHelper;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -84,12 +85,13 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.jpa.vendor.Database;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.validation.annotation.Validated;
 
-import com.google.common.collect.Lists;
+import static org.eclipse.hawkbit.tenancy.configuration.TenantConfigurationProperties.TenantConfigurationKey.IMPLICIT_LOCK_ENABLED;
 
 /**
  * JPA implementation of {@link DistributionSetManagement}.
@@ -100,51 +102,36 @@ import com.google.common.collect.Lists;
 public class JpaDistributionSetManagement implements DistributionSetManagement {
 
     private final EntityManager entityManager;
-
     private final DistributionSetRepository distributionSetRepository;
-
     private final DistributionSetTagManagement distributionSetTagManagement;
-
     private final SystemManagement systemManagement;
-
     private final DistributionSetTypeManagement distributionSetTypeManagement;
-
     private final QuotaManagement quotaManagement;
-
     private final DistributionSetMetadataRepository distributionSetMetadataRepository;
     private final TargetRepository targetRepository;
-
     private final TargetFilterQueryRepository targetFilterQueryRepository;
-
     private final ActionRepository actionRepository;
-
-    private final EventPublisherHolder eventPublisherHolder;
-
-    private final TenantAware tenantAware;
-
+    private final TenantConfigHelper tenantConfigHelper;
     private final VirtualPropertyReplacer virtualPropertyReplacer;
-
     private final SoftwareModuleRepository softwareModuleRepository;
-
     private final DistributionSetTagRepository distributionSetTagRepository;
-
-    private final AfterTransactionCommitExecutor afterCommit;
-
     private final Database database;
+    private final RepositoryProperties repositoryProperties;
 
-    public JpaDistributionSetManagement(final EntityManager entityManager,
+    public JpaDistributionSetManagement(
+            final EntityManager entityManager,
             final DistributionSetRepository distributionSetRepository,
             final DistributionSetTagManagement distributionSetTagManagement, final SystemManagement systemManagement,
             final DistributionSetTypeManagement distributionSetTypeManagement, final QuotaManagement quotaManagement,
             final DistributionSetMetadataRepository distributionSetMetadataRepository,
             final TargetRepository targetRepository,
             final TargetFilterQueryRepository targetFilterQueryRepository, final ActionRepository actionRepository,
-            final EventPublisherHolder eventPublisherHolder, final TenantAware tenantAware,
+            final TenantConfigHelper tenantConfigHelper,
             final VirtualPropertyReplacer virtualPropertyReplacer,
             final SoftwareModuleRepository softwareModuleRepository,
             final DistributionSetTagRepository distributionSetTagRepository,
-            final AfterTransactionCommitExecutor afterCommit,
-            final Database database) {
+            final Database database,
+            final RepositoryProperties repositoryProperties) {
         this.entityManager = entityManager;
         this.distributionSetRepository = distributionSetRepository;
         this.distributionSetTagManagement = distributionSetTagManagement;
@@ -155,13 +142,12 @@ public class JpaDistributionSetManagement implements DistributionSetManagement {
         this.targetRepository = targetRepository;
         this.targetFilterQueryRepository = targetFilterQueryRepository;
         this.actionRepository = actionRepository;
-        this.eventPublisherHolder = eventPublisherHolder;
-        this.tenantAware = tenantAware;
+        this.tenantConfigHelper = tenantConfigHelper;
         this.virtualPropertyReplacer = virtualPropertyReplacer;
         this.softwareModuleRepository = softwareModuleRepository;
         this.distributionSetTagRepository = distributionSetTagRepository;
-        this.afterCommit = afterCommit;
         this.database = database;
+        this.repositoryProperties = repositoryProperties;
     }
 
     @Override
@@ -286,6 +272,13 @@ public class JpaDistributionSetManagement implements DistributionSetManagement {
         update.getName().ifPresent(set::setName);
         update.getDescription().ifPresent(set::setDescription);
         update.getVersion().ifPresent(set::setVersion);
+
+        // lock/unlock ONLY if locked flag is present!
+        if (Boolean.TRUE.equals(update.locked())) {
+            set.lock();
+        } else if (Boolean.FALSE.equals(update.locked())) {
+            set.unlock();
+        }
 
         if (update.isRequiredMigrationStep() != null
                 && !update.isRequiredMigrationStep().equals(set.isRequiredMigrationStep())) {
@@ -581,7 +574,7 @@ public class JpaDistributionSetManagement implements DistributionSetManagement {
                         throw new InsufficientPermissionException("Target not accessible (or not found)!");
                     }
                     return distributionSetRepository
-                            .findOne(DistributionSetSpecification.byActionId(actionId))
+                            .findOne(DistributionSetSpecification.byId(action.getDistributionSet().getId()))
                             .orElseThrow(() ->
                                     new InsufficientPermissionException("DistributionSet not accessible (or not found)!"));
                 })
@@ -600,7 +593,7 @@ public class JpaDistributionSetManagement implements DistributionSetManagement {
 
     private static List<Specification<JpaDistributionSet>> buildDistributionSetSpecifications(
             final DistributionSetFilter distributionSetFilter) {
-        final List<Specification<JpaDistributionSet>> specList = Lists.newArrayListWithExpectedSize(10);
+        final List<Specification<JpaDistributionSet>> specList = new ArrayList<>(10);
 
         Specification<JpaDistributionSet> spec;
 
@@ -637,14 +630,6 @@ public class JpaDistributionSetManagement implements DistributionSetManagement {
                     distributionSetFilter.getSelectDSWithNoTag());
             specList.add(spec);
         }
-        if (distributionSetFilter.getInstalledTargetId() != null) {
-            spec = DistributionSetSpecification.installedTarget(distributionSetFilter.getInstalledTargetId());
-            specList.add(spec);
-        }
-        if (distributionSetFilter.getAssignedTargetId() != null) {
-            spec = DistributionSetSpecification.assignedTarget(distributionSetFilter.getAssignedTargetId());
-            specList.add(spec);
-        }
         return specList;
     }
 
@@ -673,7 +658,7 @@ public class JpaDistributionSetManagement implements DistributionSetManagement {
     @Transactional
     @Retryable(include = {
             ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))
-    public DistributionSet unAssignTag(final long id, final long dsTagId) {
+    public DistributionSet unassignTag(final long id, final long dsTagId) {
         final JpaDistributionSet set = (JpaDistributionSet) getWithDetails(id)
                 .orElseThrow(() -> new EntityNotFoundException(DistributionSet.class, id));
 
@@ -686,6 +671,37 @@ public class JpaDistributionSetManagement implements DistributionSetManagement {
         // No reason to save the tag
         entityManager.detach(distributionSetTag);
         return result;
+    }
+
+    @Override
+    @Transactional
+    @Retryable(include = {
+            ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))
+    public void lock(final long id) {
+        final JpaDistributionSet distributionSet = getById(id);
+        if (!distributionSet.isLocked()) {
+            distributionSet.getModules().forEach(module -> {
+                if (!module.isLocked()) {
+                    final JpaSoftwareModule jpaSoftwareModule = (JpaSoftwareModule)module;
+                    jpaSoftwareModule.lock();
+                    softwareModuleRepository.save(jpaSoftwareModule);
+                }
+            });
+            distributionSet.lock();
+            distributionSetRepository.save(distributionSet);
+        }
+    }
+
+    @Override
+    @Transactional
+    @Retryable(include = {
+            ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX, backoff = @Backoff(delay = Constants.TX_RT_DELAY))
+    public void unlock(final long id) {
+        final JpaDistributionSet distributionSet = getById(id);
+        if (distributionSet.isLocked()) {
+            distributionSet.unlock();
+            distributionSetRepository.save(distributionSet);
+        }
     }
 
     @Override
@@ -766,6 +782,10 @@ public class JpaDistributionSetManagement implements DistributionSetManagement {
                     + distributionSet.getType().getKey() + " is incomplete: " + distributionSet.getId());
         }
 
+        if (distributionSet.isDeleted()) {
+            throw new DeletedException(DistributionSet.class, id);
+        }
+
         return distributionSet;
     }
 
@@ -787,6 +807,36 @@ public class JpaDistributionSetManagement implements DistributionSetManagement {
         final JpaDistributionSet jpaSet = (JpaDistributionSet) distributionSet;
         jpaSet.invalidate();
         distributionSetRepository.save(jpaSet);
+    }
+
+    // check if shall implicitly lock a distribution set
+    boolean isImplicitLockApplicable(final DistributionSet distributionSet) {
+        final JpaDistributionSet jpaDistributionSet = (JpaDistributionSet) distributionSet;
+        if (jpaDistributionSet.isLocked()) {
+            // already locked
+            return false;
+        }
+
+        if (!tenantConfigHelper.getConfigValue(IMPLICIT_LOCK_ENABLED, Boolean.class)) {
+            // implicit lock disabled
+            return false;
+        }
+
+        final List<String> skipForTags = repositoryProperties.getSkipImplicitLockForTags();
+        if (!ObjectUtils.isEmpty(skipForTags)) {
+            final Set<DistributionSetTag> tags = jpaDistributionSet.getTags();
+            if (!ObjectUtils.isEmpty(tags)) {
+                for (final DistributionSetTag tag : tags) {
+                    if (skipForTags.contains(tag.getName())) {
+                        // has a skip tag
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // finally - implicit lock is applicable
+        return true;
     }
 
     private JpaDistributionSet getById(final long id) {

@@ -9,6 +9,7 @@
  */
 package org.eclipse.hawkbit.repository.jpa.model;
 
+import java.io.Serial;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
@@ -45,11 +46,11 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.hawkbit.im.authentication.SpPermission;
 import org.eclipse.hawkbit.repository.event.remote.TargetDeletedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.TargetCreatedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.TargetUpdatedEvent;
-import org.eclipse.hawkbit.repository.jpa.model.helper.SecurityChecker;
 import org.eclipse.hawkbit.repository.jpa.model.helper.SecurityTokenGeneratorHolder;
 import org.eclipse.hawkbit.repository.model.Action;
 import org.eclipse.hawkbit.repository.model.AutoConfirmationStatus;
@@ -63,6 +64,7 @@ import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.eclipse.hawkbit.repository.model.helper.EventPublisherHolder;
 import org.eclipse.hawkbit.repository.model.helper.SystemSecurityContextHolder;
 import org.eclipse.hawkbit.repository.model.helper.TenantConfigurationManagementHolder;
+import org.eclipse.hawkbit.security.SystemSecurityContext;
 import org.eclipse.hawkbit.tenancy.configuration.DurationHelper;
 import org.eclipse.hawkbit.tenancy.configuration.TenantConfigurationProperties.TenantConfigurationKey;
 import org.eclipse.persistence.annotations.CascadeOnDelete;
@@ -70,12 +72,9 @@ import org.eclipse.persistence.annotations.ConversionValue;
 import org.eclipse.persistence.annotations.Convert;
 import org.eclipse.persistence.annotations.ObjectTypeConverter;
 import org.eclipse.persistence.descriptors.DescriptorEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * JPA implementation of {@link Target}.
- *
  */
 @Entity
 @Table(name = "sp_target", indexes = {
@@ -88,11 +87,11 @@ import org.slf4j.LoggerFactory;
 // exception squid:S2160 - BaseEntity equals/hashcode is handling correctly for
 // sub entities
 @SuppressWarnings("squid:S2160")
+@Slf4j
 public class JpaTarget extends AbstractJpaNamedEntity implements Target, EventAwareEntity {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-
-    private static final Logger LOG = LoggerFactory.getLogger(JpaTarget.class);
 
     private static final List<String> TARGET_UPDATE_EVENT_IGNORE_FIELDS = Arrays.asList("lastTargetQuery", "address",
             "optLockRevision", "lastModifiedAt", "lastModifiedBy");
@@ -321,8 +320,10 @@ public class JpaTarget extends AbstractJpaNamedEntity implements Target, EventAw
      */
     @Override
     public String getSecurityToken() {
-        if (SystemSecurityContextHolder.getInstance().getSystemSecurityContext().isCurrentThreadSystemCode()
-                || SecurityChecker.hasPermission(SpPermission.READ_TARGET_SEC_TOKEN)) {
+        final SystemSecurityContext systemSecurityContext =
+                SystemSecurityContextHolder.getInstance().getSystemSecurityContext();
+        if (systemSecurityContext.isCurrentThreadSystemCode() ||
+                systemSecurityContext.hasPermission(SpPermission.READ_TARGET_SEC_TOKEN)) {
             return securityToken;
         }
         return null;
@@ -347,7 +348,7 @@ public class JpaTarget extends AbstractJpaNamedEntity implements Target, EventAw
         try {
             return URI.create(address);
         } catch (final IllegalArgumentException e) {
-            LOG.warn("Invalid address provided. Cloud not be configured to URI", e);
+            log.warn("Invalid address provided. Cloud not be configured to URI", e);
             return null;
         }
     }

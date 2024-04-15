@@ -12,17 +12,18 @@ package org.eclipse.hawkbit.security;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.hawkbit.im.authentication.TenantAwareAuthenticationDetails;
 import org.eclipse.hawkbit.im.authentication.SpPermission.SpringEvalExpressions;
 import org.eclipse.hawkbit.tenancy.TenantAware;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -30,24 +31,35 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.util.ObjectUtils;
 
 /**
  * A Service which provide to run system code.
  */
+@Slf4j
 public class SystemSecurityContext {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SystemSecurityContext.class);
-
     private final TenantAware tenantAware;
+    private final RoleHierarchy roleHierarchy;
 
     /**
      * Autowired constructor.
      * 
-     * @param tenantAware
-     *            the tenant aware bean to retrieve the current tenant
+     * @param tenantAware the tenant aware bean to retrieve the current tenant
      */
     public SystemSecurityContext(final TenantAware tenantAware) {
+        this(tenantAware, null);
+    }
+
+    /**
+     * Autowired constructor.
+     *
+     * @param tenantAware the tenant aware bean to retrieve the current tenant
+     * @param roleHierarchy the roleHierarchy that is applied
+     */
+    public SystemSecurityContext(final TenantAware tenantAware, final RoleHierarchy roleHierarchy) {
         this.tenantAware = tenantAware;
+        this.roleHierarchy = roleHierarchy;
     }
 
     /**
@@ -99,7 +111,7 @@ public class SystemSecurityContext {
     public <T> T runAsSystemAsTenant(final Callable<T> callable, final String tenant) {
         final SecurityContext oldContext = SecurityContextHolder.getContext();
         try {
-            LOG.debug("entering system code execution");
+            log.debug("entering system code execution");
             return tenantAware.runAsTenant(tenant, () -> {
                 try {
                     setSystemContext(SecurityContextHolder.getContext());
@@ -114,7 +126,7 @@ public class SystemSecurityContext {
 
         } finally {
             SecurityContextHolder.setContext(oldContext);
-            LOG.debug("leaving system code execution");
+            log.debug("leaving system code execution");
         }
     }
 
@@ -160,6 +172,27 @@ public class SystemSecurityContext {
      */
     public boolean isCurrentThreadSystemCode() {
         return SecurityContextHolder.getContext().getAuthentication() instanceof SystemCodeAuthentication;
+    }
+
+    public boolean hasPermission(final String permission) {
+        final SecurityContext context = SecurityContextHolder.getContext();
+        if (context != null) {
+            final Authentication authentication = context.getAuthentication();
+            if (authentication != null) {
+                Collection<? extends GrantedAuthority> grantedAuthorities = authentication.getAuthorities();
+                if (!ObjectUtils.isEmpty(grantedAuthorities)) {
+                    if (roleHierarchy != null) {
+                        grantedAuthorities = roleHierarchy.getReachableGrantedAuthorities(grantedAuthorities);
+                    }
+                    for (final GrantedAuthority authority : grantedAuthorities) {
+                        if (authority.getAuthority().equals(permission)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private void setCustomSecurityContext(final String tenantId, final Object principal,

@@ -9,14 +9,27 @@
  */
 package org.eclipse.hawkbit.repository.builder;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+
+import java.util.Optional;
+
 /**
  * Update implementation.
  */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@Accessors(fluent = true)
 public class GenericSoftwareModuleUpdate extends AbstractSoftwareModuleUpdateCreate<SoftwareModuleUpdate>
         implements SoftwareModuleUpdate {
+
+//    @Nullable
+    protected Boolean locked;
 
     public GenericSoftwareModuleUpdate(final Long id) {
         super.id = id;
     }
-
 }

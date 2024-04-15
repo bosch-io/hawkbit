@@ -14,7 +14,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.hawkbit.im.authentication.TenantAwareAuthenticationDetails;
-import org.eclipse.hawkbit.im.authentication.UserPrincipal;
+import org.eclipse.hawkbit.im.authentication.TenantAwareUser;
 import org.eclipse.hawkbit.repository.model.BaseEntity;
 import org.eclipse.hawkbit.ui.utils.SpringContextHolder;
 import org.springframework.security.core.Authentication;
@@ -120,11 +120,11 @@ public final class UserDetailsFormatter {
     }
 
     private static String formatUserName(final int expectedNameLength, final UserDetails userDetails) {
-        if (!(userDetails instanceof UserPrincipal)) {
+        if (!(userDetails instanceof TenantAwareUser)) {
             return userDetails.getUsername();
         }
 
-        final UserPrincipal userPrincipal = (UserPrincipal) userDetails;
+        final TenantAwareUser userPrincipal = (TenantAwareUser) userDetails;
         return trimAndFormatDetail(userPrincipal.getLoginname(), expectedNameLength);
     }
 
@@ -136,11 +136,11 @@ public final class UserDetailsFormatter {
      */
     public static String formatCurrentTenant() {
         final UserDetails userDetails = getCurrentUser();
-        if (!(userDetails instanceof UserPrincipal)) {
+        if (!(userDetails instanceof TenantAwareUser)) {
             return null;
         }
 
-        final UserPrincipal userPrincipal = (UserPrincipal) userDetails;
+        final TenantAwareUser userPrincipal = (TenantAwareUser) userDetails;
         return trimAndFormatDetail(userPrincipal.getTenant(), 8);
     }
 
@@ -152,11 +152,11 @@ public final class UserDetailsFormatter {
      */
     public static Optional<String> getCurrentTenant() {
         final UserDetails userDetails = getCurrentUser();
-        if (!(userDetails instanceof UserPrincipal)) {
+        if (!(userDetails instanceof TenantAwareUser)) {
             return Optional.empty();
         }
 
-        final UserPrincipal userPrincipal = (UserPrincipal) userDetails;
+        final TenantAwareUser userPrincipal = (TenantAwareUser) userDetails;
         return Optional.of(userPrincipal.getTenant().trim());
     }
 
@@ -165,11 +165,11 @@ public final class UserDetailsFormatter {
      */
     public static Optional<String> getCurrentUserEmail() {
         final UserDetails userDetails = getCurrentUser();
-        if (!(userDetails instanceof UserPrincipal)) {
+        if (!(userDetails instanceof TenantAwareUser)) {
             return Optional.empty();
         }
 
-        final UserPrincipal userPrincipal = (UserPrincipal) userDetails;
+        final TenantAwareUser userPrincipal = (TenantAwareUser) userDetails;
 
         return Optional.ofNullable(userPrincipal.getEmail());
     }
@@ -188,7 +188,7 @@ public final class UserDetailsFormatter {
             if (details instanceof TenantAwareAuthenticationDetails) {
                 tenant = ((TenantAwareAuthenticationDetails) details).getTenant();
             }
-            return new UserPrincipal(oidcUser.getPreferredUsername(), "***", oidcUser.getGivenName(),
+            return new TenantAwareUser(oidcUser.getPreferredUsername(), "***", oidcUser.getGivenName(),
                     oidcUser.getFamilyName(), oidcUser.getPreferredUsername(), oidcUser.getEmail(), tenant,
                     oidcUser.getAuthorities());
         } else {

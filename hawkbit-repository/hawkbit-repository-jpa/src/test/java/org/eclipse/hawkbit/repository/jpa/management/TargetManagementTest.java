@@ -30,6 +30,7 @@ import javax.validation.ConstraintViolationException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.awaitility.Awaitility;
 import org.eclipse.hawkbit.im.authentication.SpPermission;
+import org.eclipse.hawkbit.im.authentication.SpRole;
 import org.eclipse.hawkbit.repository.FilterParams;
 import org.eclipse.hawkbit.repository.Identifiable;
 import org.eclipse.hawkbit.repository.builder.TargetUpdate;
@@ -40,7 +41,9 @@ import org.eclipse.hawkbit.repository.event.remote.TargetPollEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.ActionCreatedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.ActionUpdatedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.DistributionSetCreatedEvent;
+import org.eclipse.hawkbit.repository.event.remote.entity.DistributionSetUpdatedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.SoftwareModuleCreatedEvent;
+import org.eclipse.hawkbit.repository.event.remote.entity.SoftwareModuleUpdatedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.TargetCreatedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.TargetTagCreatedEvent;
 import org.eclipse.hawkbit.repository.event.remote.entity.TargetTypeCreatedEvent;
@@ -54,7 +57,6 @@ import org.eclipse.hawkbit.repository.exception.RSQLParameterUnsupportedFieldExc
 import org.eclipse.hawkbit.repository.exception.TenantNotExistException;
 import org.eclipse.hawkbit.repository.jpa.AbstractJpaIntegrationTest;
 import org.eclipse.hawkbit.repository.jpa.model.JpaAction;
-import org.eclipse.hawkbit.repository.jpa.model.JpaAction_;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTarget;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetMetadata;
 import org.eclipse.hawkbit.repository.model.Action;
@@ -78,8 +80,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
-
-import com.google.common.collect.Iterables;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
@@ -188,7 +188,15 @@ class TargetManagementTest extends AbstractJpaIntegrationTest {
 
         // retrieve security token only with READ_TARGET_SEC_TOKEN permission
         final String securityTokenWithReadPermission = SecurityContextSwitch.runAs(
-                SecurityContextSwitch.withUser("OnlyTargetReadPermission", false, SpPermission.READ_TARGET_SEC_TOKEN),
+                SecurityContextSwitch.withUser("OnlyTargetReadPermission", SpPermission.READ_TARGET_SEC_TOKEN),
+                createdTarget::getSecurityToken);
+        // retrieve security token only with ROLE_TARGET_ADMIN permission
+        final String securityTokenWithTargetAdminPermission = SecurityContextSwitch.runAs(
+                SecurityContextSwitch.withUser("OnlyTargetAdminPermission", SpRole.TARGET_ADMIN),
+                createdTarget::getSecurityToken);
+        // retrieve security token only with ROLE_TENANT_ADMIN permission
+        final String securityTokenWithTenantAdminPermission = SecurityContextSwitch.runAs(
+                SecurityContextSwitch.withUser("OnlyTenantAdminPermission", SpRole.TENANT_ADMIN),
                 createdTarget::getSecurityToken);
 
         // retrieve security token as system code execution
@@ -196,10 +204,12 @@ class TargetManagementTest extends AbstractJpaIntegrationTest {
 
         // retrieve security token without any permissions
         final String securityTokenWithoutPermission = SecurityContextSwitch
-                .runAs(SecurityContextSwitch.withUser("NoPermission", false), createdTarget::getSecurityToken);
+                .runAs(SecurityContextSwitch.withUser("NoPermission"), createdTarget::getSecurityToken);
 
         assertThat(createdTarget.getSecurityToken()).isEqualTo("token");
         assertThat(securityTokenWithReadPermission).isNotNull();
+        assertThat(securityTokenWithTargetAdminPermission).isNotNull();
+        assertThat(securityTokenWithTenantAdminPermission).isNotNull();
         assertThat(securityTokenAsSystemCode).isNotNull();
 
         assertThat(securityTokenWithoutPermission).isNull();
@@ -454,10 +464,12 @@ class TargetManagementTest extends AbstractJpaIntegrationTest {
     @Test
     @Description("Finds a target by given ID and checks if all data is in the response (including the data defined as lazy).")
     @ExpectEvents({ @Expect(type = DistributionSetCreatedEvent.class, count = 2),
+            @Expect(type = SoftwareModuleCreatedEvent.class, count = 6),
+            @Expect(type = DistributionSetUpdatedEvent.class, count = 2), // implicit lock
+            @Expect(type = SoftwareModuleUpdatedEvent.class, count = 6), // implicit lock
             @Expect(type = TargetCreatedEvent.class, count = 1), @Expect(type = TargetUpdatedEvent.class, count = 5),
             @Expect(type = ActionCreatedEvent.class, count = 2), @Expect(type = ActionUpdatedEvent.class, count = 1),
             @Expect(type = TargetAssignDistributionSetEvent.class, count = 2),
-            @Expect(type = SoftwareModuleCreatedEvent.class, count = 6),
             @Expect(type = TargetAttributesRequestedEvent.class, count = 1),
             @Expect(type = TargetPollEvent.class, count = 1) })
     void findTargetByControllerIDWithDetails() {
@@ -483,10 +495,12 @@ class TargetManagementTest extends AbstractJpaIntegrationTest {
         controllerManagement.findOrRegisterTargetIfItDoesNotExist("4711", LOCALHOST);
 
         final DistributionSetAssignmentResult result = assignDistributionSet(testDs1.getId(), "4711");
+        implicitLock(testDs1);
 
         controllerManagement.addUpdateActionStatus(
                 entityFactory.actionStatus().create(getFirstAssignedActionId(result)).status(Status.FINISHED));
         assignDistributionSet(testDs2.getId(), "4711");
+        implicitLock(testDs2);
 
         target = targetManagement.getByControllerID("4711").orElseThrow(IllegalStateException::new);
         // read data
@@ -674,7 +688,7 @@ class TargetManagementTest extends AbstractJpaIntegrationTest {
 
         final int numberToDelete = 50;
         final Collection<Target> targetsToDelete = firstList.subList(0, numberToDelete);
-        final Target[] deletedTargets = Iterables.toArray(targetsToDelete, Target.class);
+        final Target[] deletedTargets = toArray(targetsToDelete, Target.class);
         final List<Long> targetsIdsToDelete = targetsToDelete.stream().map(Target::getId).collect(Collectors.toList());
 
         targetManagement.delete(targetsIdsToDelete);
@@ -708,14 +722,14 @@ class TargetManagementTest extends AbstractJpaIntegrationTest {
         assertThat(targetTagManagement.findByTarget(PAGE, t11.getControllerId()).getContent()).as("Tag size is wrong")
                 .hasSize(noT1Tags).containsAll(t1Tags);
         assertThat(targetTagManagement.findByTarget(PAGE, t11.getControllerId()).getContent()).as("Tag size is wrong")
-                .hasSize(noT1Tags).doesNotContain(Iterables.toArray(t2Tags, TargetTag.class));
+                .hasSize(noT1Tags).doesNotContain(toArray(t2Tags, TargetTag.class));
 
         final Target t21 = targetManagement.getByControllerID(t2.getControllerId())
                 .orElseThrow(IllegalStateException::new);
         assertThat(targetTagManagement.findByTarget(PAGE, t21.getControllerId()).getContent()).as("Tag size is wrong")
                 .hasSize(noT2Tags).containsAll(t2Tags);
         assertThat(targetTagManagement.findByTarget(PAGE, t21.getControllerId()).getContent()).as("Tag size is wrong")
-                .hasSize(noT2Tags).doesNotContain(Iterables.toArray(t1Tags, TargetTag.class));
+                .hasSize(noT2Tags).doesNotContain(toArray(t1Tags, TargetTag.class));
     }
 
     @Test
@@ -758,16 +772,16 @@ class TargetManagementTest extends AbstractJpaIntegrationTest {
         final List<Target> targetWithTagC = new ArrayList<>();
 
         // storing target lists to enable easy evaluation
-        Iterables.addAll(targetWithTagA, tagATargets);
-        Iterables.addAll(targetWithTagA, tagABTargets);
-        Iterables.addAll(targetWithTagA, tagABCTargets);
+        targetWithTagA.addAll(tagATargets);
+        targetWithTagA.addAll(tagABTargets);
+        targetWithTagA.addAll(tagABCTargets);
 
-        Iterables.addAll(targetWithTagB, tagBTargets);
-        Iterables.addAll(targetWithTagB, tagABTargets);
-        Iterables.addAll(targetWithTagB, tagABCTargets);
+        targetWithTagB.addAll(tagBTargets);
+        targetWithTagB.addAll(tagABTargets);
+        targetWithTagB.addAll(tagABCTargets);
 
-        Iterables.addAll(targetWithTagC, tagCTargets);
-        Iterables.addAll(targetWithTagC, tagABCTargets);
+        targetWithTagC.addAll(tagCTargets);
+        targetWithTagC.addAll(tagABCTargets);
 
         // check the target lists as returned by assignTag
         checkTargetHasTags(false, targetWithTagA, tagA);
