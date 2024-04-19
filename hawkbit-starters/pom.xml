@@ -27,5 +27,4 @@
       <module>hawkbit-boot-starter-ddi-api</module>
       <module>hawkbit-boot-starter-dmf-api</module>
    </modules>
-
 </project>

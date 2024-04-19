@@ -75,6 +75,6 @@ public class PreAuthorizeEnabledTest extends AbstractSecurityTest {
     @WithUser(authorities =  { SpPermission.TENANT_CONFIGURATION })
     public void successIfHasTenantConfig() throws Exception {
         mvc.perform(get("/rest/v1/system/configs")).andExpect(result ->
-                assertThat(result.getResponse().getStatus()).isEqualTo(HttpStatus.OK.value()));
+            assertThat(result.getResponse().getStatus()).isEqualTo(HttpStatus.OK.value()));
     }
 }
