@@ -9,11 +9,6 @@
  */
 package org.eclipse.hawkbit.repository.jpa.management;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.hawkbit.repository.QuotaManagement;
 import org.eclipse.hawkbit.repository.RepositoryProperties;
@@ -32,7 +27,13 @@ import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static org.eclipse.hawkbit.repository.model.Action.ActionType.DOWNLOAD_ONLY;
+import static org.eclipse.hawkbit.repository.model.Action.Status.ERROR;
 import static org.eclipse.hawkbit.repository.model.Action.Status.FINISHED;
 
 /**
@@ -112,7 +113,7 @@ public class JpaActionManagement {
     private boolean isUpdatingActionStatusAllowed(final JpaAction action, final JpaActionStatus actionStatus) {
 
         final boolean isIntermediateFeedback = (FINISHED != actionStatus.getStatus())
-                && (Action.Status.ERROR != actionStatus.getStatus());
+                && (ERROR != actionStatus.getStatus());
 
         final boolean isAllowedByRepositoryConfiguration = !repositoryProperties.isRejectActionStatusForClosedAction()
                 && isIntermediateFeedback;
@@ -141,7 +142,7 @@ public class JpaActionManagement {
      */
     private Action handleAddUpdateActionStatus(final JpaActionStatus actionStatus, final JpaAction action) {
         // information status entry - check for a potential DOS attack
-        assertActionStatusQuota(action);
+        assertActionStatusQuota(actionStatus, action);
         assertActionStatusMessageQuota(actionStatus);
         actionStatus.setAction(action);
 
@@ -157,9 +158,12 @@ public class JpaActionManagement {
      // can be overwritten to intercept the persistence of the action status
     }
     
-    protected void assertActionStatusQuota(final JpaAction action) {
-        QuotaHelper.assertAssignmentQuota(action.getId(), 1, quotaManagement.getMaxStatusEntriesPerAction(),
-                ActionStatus.class, Action.class, actionStatusRepository::countByActionId);
+    protected void assertActionStatusQuota(final JpaActionStatus newActionStatus, final JpaAction action) {
+        final boolean intermediateStatus = FINISHED != newActionStatus.getStatus() && ERROR != newActionStatus.getStatus();
+        if (intermediateStatus) {// check for quota only for intermediate statuses
+            QuotaHelper.assertAssignmentQuota(action.getId(), 1, quotaManagement.getMaxStatusEntriesPerAction(),
+                    ActionStatus.class, Action.class, actionStatusRepository::countByActionId);
+        }
     }
 
     protected void assertActionStatusMessageQuota(final JpaActionStatus actionStatus) {
