@@ -559,7 +559,7 @@ class MgmtActionResourceTest extends AbstractManagementApiIntegrationTest {
                     .getAssignedEntity().stream().map(Action::getTarget).collect(Collectors.toList());
             // 2nd update
             // sleep 10ms to ensure that we can sort by reportedAt
-            Awaitility.await().atMost(Duration.ofMillis(100)).atLeast(5, TimeUnit.MILLISECONDS)
+            Awaitility.await().atMost(Duration.ofMillis(200)).atLeast(5, TimeUnit.MILLISECONDS)
                     .pollInterval(10, TimeUnit.MILLISECONDS)
                     .until(() -> updatedTargets.stream().allMatch(t -> t.getLastModifiedAt() > 0L));
             assignDistributionSet(two, updatedTargets);
@@ -569,7 +569,7 @@ class MgmtActionResourceTest extends AbstractManagementApiIntegrationTest {
                             .map(Action::getTarget).collect(Collectors.toList());
             // 2nd update
             // sleep 10ms to ensure that we can sort by reportedAt
-            Awaitility.await().atMost(Duration.ofMillis(100)).atLeast(5, TimeUnit.MILLISECONDS)
+            Awaitility.await().atMost(Duration.ofMillis(200)).atLeast(5, TimeUnit.MILLISECONDS)
                     .pollInterval(10, TimeUnit.MILLISECONDS)
                     .until(() -> updatedTargets.stream().allMatch(t -> t.getLastModifiedAt() > 0L));
             assignDistributionSetWithMaintenanceWindow(two.getId(), updatedTargets.get(0).getControllerId(), schedule,

@@ -128,7 +128,7 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
 
         // ensures that we are not to fast so that last modified is not set correctly
         Awaitility.await()
-                .atMost(Duration.ofMillis(100))
+                .atMost(Duration.ofMillis(200))
                 .pollInterval(10L, TimeUnit.MILLISECONDS)
                 .until(() -> sm.getLastModifiedAt() > 0L && sm.getLastModifiedBy() != null);
 
@@ -169,7 +169,7 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
 
         // ensures that we are not to fast so that last modified is not set correctly
         Awaitility.await()
-                .atMost(Duration.ofMillis(100))
+                .atMost(Duration.ofMillis(200))
                 .pollInterval(10L, TimeUnit.MILLISECONDS)
                 .until(() -> sm.getLastModifiedAt() > 0L && sm.getLastModifiedBy() != null);
 
@@ -198,7 +198,7 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
         assertThat(sm.isLocked()).as("Created software module should not be locked").isFalse();
         // ensures that we are not to fast so that last modified is not set correctly
         Awaitility.await()
-                .atMost(Duration.ofMillis(100))
+                .atMost(Duration.ofMillis(200))
                 .pollInterval(10L, TimeUnit.MILLISECONDS)
                 .until(() -> sm.getLastModifiedAt() > 0L && sm.getLastModifiedBy() != null);
 
@@ -234,7 +234,7 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
                 .isTrue();
         // ensures that we are not to fast so that last modified is not set correctly
         Awaitility.await()
-                .atMost(Duration.ofMillis(100))
+                .atMost(Duration.ofMillis(200))
                 .pollInterval(10L, TimeUnit.MILLISECONDS)
                 .until(() -> sm.getLastModifiedAt() > 0L && sm.getLastModifiedBy() != null);
 

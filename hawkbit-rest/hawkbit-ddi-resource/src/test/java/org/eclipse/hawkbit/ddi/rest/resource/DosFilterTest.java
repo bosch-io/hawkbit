@@ -127,11 +127,11 @@ class DosFilterTest extends AbstractDDiApiIntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                     .andReturn();
             requests++;
-
+            System.out.println(result.getResponse().getStatus());
             // we give up after 500 requests
             assertThat(requests).isLessThan(500);
         } while (result.getResponse().getStatus() != HttpStatus.TOO_MANY_REQUESTS.value());
-
+        System.out.println(requests);
         // the filter shuts down after 10 POST requests
         assertThat(requests).isGreaterThanOrEqualTo(10);
 
