@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -70,8 +69,9 @@ import org.eclipse.hawkbit.security.SystemSecurityContext;
 import org.eclipse.persistence.descriptors.DescriptorEvent;
 import org.eclipse.persistence.descriptors.DescriptorEventAdapter;
 import org.eclipse.persistence.queries.UpdateObjectQuery;
-import org.hibernate.event.spi.PreUpdateEvent;
-import org.hibernate.event.spi.PreUpdateEventListener;
+import org.hibernate.event.spi.PostUpdateEvent;
+import org.hibernate.event.spi.PostUpdateEventListener;
+import org.hibernate.persister.entity.EntityPersister;
 
 /**
  * JPA implementation of {@link Target}.
@@ -334,7 +334,7 @@ public class JpaTarget extends AbstractJpaNamedEntity implements Target, EventAw
     /**
      * Listens to updates on {@link JpaTarget} entities, Filtering out updates that only change the "lastTargetQuery" or "address" fields.
      */
-    public static class EntityPropertyChangeListener extends DescriptorEventAdapter implements PreUpdateEventListener {
+    public static class EntityPropertyChangeListener extends DescriptorEventAdapter implements PostUpdateEventListener {
 
         private static final List<String> TARGET_UPDATE_EVENT_IGNORE_FIELDS = List.of(
                 "lastTargetQuery", "address", // actual to be skipped
@@ -351,18 +351,38 @@ public class JpaTarget extends AbstractJpaNamedEntity implements Target, EventAw
         }
 
         @Override
-        public boolean onPreUpdate(final PreUpdateEvent event) {
-            final Object[] oldState = event.getOldState();
-            final Object[] newState = event.getState();
-            for (int i = 0; i < newState.length; i++) {
-                if (!Objects.equals(oldState[i], newState[i])) {
-                    final String attribute = event.getPersister().getAttributeMapping(i).getAttributeName();
-                    if (!TARGET_UPDATE_EVENT_IGNORE_FIELDS.contains(attribute)) {
-                        doNotify(() -> ((EventAwareEntity) event.getEntity()).fireUpdateEvent());
-                        break;
-                    }
+        public void onPostUpdate(final PostUpdateEvent event) {
+            boolean lastTargetQueryChanged = false;
+            boolean hasNonIgnoredChanges = false;
+            for (int i : event.getDirtyProperties()) {
+                final String attribute = event.getPersister().getAttributeMapping(i).getAttributeName();
+                if ("lastTargetQuery".equals(attribute)) {
+                    lastTargetQueryChanged = true;
+                } else if (!TARGET_UPDATE_EVENT_IGNORE_FIELDS.contains(attribute)) {
+                    hasNonIgnoredChanges = true;
+                    break;
                 }
             }
+
+            if (hasNonIgnoredChanges || !lastTargetQueryChanged) {
+                doNotify(() -> ((EventAwareEntity) event.getEntity()).fireUpdateEvent());
+            }
+
+//            final Object[] oldState = event.getOldState();
+//            final Object[] newState = event.getState();
+//            for (int i = 0; i < newState.length; i++) {
+//                if (!Objects.equals(oldState[i], newState[i])) {
+//                    final String attribute = event.getPersister().getAttributeMapping(i).getAttributeName();
+//                    if (!TARGET_UPDATE_EVENT_IGNORE_FIELDS.contains(attribute)) {
+//                        doNotify(() -> ((EventAwareEntity) event.getEntity()).fireUpdateEvent());
+//                        break;
+//                    }
+//                }
+//            }
+        }
+
+        @Override
+        public boolean requiresPostCommitHandling(EntityPersister persister) {
             return false;
         }
     }

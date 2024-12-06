@@ -36,6 +36,7 @@ import org.eclipse.hawkbit.repository.exception.InvalidMD5HashException;
 import org.eclipse.hawkbit.repository.exception.InvalidSHA1HashException;
 import org.eclipse.hawkbit.repository.exception.InvalidSHA256HashException;
 import org.eclipse.hawkbit.repository.jpa.EncryptionAwareDbArtifact;
+import org.eclipse.hawkbit.repository.jpa.Jpa;
 import org.eclipse.hawkbit.repository.jpa.JpaManagementHelper;
 import org.eclipse.hawkbit.repository.jpa.acm.AccessController;
 import org.eclipse.hawkbit.repository.jpa.configuration.Constants;
@@ -81,7 +82,8 @@ public class JpaArtifactManagement implements ArtifactManagement {
             final EntityManager entityManager,
             final LocalArtifactRepository localArtifactRepository,
             final SoftwareModuleRepository softwareModuleRepository, @Nullable final ArtifactRepository artifactRepository,
-            final QuotaManagement quotaManagement, final TenantAware tenantAware) {
+            final QuotaManagement quotaManagement,
+            final TenantAware tenantAware) {
         this.entityManager = entityManager;
         this.localArtifactRepository = localArtifactRepository;
         this.softwareModuleRepository = softwareModuleRepository;
@@ -137,15 +139,14 @@ public class JpaArtifactManagement implements ArtifactManagement {
     @Retryable(retryFor = { ConcurrencyFailureException.class }, maxAttempts = Constants.TX_RT_MAX,
             backoff = @Backoff(delay = Constants.TX_RT_DELAY))
     public void delete(final long id) {
-        final JpaArtifact toDelete = (JpaArtifact) get(id)
-                .orElseThrow(() -> new EntityNotFoundException(Artifact.class, id));
+        final JpaArtifact toDelete = (JpaArtifact) get(id).orElseThrow(() -> new EntityNotFoundException(Artifact.class, id));
 
+        final JpaSoftwareModule softwareModule = (JpaSoftwareModule) toDelete.getSoftwareModule();
         // clearArtifactBinary checks (unconditionally) software module UPDATE access
         softwareModuleRepository.getAccessController().ifPresent(accessController ->
-                accessController.assertOperationAllowed(AccessController.Operation.UPDATE,
-                        (JpaSoftwareModule) toDelete.getSoftwareModule()));
-        ((JpaSoftwareModule) toDelete.getSoftwareModule()).removeArtifact(toDelete);
-        softwareModuleRepository.save((JpaSoftwareModule) toDelete.getSoftwareModule());
+                accessController.assertOperationAllowed(AccessController.Operation.UPDATE, softwareModule));
+        softwareModule.removeArtifact(toDelete);
+        softwareModuleRepository.save(softwareModule);
 
         localArtifactRepository.deleteById(id);
         clearArtifactBinary(toDelete.getSha1Hash());
@@ -223,12 +224,14 @@ public class JpaArtifactManagement implements ArtifactManagement {
     void clearArtifactBinary(final String sha1Hash) {
         assertArtifactRepositoryAvailable();
 
-        // countBySha1HashAndTenantAndSoftwareModuleDeletedIsFalse will skip ACM checks and
-        // will return total count as it should be
+        // countBySha1HashAndTenantAndSoftwareModuleDeletedIsFalse will skip ACM checks and will return total count as it should be
         final long count = localArtifactRepository.countBySha1HashAndTenantAndSoftwareModuleDeletedIsFalse(
                 sha1Hash,
                 tenantAware.getCurrentTenant());
-        if (count <= 1) { // 1 artifact is the one being deleted!
+        if (count <= switch (Jpa.JPA_VENDOR) {
+            case HIBERNATE -> 0;
+            case ECLIPSELINK -> 1;
+        }) { // 1 artifact is the one being deleted!
             // removes the real artifact ONLY AFTER the delete of artifact or software module
             // in local history has passed successfully (caller has permission and no errors)
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {

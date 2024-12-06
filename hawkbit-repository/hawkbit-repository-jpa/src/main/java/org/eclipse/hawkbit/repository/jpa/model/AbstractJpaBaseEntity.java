@@ -87,7 +87,7 @@ public abstract class AbstractJpaBaseEntity implements BaseEntity {
         this.createdBy = createdBy;
     }
 
-    // maybe needed to have correct createdBy value in the database
+    @Column(name = "created_by", updatable = false, nullable = false, length = USERNAME_FIELD_LENGTH)
     @Access(AccessType.PROPERTY)
     public String getCreatedBy() {
         return createdBy;
@@ -134,7 +134,7 @@ public abstract class AbstractJpaBaseEntity implements BaseEntity {
         this.lastModifiedAt = lastModifiedAt;
     }
 
-    // property access to make entity manager to detect touch
+    @Column(name = "last_modified_at", nullable = false)
     @Access(AccessType.PROPERTY)
     public long getLastModifiedAt() {
         return lastModifiedAt;
