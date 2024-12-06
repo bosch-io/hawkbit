@@ -23,11 +23,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.eclipse.hawkbit.repository.exception.TenantNotExistException;
+import org.eclipse.hawkbit.repository.jpa.Jpa;
 import org.eclipse.hawkbit.repository.jpa.model.helper.TenantAwareHolder;
 import org.eclipse.hawkbit.repository.model.TenantAwareBaseEntity;
 import org.eclipse.persistence.annotations.Multitenant;
 import org.eclipse.persistence.annotations.MultitenantType;
 import org.eclipse.persistence.annotations.TenantDiscriminatorColumn;
+import org.hibernate.annotations.TenantId;
 
 /**
  * Holder of the base attributes common to all tenant aware entities.
@@ -44,9 +46,10 @@ public abstract class AbstractJpaTenantAwareBaseEntity extends AbstractJpaBaseEn
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @Column(name = "tenant", nullable = false, insertable = false, updatable = false, length = 40)
+    @Column(name = "tenant", nullable = false, insertable = Jpa.TENANT_ID_INSERTABLE, updatable = false, length = 40)
     @Size(min = 1, max = 40)
     @NotNull
+    @TenantId // Hibernate MultiTenant support
     private String tenant;
 
     /**

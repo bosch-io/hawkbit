@@ -25,6 +25,7 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PostUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
@@ -200,6 +201,11 @@ public class JpaRolloutGroup extends AbstractJpaNamedEntity implements RolloutGr
     public void fireDeleteEvent() {
         EventPublisherHolder.getInstance().getEventPublisher().publishEvent(
                 new RolloutGroupDeletedEvent(getTenant(), getId(), getClass(), EventPublisherHolder.getInstance().getApplicationId()));
+    }
+
+    @PostUpdate
+    public void postUpdate() {
+        fireUpdateEvent();
     }
 
     @Converter

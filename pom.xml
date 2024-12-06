@@ -273,6 +273,11 @@
                 <artifactId>license-tool-plugin</artifactId>
             </plugin>
 
+<!--            <plugin>-->
+<!--                <groupId>org.hibernate.orm.tooling</groupId>-->
+<!--                <artifactId>hibernate-enhance-maven-plugin</artifactId>-->
+<!--            </plugin>-->
+
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -450,6 +455,27 @@
                         </execution>
                     </executions>
                 </plugin>
+
+<!--                <plugin>-->
+<!--                    <groupId>org.hibernate.orm.tooling</groupId>-->
+<!--                    <artifactId>hibernate-enhance-maven-plugin</artifactId>-->
+<!--                    <version>${hibernate.version}</version>-->
+<!--                    <executions>-->
+<!--                        <execution>-->
+<!--                            <configuration>-->
+<!--                                &lt;!&ndash;-->
+<!--                                     enableLazyInitialization and enableDirtyTracking enabled by default.-->
+<!--                                     anyway, in future they couldn't be set to false anyway-->
+<!--                                &ndash;&gt;-->
+<!--                                <enableAssociationManagement>false</enableAssociationManagement>-->
+<!--                                <enableExtendedEnhancement>false</enableExtendedEnhancement>-->
+<!--                            </configuration>-->
+<!--                            <goals>-->
+<!--                                <goal>enhance</goal>-->
+<!--                            </goals>-->
+<!--                        </execution>-->
+<!--                    </executions>-->
+<!--                </plugin>-->
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
