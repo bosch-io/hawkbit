@@ -9,6 +9,7 @@
  */
 package org.eclipse.hawkbit.repository.jpa;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,7 @@ import org.eclipse.hawkbit.repository.jpa.builder.JpaTargetBuilder;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaTargetFilterQueryBuilder;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaTargetTypeBuilder;
 import org.eclipse.hawkbit.repository.jpa.configuration.MultiTenantJpaTransactionManager;
+import org.eclipse.hawkbit.repository.jpa.configuration.TenantIdentifier;
 import org.eclipse.hawkbit.repository.jpa.event.JpaEventEntityManager;
 import org.eclipse.hawkbit.repository.jpa.executor.AfterTransactionCommitDefaultServiceExecutor;
 import org.eclipse.hawkbit.repository.jpa.executor.AfterTransactionCommitExecutor;
@@ -167,6 +169,19 @@ import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.tenancy.UserAuthoritiesResolver;
 import org.eclipse.hawkbit.utils.TenantConfigHelper;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.spi.BootstrapContext;
+import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.event.service.spi.EventListenerRegistry;
+import org.hibernate.event.spi.EventType;
+import org.hibernate.event.spi.PostUpdateEvent;
+import org.hibernate.event.spi.PostUpdateEventListener;
+import org.hibernate.integrator.spi.Integrator;
+import org.hibernate.jpa.boot.spi.IntegratorProvider;
+import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.service.spi.SessionFactoryServiceRegistry;
 import org.hibernate.validator.BaseHibernateValidatorConfiguration;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
@@ -194,6 +209,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.orm.jpa.vendor.AbstractJpaVendorAdapter;
 import org.springframework.orm.jpa.vendor.EclipseLinkJpaDialect;
 import org.springframework.orm.jpa.vendor.EclipseLinkJpaVendorAdapter;
+import org.springframework.orm.jpa.vendor.HibernateJpaDialect;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -213,14 +230,18 @@ import org.springframework.validation.beanvalidation.MethodValidationPostProcess
 @EnableRetry
 @EntityScan("org.eclipse.hawkbit.repository.jpa.model")
 @PropertySource("classpath:/hawkbit-jpa-defaults.properties")
-@Import({ RepositoryDefaultConfiguration.class, DataSourceAutoConfiguration.class,
-        SystemManagementCacheKeyGenerator.class })
+@Import({ RepositoryDefaultConfiguration.class, DataSourceAutoConfiguration.class, SystemManagementCacheKeyGenerator.class })
 @AutoConfigureAfter(DataSourceAutoConfiguration.class)
 public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
 
-    protected RepositoryApplicationConfiguration(final DataSource dataSource, final JpaProperties properties,
-            final ObjectProvider<JtaTransactionManager> jtaTransactionManagerProvider) {
+    private final TenantIdentifier tenantIdentifier;
+
+    protected RepositoryApplicationConfiguration(
+            final DataSource dataSource, final JpaProperties properties,
+            final ObjectProvider<JtaTransactionManager> jtaTransactionManagerProvider,
+            final TenantAware tenantAware) {
         super(dataSource, properties, jtaTransactionManagerProvider);
+        tenantIdentifier = new TenantIdentifier(tenantAware);
     }
 
     /**
@@ -234,7 +255,7 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
         // ValidatorFactory shall NOT be closed because after closing the generated Validator
         // methods shall not be called - we need the validator in future
         processor.setValidator(Validation.byDefaultProvider().configure()
-                .addProperty(BaseHibernateValidatorConfiguration.ALLOW_PARALLEL_METHODS_DEFINE_PARAMETER_CONSTRAINTS,"true")
+                .addProperty(BaseHibernateValidatorConfiguration.ALLOW_PARALLEL_METHODS_DEFINE_PARAMETER_CONSTRAINTS, "true")
                 .buildValidatorFactory().getValidator());
         return processor;
     }
@@ -247,21 +268,36 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
      */
     @Override
     @Bean
-    public PlatformTransactionManager transactionManager(
-            final ObjectProvider<TransactionManagerCustomizers> transactionManagerCustomizers) {
+    public PlatformTransactionManager transactionManager(final ObjectProvider<TransactionManagerCustomizers> transactionManagerCustomizers) {
         return new MultiTenantJpaTransactionManager();
+    }
+
+    @Bean
+    CurrentTenantIdentifierResolver<String> currentTenantIdentifierResolver() {
+        return tenantIdentifier;
     }
 
     @Override
     protected AbstractJpaVendorAdapter createJpaVendorAdapter() {
-        return new EclipseLinkJpaVendorAdapter() {
+        return switch (JpaConstants.JPA_VENDOR) {
+            case HIBERNATE -> new HibernateJpaVendorAdapter() {
 
-            private final HawkbitEclipseLinkJpaDialect jpaDialect = new HawkbitEclipseLinkJpaDialect();
+                private final HibernateJpaDialect jpaDialect = new HibernateJpaDialect();
 
-            @Override
-            public EclipseLinkJpaDialect getJpaDialect() {
-                return jpaDialect;
-            }
+                @Override
+                public HibernateJpaDialect getJpaDialect() {
+                    return jpaDialect;
+                }
+            };
+            case ECLIPSELINK -> new EclipseLinkJpaVendorAdapter() {
+
+                private final HawkbitEclipseLinkJpaDialect jpaDialect = new HawkbitEclipseLinkJpaDialect();
+
+                @Override
+                public EclipseLinkJpaDialect getJpaDialect() {
+                    return jpaDialect;
+                }
+            };
         };
     }
 
@@ -282,6 +318,48 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
         properties.put(PersistenceUnitProperties.BATCH_WRITING, "JDBC");
         // Batch size
         properties.put(PersistenceUnitProperties.BATCH_WRITING_SIZE, "500");
+        switch (JpaConstants.JPA_VENDOR) {
+            case HIBERNATE: {
+                properties.put(AvailableSettings.MULTI_TENANT_IDENTIFIER_RESOLVER, tenantIdentifier);
+                properties.put("hibernate.multiTenancy", "DISCRIMINATOR");
+                // LAZY_LOAD - Enable lazy loading of lazy fields when session is closed - N + 1 problem occur.
+                // So it would be good if in future hawkBit run without that
+                // Otherwise, if false, call for the lazy field will throw LazyInitializationException
+                properties.put("hibernate.enable_lazy_load_no_trans", "true");
+                properties.put("hibernate.integrator_provider", (IntegratorProvider) () -> Collections.singletonList(new Integrator() {
+
+                    @Override
+                    public void integrate(
+                            final Metadata metadata, final BootstrapContext bootstrapContext,
+                            final SessionFactoryImplementor sessionFactory) {
+                        final PostUpdateEventListener delegate = new JpaTarget.EntityPropertyChangeListener();
+                        sessionFactory.getServiceRegistry()
+                                .getService(EventListenerRegistry.class)
+                                .appendListeners(EventType.POST_UPDATE, new PostUpdateEventListener() {
+
+                                    @Override
+                                    public void onPostUpdate(final PostUpdateEvent event) {
+                                        if (event.getEntity() instanceof JpaTarget) {
+                                            delegate.onPostUpdate(event);
+                                        }
+                                    }
+
+                                    @Override
+                                    public boolean requiresPostCommitHandling(final EntityPersister persister) {
+                                        return delegate.requiresPostCommitHandling(persister);
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void disintegrate(
+                            final SessionFactoryImplementor sessionFactory, final SessionFactoryServiceRegistry serviceRegistry) {
+                    }
+                }));
+            }
+            case ECLIPSELINK: {
+            }
+        }
         return properties;
     }
 
@@ -357,8 +435,8 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
             final List<RolloutGroupConditionEvaluator<RolloutGroup.RolloutGroupSuccessCondition>> successConditionEvaluators,
             final List<RolloutGroupActionEvaluator<RolloutGroup.RolloutGroupErrorAction>> errorActionEvaluators,
             final List<RolloutGroupActionEvaluator<RolloutGroup.RolloutGroupSuccessAction>> successActionEvaluators) {
-        return new RolloutGroupEvaluationManager(errorConditionEvaluators, successConditionEvaluators,
-                errorActionEvaluators, successActionEvaluators);
+        return new RolloutGroupEvaluationManager(
+                errorConditionEvaluators, successConditionEvaluators, errorActionEvaluators, successActionEvaluators);
     }
 
     @Bean
@@ -696,8 +774,8 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
             final DistributionSetTagRepository distributionSetTagRepository,
             final DistributionSetRepository distributionSetRepository,
             final VirtualPropertyReplacer virtualPropertyReplacer, final JpaProperties properties) {
-        return new JpaDistributionSetTagManagement(distributionSetTagRepository, distributionSetRepository,
-                virtualPropertyReplacer, properties.getDatabase());
+        return new JpaDistributionSetTagManagement(
+                distributionSetTagRepository, distributionSetRepository, virtualPropertyReplacer, properties.getDatabase());
     }
 
     /**
@@ -735,8 +813,7 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
             final SoftwareModuleRepository softwareModuleRepository,
             final JpaProperties properties) {
         return new JpaSoftwareModuleTypeManagement(distributionSetTypeRepository, softwareModuleTypeRepository,
-                virtualPropertyReplacer, softwareModuleRepository,
-                properties.getDatabase());
+                virtualPropertyReplacer, softwareModuleRepository, properties.getDatabase());
     }
 
     @Bean
@@ -744,8 +821,7 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
     RolloutHandler rolloutHandler(final TenantAware tenantAware, final RolloutManagement rolloutManagement,
             final RolloutExecutor rolloutExecutor, final LockRegistry lockRegistry,
             final PlatformTransactionManager txManager, final ContextAware contextAware) {
-        return new JpaRolloutHandler(tenantAware, rolloutManagement, rolloutExecutor, lockRegistry, txManager,
-                contextAware);
+        return new JpaRolloutHandler(tenantAware, rolloutManagement, rolloutExecutor, lockRegistry, txManager, contextAware);
     }
 
     @Bean
@@ -777,8 +853,7 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
             final ContextAware contextAware) {
         return new JpaRolloutManagement(targetManagement, distributionSetManagement, eventPublisherHolder,
                 virtualPropertyReplacer, properties.getDatabase(), rolloutApprovalStrategy,
-                tenantConfigurationManagement, systemSecurityContext,
-                contextAware);
+                tenantConfigurationManagement, systemSecurityContext, contextAware);
     }
 
     /**
@@ -863,7 +938,8 @@ public class RepositoryApplicationConfiguration extends JpaBaseConfiguration {
             final EntityManager entityManager, final LocalArtifactRepository localArtifactRepository,
             final SoftwareModuleRepository softwareModuleRepository, final Optional<ArtifactRepository> artifactRepository,
             final QuotaManagement quotaManagement, final TenantAware tenantAware) {
-        return new JpaArtifactManagement(entityManager, localArtifactRepository, softwareModuleRepository, artifactRepository.orElse(null),
+        return new JpaArtifactManagement(
+                entityManager, localArtifactRepository, softwareModuleRepository, artifactRepository.orElse(null),
                 quotaManagement, tenantAware);
     }
 

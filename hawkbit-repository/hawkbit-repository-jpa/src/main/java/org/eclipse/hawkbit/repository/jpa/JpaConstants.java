@@ -16,5 +16,8 @@ public class JpaConstants {
         HIBERNATE // NOT SUPPORTED!
     }
 
-    public static final JpaVendor JPA_VENDOR = JpaVendor.ECLIPSELINK;
+    public static final JpaVendor JPA_VENDOR = JpaVendor.HIBERNATE;
+    public static final boolean TENANT_ID_INSERTABLE = true;
+//    public static final JpaVendor JPA_VENDOR = JpaVendor.ECLIPSELINK;
+//    public static final boolean TENANT_ID_INSERTABLE = false;
 }

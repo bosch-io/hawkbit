@@ -105,7 +105,8 @@ public interface RolloutManagement {
      *         exceeded.
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_ROLLOUT_MANAGEMENT_CREATE)
-    Rollout create(@NotNull @Valid RolloutCreate create, int amountGroup, boolean confirmationRequired,
+    Rollout create(
+            @NotNull @Valid RolloutCreate create, int amountGroup, boolean confirmationRequired,
             @NotNull RolloutGroupConditions conditions, DynamicRolloutGroupTemplate dynamicRolloutGroupTemplate);
 
     /**
@@ -413,5 +414,4 @@ public interface RolloutManagement {
      */
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_ROLLOUT_MANAGEMENT_UPDATE)
     void setRolloutStatusDetails(final Slice<Rollout> rollouts);
-
 }
