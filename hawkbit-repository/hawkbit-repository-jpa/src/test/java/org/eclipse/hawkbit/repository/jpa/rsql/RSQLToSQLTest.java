@@ -49,6 +49,11 @@ public class RSQLToSQLTest {
     }
 
     @Test
+    public void printSameTableMultiJoin() {
+        print(JpaTarget.class, TargetFields.class, "installedds.version==1.0.0 or assignedds.version==2.0.0");
+    }
+
+    @Test
     public void printPG() {
         printFrom(JpaTarget.class, TargetFields.class, "tag!=TAG1 and tag==TAG2");
         printFrom(JpaTarget.class, TargetFields.class, "tag==TAG1 and tag!=TAG2");
