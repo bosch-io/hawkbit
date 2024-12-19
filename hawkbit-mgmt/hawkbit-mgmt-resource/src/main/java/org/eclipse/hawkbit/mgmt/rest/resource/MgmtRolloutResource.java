@@ -121,43 +121,48 @@ public class MgmtRolloutResource implements MgmtRolloutRestApi {
 
     @Override
     public ResponseEntity<MgmtRolloutResponseBody> create(final MgmtRolloutRestRequestBodyPost rolloutRequestBody) {
-        // first check the given RSQL query if it's well-formed, otherwise and exception is thrown
-        final String targetFilterQuery = rolloutRequestBody.getTargetFilterQuery();
-        if (targetFilterQuery == null) {
-            // Use RSQLParameterSyntaxException due to backwards compatibility
-            throw new RSQLParameterSyntaxException("Cannot create a Rollout with an empty target query filter!");
-        }
-        targetFilterQueryManagement.verifyTargetFilterQuerySyntax(targetFilterQuery);
-        final DistributionSet distributionSet = distributionSetManagement
-                .getValidAndComplete(rolloutRequestBody.getDistributionSetId());
-        final RolloutGroupConditions rolloutGroupConditions = MgmtRolloutMapper.fromRequest(rolloutRequestBody, true);
-        final RolloutCreate create = MgmtRolloutMapper.fromRequest(entityFactory, rolloutRequestBody, distributionSet);
-        final boolean confirmationFlowActive = tenantConfigHelper.isConfirmationFlowEnabled();
-
         final Rollout rollout;
-        if (rolloutRequestBody.getGroups() != null) {
-            if (rolloutRequestBody.isDynamic()) {
-                throw new ValidationException("Dynamic rollouts are not supported with groups");
+        try {
+            // first check the given RSQL query if it's well-formed, otherwise and exception is thrown
+            final String targetFilterQuery = rolloutRequestBody.getTargetFilterQuery();
+            if (targetFilterQuery == null) {
+                // Use RSQLParameterSyntaxException due to backwards compatibility
+                throw new RSQLParameterSyntaxException("Cannot create a Rollout with an empty target query filter!");
             }
-            if (rolloutRequestBody.getAmountGroups() != null) {
+            targetFilterQueryManagement.verifyTargetFilterQuerySyntax(targetFilterQuery);
+            final DistributionSet distributionSet = distributionSetManagement
+                    .getValidAndComplete(rolloutRequestBody.getDistributionSetId());
+            final RolloutGroupConditions rolloutGroupConditions = MgmtRolloutMapper.fromRequest(rolloutRequestBody, true);
+            final RolloutCreate create = MgmtRolloutMapper.fromRequest(entityFactory, rolloutRequestBody, distributionSet);
+            final boolean confirmationFlowActive = tenantConfigHelper.isConfirmationFlowEnabled();
+
+            if (rolloutRequestBody.getGroups() != null) {
+                if (rolloutRequestBody.isDynamic()) {
+                    throw new ValidationException("Dynamic rollouts are not supported with groups");
+                }
+                if (rolloutRequestBody.getAmountGroups() != null) {
+                    throw new ValidationException("Either 'amountGroups' or 'groups' must be defined in the request");
+                }
+                final List<RolloutGroupCreate> rolloutGroups = rolloutRequestBody.getGroups().stream()
+                        .map(mgmtRolloutGroup -> {
+                            final boolean confirmationRequired = isConfirmationRequiredForGroup(mgmtRolloutGroup,
+                                    rolloutRequestBody).orElse(confirmationFlowActive);
+                            return MgmtRolloutMapper.fromRequest(entityFactory, mgmtRolloutGroup)
+                                    .confirmationRequired(confirmationRequired);
+                        }).collect(Collectors.toList());
+                rollout = rolloutManagement.create(create, rolloutGroups, rolloutGroupConditions);
+            } else if (rolloutRequestBody.getAmountGroups() != null) {
+                final boolean confirmationRequired = rolloutRequestBody.getConfirmationRequired() == null
+                        ? confirmationFlowActive
+                        : rolloutRequestBody.getConfirmationRequired();
+                rollout = rolloutManagement.create(create, rolloutRequestBody.getAmountGroups(), confirmationRequired,
+                        rolloutGroupConditions, MgmtRolloutMapper.fromRequest(rolloutRequestBody.getDynamicGroupTemplate()));
+            } else {
                 throw new ValidationException("Either 'amountGroups' or 'groups' must be defined in the request");
             }
-            final List<RolloutGroupCreate> rolloutGroups = rolloutRequestBody.getGroups().stream()
-                    .map(mgmtRolloutGroup -> {
-                        final boolean confirmationRequired = isConfirmationRequiredForGroup(mgmtRolloutGroup,
-                                rolloutRequestBody).orElse(confirmationFlowActive);
-                        return MgmtRolloutMapper.fromRequest(entityFactory, mgmtRolloutGroup)
-                                .confirmationRequired(confirmationRequired);
-                    }).collect(Collectors.toList());
-            rollout = rolloutManagement.create(create, rolloutGroups, rolloutGroupConditions);
-        } else if (rolloutRequestBody.getAmountGroups() != null) {
-            final boolean confirmationRequired = rolloutRequestBody.getConfirmationRequired() == null
-                    ? confirmationFlowActive
-                    : rolloutRequestBody.getConfirmationRequired();
-            rollout = rolloutManagement.create(create, rolloutRequestBody.getAmountGroups(), confirmationRequired,
-                    rolloutGroupConditions, MgmtRolloutMapper.fromRequest(rolloutRequestBody.getDynamicGroupTemplate()));
-        } else {
-            throw new ValidationException("Either 'amountGroups' or 'groups' must be defined in the request");
+        } catch (Exception ex) {
+            log.error("Failed to create rollout", ex);
+            throw ex;
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(MgmtRolloutMapper.toResponseRollout(rollout, true));
