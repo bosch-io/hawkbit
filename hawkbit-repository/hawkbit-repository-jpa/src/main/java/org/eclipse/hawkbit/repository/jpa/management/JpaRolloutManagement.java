@@ -22,6 +22,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.turkraft.springfilter.builder.FilterBuilder;
+import com.turkraft.springfilter.converter.FilterSpecification;
+import com.turkraft.springfilter.converter.FilterSpecificationConverter;
+import com.turkraft.springfilter.converter.FilterSpecificationConverterImpl;
 import jakarta.validation.ConstraintDeclarationException;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
@@ -134,6 +138,8 @@ public class JpaRolloutManagement implements RolloutManagement {
     private RolloutStatusCache rolloutStatusCache;
     @Autowired
     private StartNextGroupRolloutGroupSuccessAction startNextRolloutGroupAction;
+    @Autowired
+    private FilterSpecificationConverter filterSpecificationConverter;
 
     public JpaRolloutManagement(final TargetManagement targetManagement,
             final DistributionSetManagement distributionSetManagement, final EventPublisherHolder eventPublisherHolder,
@@ -160,6 +166,15 @@ public class JpaRolloutManagement implements RolloutManagement {
     public void publishRolloutGroupCreatedEventAfterCommit(final RolloutGroup group, final Rollout rollout) {
         afterCommit.afterCommit(() -> eventPublisherHolder.getEventPublisher().publishEvent(
                 new RolloutGroupCreatedEvent(group, rollout.getId(), eventPublisherHolder.getApplicationId())));
+    }
+
+    @Override
+    public Page<Rollout> findAll(Pageable pageable, String query) {
+
+        FilterSpecification<JpaRollout> spec = filterSpecificationConverter.convert(query);
+        return JpaManagementHelper.convertPage(
+                rolloutRepository.findAll(spec, pageable), pageable);
+
     }
 
     @Override

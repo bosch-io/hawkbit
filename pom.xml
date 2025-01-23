@@ -702,6 +702,12 @@
                 <artifactId>rsql-parser</artifactId>
                 <version>${rsql-parser.version}</version>
             </dependency>
+            <!-- Spring filter experimental  -->
+            <dependency>
+                <groupId>com.turkraft.springfilter</groupId>
+                <artifactId>jpa</artifactId>
+                <version>3.1.9</version>
+            </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>

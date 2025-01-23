@@ -26,6 +26,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.turkraft.springfilter.converter.FilterSpecification;
+import com.turkraft.springfilter.converter.FilterSpecificationConverter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -52,6 +54,7 @@ import org.eclipse.hawkbit.repository.jpa.acm.AccessController;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaTargetCreate;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaTargetUpdate;
 import org.eclipse.hawkbit.repository.jpa.configuration.Constants;
+import org.eclipse.hawkbit.repository.jpa.model.JpaRollout;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTarget;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetMetadata;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetMetadata_;
@@ -84,6 +87,7 @@ import org.eclipse.hawkbit.repository.model.TargetUpdateStatus;
 import org.eclipse.hawkbit.repository.model.helper.EventPublisherHolder;
 import org.eclipse.hawkbit.repository.rsql.VirtualPropertyReplacer;
 import org.eclipse.hawkbit.tenancy.TenantAware;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -128,6 +132,9 @@ public class JpaTargetManagement implements TargetManagement {
     private final VirtualPropertyReplacer virtualPropertyReplacer;
 
     private final Database database;
+
+    @Autowired
+    FilterSpecificationConverter filterSpecificationConverter;
 
     public JpaTargetManagement(final EntityManager entityManager,
             final DistributionSetManagement distributionSetManagement, final QuotaManagement quotaManagement,
@@ -451,6 +458,13 @@ public class JpaTargetManagement implements TargetManagement {
     @Override
     public Slice<Target> findAll(final Pageable pageable) {
         return targetRepository.findAllWithoutCount(pageable).map(Target.class::cast);
+    }
+
+    @Override
+    public Page<Target> findAll(Pageable pageable, String filter) {
+        FilterSpecification<JpaTarget> spec = filterSpecificationConverter.convert(filter);
+        return JpaManagementHelper.convertPage(
+                targetRepository.findAll(spec, pageable), pageable);
     }
 
     @Override

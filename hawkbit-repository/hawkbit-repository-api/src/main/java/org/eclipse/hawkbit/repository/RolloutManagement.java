@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import com.turkraft.springfilter.converter.FilterSpecification;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -47,6 +48,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
  * {@link PreAuthorize} annotation on methods.
  */
 public interface RolloutManagement {
+
+    Page<Rollout> findAll(@NotNull Pageable pageable, String query);
+
 
     /**
      * Counts all {@link Rollout}s in the repository that are not marked as deleted.

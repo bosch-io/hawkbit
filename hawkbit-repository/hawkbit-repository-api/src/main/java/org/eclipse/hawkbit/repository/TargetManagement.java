@@ -456,6 +456,8 @@ public interface TargetManagement {
     @PreAuthorize(SpringEvalExpressions.HAS_AUTH_READ_TARGET)
     Slice<Target> findAll(@NotNull Pageable pageable);
 
+    Page<Target> findAll(@NotNull Pageable pageable, String filter);
+
     /**
      * Retrieves all targets.
      *
