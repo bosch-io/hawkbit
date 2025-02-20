@@ -19,7 +19,7 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomi
  * {@link CurrentTenantIdentifierResolver} and {@link HibernatePropertiesCustomizer} that resolves the
  * {@link TenantAware#getCurrentTenant()} for hibernate.
  */
-class TenantIdentifier implements CurrentTenantIdentifierResolver<String> {
+public class TenantIdentifier implements CurrentTenantIdentifierResolver<String> {
 
     private final TenantAware.TenantResolver tenantResolver;
 

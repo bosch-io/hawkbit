@@ -15,6 +15,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.eclipse.hawkbit.repository.jpa.model.AuditPreInsertEventListener;
+import org.eclipse.hawkbit.repository.jpa.model.AuditPreUpdateEventListener;
 import org.eclipse.hawkbit.repository.jpa.model.EntityPropertyChangeListener;
 
 import org.eclipse.hawkbit.tenancy.TenantAware;
@@ -92,9 +94,14 @@ public class JpaConfiguration extends JpaBaseConfiguration {
             public void integrate(
                     final Metadata metadata, final BootstrapContext bootstrapContext,
                     final SessionFactoryImplementor sessionFactory) {
-                sessionFactory.getServiceRegistry()
-                        .getService(EventListenerRegistry.class)
-                        .appendListeners(EventType.POST_UPDATE, new EntityPropertyChangeListener());
+                EventListenerRegistry registry = sessionFactory.getServiceRegistry()
+                    .getService(EventListenerRegistry.class);
+                if (registry != null) {
+                    registry.appendListeners(EventType.POST_UPDATE, new EntityPropertyChangeListener());
+                    registry.appendListeners(EventType.PRE_INSERT, new AuditPreInsertEventListener(tenantIdentifier));
+                    registry.appendListeners(EventType.PRE_UPDATE, new AuditPreUpdateEventListener());
+                }
+
             }
 
             @Override
