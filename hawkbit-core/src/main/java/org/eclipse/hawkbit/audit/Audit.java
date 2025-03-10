@@ -5,11 +5,11 @@ import org.slf4j.LoggerFactory;
 
 public class Audit {
 
-    private static AuditContextProvider.AuditContext AUDIT_CONTEXT = new AuditContextProvider().getAuditContext();
+    private static final AuditContextProvider AUDIT_CONTEXT_PROVIDER = new AuditContextProvider();
     private Audit() {}
 
     public static void logMessage(String entity, String message, AuditLog.Level level) {
-        logMessage(AUDIT_CONTEXT.tenant(), AUDIT_CONTEXT.username(), entity , message, level);
+        logMessage(AUDIT_CONTEXT_PROVIDER.getAuditContext().tenant(), AUDIT_CONTEXT_PROVIDER.getAuditContext().username(), entity , message, level);
     }
 
     public static void logMessage(String tenant, String username, String entity, String message, AuditLog.Level level) {

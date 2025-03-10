@@ -16,7 +16,7 @@ import java.util.stream.IntStream;
 @Aspect
 @Component
 public class AuditLoggingAspect {
-    AuditContextProvider.AuditContext auditContext = new AuditContextProvider().getAuditContext();
+    AuditContextProvider auditContextProvider = new AuditContextProvider();
 
     /**
      * Around advice that applies to methods annotated with @AuditLog.
@@ -24,16 +24,18 @@ public class AuditLoggingAspect {
      */
     @Around("@annotation(auditLog)")
     public Object handleAuditLogging(ProceedingJoinPoint joinPoint, AuditLog auditLog) throws Throwable {
-
         String logUUID = UUID.randomUUID().toString();
-        logAudit(logUUID, joinPoint, auditLog);
-
-        Object result = joinPoint.proceed();
-
-        if (auditLog.logResponse()) {
-            logAuditWithResponse(logUUID, joinPoint, auditLog, result);
+        try {
+            logAudit(logUUID, joinPoint, auditLog);
+            Object result = joinPoint.proceed();
+            if (auditLog.logResponse()) {
+                logAuditWithResponse(logUUID, joinPoint, auditLog, result);
+            }
+            return result;
+        } catch (Throwable t) {
+            logAuditWithResponse(logUUID, joinPoint, auditLog, t.getMessage());
+            throw t;
         }
-        return result;
     }
 
     /**
@@ -42,8 +44,8 @@ public class AuditLoggingAspect {
     private void logAudit(String logUUID, JoinPoint joinPoint, AuditLog auditLog) {
         String methodName = joinPoint.getSignature().getName();
         String params = getParamsToLog(joinPoint, auditLog);
-        String username = auditContext.username();
-        String tenant = auditContext.tenant();
+        String username = auditContextProvider.getAuditContext().username();
+        String tenant = auditContextProvider.getAuditContext().tenant();
 
         String requestLog = String.format(
             "[Log UUID: %s], Method: %s - Message: %s - Parameters: %s",
@@ -58,8 +60,8 @@ public class AuditLoggingAspect {
     private void logAuditWithResponse(String logUUID, JoinPoint joinPoint, AuditLog auditLog, Object result) {
         String methodName = joinPoint.getSignature().getName();
         String params = getParamsToLog(joinPoint, auditLog);
-        String username = auditContext.username();
-        String tenant = auditContext.tenant();
+        String username = auditContextProvider.getAuditContext().username();
+        String tenant = auditContextProvider.getAuditContext().tenant();
 
         String logMessage = String.format(
             "[Log UUID: %s], Method: %s - Message: %s - Parameters: %s - Response: %s",
