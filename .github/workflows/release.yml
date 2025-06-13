@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  # enable running the workflow manually
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: 'Release version'
+        required: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      rabbitmq:
+        image: rabbitmq:3-management-alpine
+        env:
+          RABBITMQ_DEFAULT_VHOST: /
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        ports:
+          - 15672:15672
+          - 5672:5672
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+          cache: 'maven'
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Prepare keyring
+        run: |
+          export GPG_TTY=$(tty)
+          gpg --batch --import "${GPG_PRIVATE_KEY}"
+          for fpr in $(gpg --list-keys --with-colons  | awk -F: '/fpr:/ {print $10}' | sort -u);
+          do
+            echo -e "5\ny\n" |  gpg --batch --command-fd 0 --expert --edit-key $fpr trust;
+          done
+
+      # Verify
+      - name: Check file license headers
+        run: mvn license:check -Plicense --batch-mode
+      - name: Run tests & javadoc
+        run: mvn clean verify javadoc:jar --batch-mode
+      # Deploy and tag
+      - name: Deploy
+        run: mvn deploy -DskipTests -Dadditionalparam=-Xdoclint:none -Drevision=${{ github.event.inputs.revision }} -B -Plicense -Ppublish --batch-mode
+      - name: Tag release
+        run: |
+          REVISION=${{ github.event.inputs.revision }}
+          git tag -a ${REVISION} -m "Release version ${REVISION}"
+          git push origin ${REVISION}
