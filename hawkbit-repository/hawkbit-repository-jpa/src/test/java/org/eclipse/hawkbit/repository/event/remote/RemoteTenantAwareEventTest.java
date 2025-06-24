@@ -20,6 +20,8 @@ import org.eclipse.hawkbit.repository.model.Action.Status;
 import org.eclipse.hawkbit.repository.model.ActionProperties;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 /**
  * Feature: Component Tests - Repository<br/>
@@ -29,6 +31,9 @@ class RemoteTenantAwareEventTest extends AbstractRemoteEventTest {
 
     private static final String TENANT_DEFAULT = "DEFAULT";
     private static final String APPLICATION_ID_DEFAULT = "Node";
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     /**
      * Verifies that a testMultiActionAssignEvent can be properly serialized and deserialized
@@ -104,7 +109,7 @@ class RemoteTenantAwareEventTest extends AbstractRemoteEventTest {
         final Action action = actionRepository.save(generateAction);
 
         final TargetAssignDistributionSetEvent assignmentEvent = new TargetAssignDistributionSetEvent(
-                action.getTenant(), dsA.getId(), List.of(action), serviceMatcher.getBusId(),
+                action.getTenant(), dsA.getId(), List.of(action), applicationContext.getId(),
                 action.isMaintenanceWindowAvailable());
 
         final TargetAssignDistributionSetEvent remoteEventProtoStuff = createProtoStuffEvent(assignmentEvent);
@@ -133,7 +138,7 @@ class RemoteTenantAwareEventTest extends AbstractRemoteEventTest {
         final Action action = actionRepository.save(generateAction);
 
         final CancelTargetAssignmentEvent cancelEvent = new CancelTargetAssignmentEvent(action,
-                serviceMatcher.getBusId());
+                applicationContext.getId());
 
         final CancelTargetAssignmentEvent remoteEventProtoStuff = createProtoStuffEvent(cancelEvent);
         assertCancelTargetAssignmentEvent(action, remoteEventProtoStuff);

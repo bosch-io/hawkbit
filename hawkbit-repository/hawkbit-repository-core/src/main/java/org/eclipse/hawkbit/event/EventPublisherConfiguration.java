@@ -10,10 +10,12 @@
 package org.eclipse.hawkbit.event;
 
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 import io.protostuff.ProtostuffIOUtil;
 import io.protostuff.Schema;
 import org.eclipse.hawkbit.repository.event.ApplicationEventFilter;
+import org.eclipse.hawkbit.repository.event.remote.AbstractRemoteEvent;
 import org.eclipse.hawkbit.repository.event.remote.RemoteTenantAwareEvent;
 import org.eclipse.hawkbit.repository.model.helper.EventPublisherHolder;
 import org.eclipse.hawkbit.security.SystemSecurityContext;
@@ -21,15 +23,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.bus.BusProperties;
-import org.springframework.cloud.bus.ConditionalOnBusEnabled;
-import org.springframework.cloud.bus.ServiceMatcher;
-import org.springframework.cloud.bus.jackson.RemoteApplicationEventScan;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.context.support.AbstractApplicationContext;
@@ -40,9 +40,7 @@ import org.springframework.messaging.converter.MessageConverter;
  * Autoconfiguration for the event bus.
  */
 @Configuration
-@RemoteApplicationEventScan(basePackages = "org.eclipse.hawkbit.repository.event.remote")
-@PropertySource("classpath:/hawkbit-eventbus-defaults.properties")
-@EnableConfigurationProperties(BusProperties.class)
+@EnableConfigurationProperties(EventsProperties.class)
 public class EventPublisherConfiguration {
 
     /**
@@ -67,8 +65,15 @@ public class EventPublisherConfiguration {
      * @return the singleton instance of the {@link EventPublisherHolder}
      */
     @Bean
-    EventPublisherHolder eventBusHolder() {
-        return EventPublisherHolder.getInstance();
+    public EventPublisherHolder eventPublisherHolder(
+            final ApplicationEventPublisher fallbackPublisher,
+            @Autowired(required = false)
+            final StreamBridge streamBridge,
+            final EventsProperties eventsProperties
+            ) {
+        EventPublisherHolder eventPublisherHolder = EventPublisherHolder.getInstance();
+        eventPublisherHolder.setApplicationEventPublisher(new RoutingEventPublisher(streamBridge, fallbackPublisher, eventsProperties));
+        return eventPublisherHolder;
     }
 
     /**
@@ -85,17 +90,10 @@ public class EventPublisherConfiguration {
         private final SystemSecurityContext systemSecurityContext;
         private final ApplicationEventFilter applicationEventFilter;
 
-        private ServiceMatcher serviceMatcher;
-
         protected TenantAwareApplicationEventPublisher(
                 final SystemSecurityContext systemSecurityContext, final ApplicationEventFilter applicationEventFilter) {
             this.systemSecurityContext = systemSecurityContext;
             this.applicationEventFilter = applicationEventFilter;
-        }
-
-        @Autowired(required = false)
-        public void setServiceMatcher(final ServiceMatcher serviceMatcher) {
-            this.serviceMatcher = serviceMatcher;
         }
 
         /**
@@ -107,12 +105,7 @@ public class EventPublisherConfiguration {
                 return;
             }
 
-            if (serviceMatcher == null || !(event instanceof final RemoteTenantAwareEvent remoteEvent)) {
-                super.multicastEvent(event, eventType);
-                return;
-            }
-
-            if (serviceMatcher.isFromSelf(remoteEvent)) {
+            if (!(event instanceof final RemoteTenantAwareEvent remoteEvent)) {
                 super.multicastEvent(event, eventType);
                 return;
             }
@@ -124,7 +117,12 @@ public class EventPublisherConfiguration {
         }
     }
 
-    @ConditionalOnBusEnabled
+    @Bean
+    @ConditionalOnProperty(name = "org.eclipse.hawkbit.events.remote-enabled", havingValue = "true")
+    public Consumer<AbstractRemoteEvent> remoteEventConsumer(ApplicationEventPublisher publisher) {
+        return publisher::publishEvent;
+    }
+
     @ConditionalOnClass({ Schema.class, ProtostuffIOUtil.class })
     protected static class BusProtoStuffAutoConfiguration {
 
@@ -132,8 +130,8 @@ public class EventPublisherConfiguration {
          * @return the protostuff io message converter
          */
         @Bean
-        public MessageConverter busProtoBufConverter() {
-            return new BusProtoStuffMessageConverter();
+        public MessageConverter eventProtoBufConverter() {
+            return new EventProtoStuffMessageConverter();
         }
     }
 }

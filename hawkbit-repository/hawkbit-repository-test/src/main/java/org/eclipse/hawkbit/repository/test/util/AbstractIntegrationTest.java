@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.hawkbit.artifact.repository.ArtifactRepository;
 import org.eclipse.hawkbit.artifact.repository.ArtifactStoreException;
-import org.eclipse.hawkbit.cache.TenantAwareCacheManager;
 import org.eclipse.hawkbit.repository.ArtifactManagement;
 import org.eclipse.hawkbit.repository.ConfirmationManagement;
 import org.eclipse.hawkbit.repository.ControllerManagement;
@@ -72,7 +71,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.bus.ServiceMatcher;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
@@ -169,8 +167,6 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected ArtifactRepository binaryArtifactRepository;
     @Autowired
-    protected TenantAwareCacheManager cacheManager;
-    @Autowired
     protected QuotaManagement quotaManagement;
 
     protected SoftwareModuleType osType;
@@ -181,8 +177,6 @@ public abstract class AbstractIntegrationTest {
 
     @Autowired
     protected TestdataFactory testdataFactory;
-    @Autowired
-    protected ServiceMatcher serviceMatcher;
     @Autowired
     protected ApplicationEventPublisher eventPublisher;
     private static final String ARTIFACT_DIRECTORY = createTempDir().getAbsolutePath() + "/" + randomString(20);

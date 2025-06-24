@@ -73,8 +73,7 @@ import org.eclipse.hawkbit.security.HawkbitSecurityProperties;
 import org.eclipse.hawkbit.tenancy.TenantAware;
 import org.eclipse.hawkbit.util.IpUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.bus.BusProperties;
-import org.springframework.cloud.bus.ServiceMatcher;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
@@ -110,18 +109,17 @@ public class DdiRootController implements DdiRootControllerRestApi {
     private final ArtifactUrlHandler artifactUrlHandler;
     private final SystemManagement systemManagement;
     private final ApplicationEventPublisher eventPublisher;
-    private final BusProperties bus;
     private final HawkbitSecurityProperties securityProperties;
     private final TenantAware tenantAware;
     private final EntityFactory entityFactory;
-    private ServiceMatcher serviceMatcher;
+    private ApplicationContext applicationContext;
 
     @SuppressWarnings("java:S107")
     public DdiRootController(
             final ControllerManagement controllerManagement, final ConfirmationManagement confirmationManagement,
             final ArtifactManagement artifactManagement, final ArtifactUrlHandler artifactUrlHandler,
             final SystemManagement systemManagement,
-            final ApplicationEventPublisher eventPublisher, final BusProperties bus,
+            final ApplicationEventPublisher eventPublisher,
             final HawkbitSecurityProperties securityProperties, final TenantAware tenantAware, final EntityFactory entityFactory) {
         this.controllerManagement = controllerManagement;
         this.confirmationManagement = confirmationManagement;
@@ -129,15 +127,9 @@ public class DdiRootController implements DdiRootControllerRestApi {
         this.artifactUrlHandler = artifactUrlHandler;
         this.systemManagement = systemManagement;
         this.eventPublisher = eventPublisher;
-        this.bus = bus;
         this.securityProperties = securityProperties;
         this.tenantAware = tenantAware;
         this.entityFactory = entityFactory;
-    }
-
-    @Autowired(required = false)
-    public void setServiceMatcher(final ServiceMatcher serviceMatcher) {
-        this.serviceMatcher = serviceMatcher;
     }
 
     @Override
@@ -212,8 +204,7 @@ public class DdiRootController implements DdiRootControllerRestApi {
                         (length, shippedSinceLastEvent, total) -> {
                             if (actionStatus != null) {
                                 eventPublisher.publishEvent(new DownloadProgressEvent(
-                                        tenantAware.getCurrentTenant(), actionStatus.getId(), shippedSinceLastEvent,
-                                        serviceMatcher != null ? serviceMatcher.getBusId() : bus.getId()));
+                                        tenantAware.getCurrentTenant(), actionStatus.getId(), shippedSinceLastEvent, applicationContext.getId()));
                             }
                         });
             }
@@ -787,5 +778,10 @@ public class DdiRootController implements DdiRootControllerRestApi {
             log.trace("Returning state auto-conf state disabled for device {}", controllerId);
             return new DdiAutoConfirmationState(false, null, null, 0L);
         });
+    }
+
+    @Autowired
+    private void setApplicationContext(final ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 }

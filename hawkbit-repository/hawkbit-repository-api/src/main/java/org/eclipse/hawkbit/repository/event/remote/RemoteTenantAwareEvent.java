@@ -18,7 +18,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.eclipse.hawkbit.repository.event.TenantAwareEvent;
-import org.springframework.cloud.bus.event.RemoteApplicationEvent;
 
 /**
  * A distributed tenant aware event. It's the base class of the other
@@ -29,7 +28,7 @@ import org.springframework.cloud.bus.event.RemoteApplicationEvent;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // for serialization libs like jackson
-public class RemoteTenantAwareEvent extends RemoteApplicationEvent implements TenantAwareEvent {
+public class RemoteTenantAwareEvent extends AbstractRemoteEvent implements TenantAwareEvent {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -45,7 +44,7 @@ public class RemoteTenantAwareEvent extends RemoteApplicationEvent implements Te
      */
     public RemoteTenantAwareEvent(final Object source, final String tenant, final String applicationId) {
         // due to a bug in Spring Cloud, we cannot pass null for applicationId
-        super(source, applicationId != null ? applicationId : StringUtils.EMPTY, DEFAULT_DESTINATION_FACTORY.getDestination(null));
+        super(source, applicationId != null ? applicationId : StringUtils.EMPTY);
         this.tenant = tenant;
     }
 }

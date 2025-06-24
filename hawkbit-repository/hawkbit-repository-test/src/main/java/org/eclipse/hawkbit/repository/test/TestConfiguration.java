@@ -23,7 +23,7 @@ import org.eclipse.hawkbit.artifact.repository.ArtifactRepository;
 import org.eclipse.hawkbit.artifact.repository.urlhandler.ArtifactUrlHandlerProperties;
 import org.eclipse.hawkbit.artifact.repository.urlhandler.PropertyBasedArtifactUrlHandler;
 import org.eclipse.hawkbit.cache.TenantAwareCacheManager;
-import org.eclipse.hawkbit.event.BusProtoStuffMessageConverter;
+import org.eclipse.hawkbit.event.EventProtoStuffMessageConverter;
 import org.eclipse.hawkbit.im.authentication.SpRole;
 import org.eclipse.hawkbit.repository.ArtifactManagement;
 import org.eclipse.hawkbit.repository.ControllerManagement;
@@ -69,7 +69,6 @@ import org.springframework.aop.interceptor.SimpleAsyncUncaughtExceptionHandler;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
-import org.springframework.cloud.bus.ConditionalOnBusEnabled;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -245,14 +244,13 @@ public class TestConfiguration implements AsyncConfigurer {
         return new RolloutTestApprovalStrategy();
     }
 
-    /**
-     * @return the protostuff io message converter
-     */
-    @Bean
-    @ConditionalOnBusEnabled
-    MessageConverter busProtoBufConverter() {
-        return new BusProtoStuffMessageConverter();
-    }
+//    /**
+//     * @return the protostuff io message converter
+//     */
+//    @Bean
+//    MessageConverter busProtoBufConverter() {
+//        return new EventProtoStuffMessageConverter();
+//    }
 
     private static class FilterEnabledApplicationEventPublisher extends SimpleApplicationEventMulticaster {
 

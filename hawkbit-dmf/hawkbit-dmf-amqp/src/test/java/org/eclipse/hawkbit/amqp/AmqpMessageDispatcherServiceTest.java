@@ -58,7 +58,9 @@ import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.AbstractJavaTypeMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles({ "test" })
@@ -80,6 +82,8 @@ class AmqpMessageDispatcherServiceTest extends AbstractIntegrationTest {
     private RabbitTemplate rabbitTemplate;
     private DefaultAmqpMessageSenderService senderService;
     private Target testTarget;
+    @Autowired
+    ApplicationContext applicationContext;
 
     @BeforeEach
     public void beforeEach() {
@@ -104,7 +108,7 @@ class AmqpMessageDispatcherServiceTest extends AbstractIntegrationTest {
         when(systemManagement.getTenantMetadataWithoutDetails()).thenReturn(tenantMetaData);
 
         amqpMessageDispatcherService = new AmqpMessageDispatcherService(rabbitTemplate, senderService,
-                artifactUrlHandlerMock, systemSecurityContext, systemManagement, targetManagement, serviceMatcher,
+                artifactUrlHandlerMock, systemSecurityContext, systemManagement, targetManagement,
                 distributionSetManagement, softwareModuleManagement, deploymentManagement, tenantConfigurationManagement);
 
     }
@@ -127,7 +131,7 @@ class AmqpMessageDispatcherServiceTest extends AbstractIntegrationTest {
         final Action action = createAction(createDistributionSet);
 
         final TargetAssignDistributionSetEvent targetAssignDistributionSetEvent = new TargetAssignDistributionSetEvent(
-                action, serviceMatcher.getBusId());
+                action, applicationContext.getId());
         amqpMessageDispatcherService.targetAssignDistributionSet(targetAssignDistributionSetEvent);
         final Message sendMessage = getCaptureAddressEvent(targetAssignDistributionSetEvent);
         final DmfDownloadAndUpdateRequest downloadAndUpdateRequest = assertDownloadAndInstallMessage(sendMessage,
@@ -176,7 +180,7 @@ class AmqpMessageDispatcherServiceTest extends AbstractIntegrationTest {
         Mockito.when(rabbitTemplate.convertSendAndReceive(any())).thenReturn(receivedList);
 
         final TargetAssignDistributionSetEvent targetAssignDistributionSetEvent = new TargetAssignDistributionSetEvent(
-                action, serviceMatcher.getBusId());
+                action, applicationContext.getId());
         amqpMessageDispatcherService.targetAssignDistributionSet(targetAssignDistributionSetEvent);
         final Message sendMessage = getCaptureAddressEvent(targetAssignDistributionSetEvent);
         final DmfDownloadAndUpdateRequest downloadAndUpdateRequest = assertDownloadAndInstallMessage(sendMessage,
@@ -216,7 +220,7 @@ class AmqpMessageDispatcherServiceTest extends AbstractIntegrationTest {
     void sendUpdateAttributesRequest() {
         final String amqpUri = "amqp://anyhost";
         final TargetAttributesRequestedEvent targetAttributesRequestedEvent = new TargetAttributesRequestedEvent(TENANT,
-                1L, CONTROLLER_ID, amqpUri, Target.class, serviceMatcher.getBusId());
+                1L, CONTROLLER_ID, amqpUri, Target.class, applicationContext.getId());
 
         amqpMessageDispatcherService.targetTriggerUpdateAttributes(targetAttributesRequestedEvent);
 
@@ -234,7 +238,7 @@ class AmqpMessageDispatcherServiceTest extends AbstractIntegrationTest {
         when(action.getTenant()).thenReturn(TENANT);
         when(action.getTarget()).thenReturn(testTarget);
         final CancelTargetAssignmentEvent cancelTargetAssignmentDistributionSetEvent = new CancelTargetAssignmentEvent(
-                action, serviceMatcher.getBusId());
+                action, applicationContext.getId());
         amqpMessageDispatcherService
                 .targetCancelAssignmentToDistributionSet(cancelTargetAssignmentDistributionSetEvent);
         final Message sendMessage = createArgumentCapture(AMQP_URI);
@@ -251,7 +255,7 @@ class AmqpMessageDispatcherServiceTest extends AbstractIntegrationTest {
         // setup
         final String amqpUri = "amqp://anyhost";
         final TargetDeletedEvent targetDeletedEvent = new TargetDeletedEvent(TENANT, 1L, CONTROLLER_ID, amqpUri,
-                Target.class, serviceMatcher.getBusId());
+                Target.class, applicationContext.getId());
 
         // test
         amqpMessageDispatcherService.targetDelete(targetDeletedEvent);
@@ -270,7 +274,7 @@ class AmqpMessageDispatcherServiceTest extends AbstractIntegrationTest {
         // setup
         final String noAmqpUri = "http://anyhost";
         final TargetDeletedEvent targetDeletedEvent = new TargetDeletedEvent(TENANT, 1L, CONTROLLER_ID, noAmqpUri,
-                Target.class, serviceMatcher.getBusId());
+                Target.class, applicationContext.getId());
 
         // test
         amqpMessageDispatcherService.targetDelete(targetDeletedEvent);
@@ -288,7 +292,7 @@ class AmqpMessageDispatcherServiceTest extends AbstractIntegrationTest {
         // setup
         final String noAmqpUri = null;
         final TargetDeletedEvent targetDeletedEvent = new TargetDeletedEvent(TENANT, 1L, CONTROLLER_ID, noAmqpUri,
-                Target.class, serviceMatcher.getBusId());
+                Target.class, applicationContext.getId());
 
         // test
         amqpMessageDispatcherService.targetDelete(targetDeletedEvent);

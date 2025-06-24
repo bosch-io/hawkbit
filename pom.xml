@@ -716,7 +716,7 @@
         <module>hawkbit-dmf</module>
         <module>hawkbit-monolith</module>
 
-        <module>hawkbit-simple-ui</module>
+<!--        <module>hawkbit-simple-ui</module>-->
         <module>hawkbit-sdk</module>
     </modules>
 </project>
