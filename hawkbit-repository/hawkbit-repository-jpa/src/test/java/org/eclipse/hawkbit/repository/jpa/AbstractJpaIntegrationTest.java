@@ -176,16 +176,14 @@ public abstract class AbstractJpaIntegrationTest extends AbstractIntegrationTest
                 targets.stream().map(Target::getControllerId).toList(), tag.getId());
     }
 
-    protected List<DistributionSet> assignTag(final Collection<DistributionSet> sets,
+    protected List<? extends DistributionSet> assignTag(final Collection<? extends DistributionSet> sets,
             final DistributionSetTag tag) {
-        return distributionSetManagement.assignTag(
-                sets.stream().map(DistributionSet::getId).toList(), tag.getId());
+        return distributionSetManagement.assignTag(sets.stream().map(DistributionSet::getId).toList(), tag.getId());
     }
 
-    protected List<DistributionSet> unassignTag(final Collection<DistributionSet> sets,
-            final DistributionSetTag tag) {
-        return distributionSetManagement.unassignTag(
-                sets.stream().map(DistributionSet::getId).toList(), tag.getId());
+    protected List<? extends DistributionSet> unassignTag(
+            final Collection<DistributionSet> sets, final DistributionSetTag tag) {
+        return distributionSetManagement.unassignTag(sets.stream().map(DistributionSet::getId).toList(), tag.getId());
     }
 
     protected TargetTypeAssignmentResult initiateTypeAssignment(final Collection<Target> targets, final TargetType type) {

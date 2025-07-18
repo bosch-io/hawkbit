@@ -14,6 +14,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.UUID;
 
+import org.eclipse.hawkbit.repository.DistributionSetManagement;
+import org.eclipse.hawkbit.repository.SoftwareModuleManagement;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.Rollout;
 import org.eclipse.hawkbit.repository.model.RolloutGroup;
@@ -79,12 +81,13 @@ class RolloutGroupEventTest extends AbstractRemoteEntityEventTest<RolloutGroup> 
     protected RolloutGroup createEntity() {
         testdataFactory.createTarget(UUID.randomUUID().toString());
         final SoftwareModule module = softwareModuleManagement.create(
-                entityFactory.softwareModule().create().name("swm").version("2").description("desc").type("os"));
+                SoftwareModuleManagement.Create.builder().name("swm").version("2").description("desc").type("os").build());
         final DistributionSet ds = distributionSetManagement
-                .create(entityFactory.distributionSet().create()
+                .create(DistributionSetManagement.Create.builder()
                         .name("complete").version("2")
                         .description("complete").type("os")
-                        .modules(List.of(module.getId())));
+                        .modules(List.of(module.getId()))
+                        .build());
 
         final Rollout entity = rolloutManagement.create(
                 entityFactory.rollout().create().name("exampleRollout").targetFilterQuery("controllerId==*").distributionSetId(ds),

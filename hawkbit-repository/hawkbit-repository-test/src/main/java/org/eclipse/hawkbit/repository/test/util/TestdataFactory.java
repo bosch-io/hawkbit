@@ -47,17 +47,8 @@ import org.eclipse.hawkbit.repository.TargetFilterQueryManagement;
 import org.eclipse.hawkbit.repository.TargetManagement;
 import org.eclipse.hawkbit.repository.TargetTagManagement;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
-import org.eclipse.hawkbit.repository.builder.DistributionSetCreate;
-import org.eclipse.hawkbit.repository.builder.DistributionSetTypeCreate;
-import org.eclipse.hawkbit.repository.builder.DistributionSetTypeUpdate;
-import org.eclipse.hawkbit.repository.builder.DistributionSetUpdate;
 import org.eclipse.hawkbit.repository.builder.DynamicRolloutGroupTemplate;
-import org.eclipse.hawkbit.repository.builder.SoftwareModuleCreate;
-import org.eclipse.hawkbit.repository.builder.SoftwareModuleTypeCreate;
-import org.eclipse.hawkbit.repository.builder.SoftwareModuleTypeUpdate;
-import org.eclipse.hawkbit.repository.builder.SoftwareModuleUpdate;
 import org.eclipse.hawkbit.repository.builder.TagCreate;
-import org.eclipse.hawkbit.repository.builder.TagUpdate;
 import org.eclipse.hawkbit.repository.builder.TargetCreate;
 import org.eclipse.hawkbit.repository.builder.TargetTypeCreate;
 import org.eclipse.hawkbit.repository.model.Action;
@@ -154,11 +145,11 @@ public class TestdataFactory {
 
     private final ControllerManagement controllerManagement;
     private final ArtifactManagement artifactManagement;
-    private final SoftwareModuleManagement<? extends SoftwareModule, SoftwareModuleCreate<? extends SoftwareModule>, SoftwareModuleUpdate> softwareModuleManagement;
-    private final SoftwareModuleTypeManagement<? extends SoftwareModuleType, SoftwareModuleTypeCreate<?>, SoftwareModuleTypeUpdate> softwareModuleTypeManagement;
-    private final DistributionSetManagement<? extends DistributionSet, DistributionSetCreate<? extends DistributionSet>, DistributionSetUpdate> distributionSetManagement;
-    private final DistributionSetTagManagement<? extends DistributionSetTag, TagCreate<? extends DistributionSetTag>, TagUpdate> distributionSetTagManagement;
-    private final DistributionSetTypeManagement<? extends DistributionSetType, DistributionSetTypeCreate<? extends DistributionSetType>, ? extends DistributionSetTypeUpdate> distributionSetTypeManagement;
+    private final SoftwareModuleManagement<?> softwareModuleManagement;
+    private final SoftwareModuleTypeManagement<?> softwareModuleTypeManagement;
+    private final DistributionSetManagement<?> distributionSetManagement;
+    private final DistributionSetTagManagement<?> distributionSetTagManagement;
+    private final DistributionSetTypeManagement<?> distributionSetTypeManagement;
     private final DistributionSetInvalidationManagement distributionSetInvalidationManagement;
     private final TargetManagement targetManagement;
     private final TargetFilterQueryManagement targetFilterQueryManagement;
@@ -175,7 +166,8 @@ public class TestdataFactory {
             final ControllerManagement controllerManagement, final ArtifactManagement artifactManagement,
             final SoftwareModuleManagement softwareModuleManagement, final SoftwareModuleTypeManagement softwareModuleTypeManagement,
             final DistributionSetManagement distributionSetManagement,
-            final DistributionSetTagManagement distributionSetTagManagement, final DistributionSetInvalidationManagement distributionSetInvalidationManagement,
+            final DistributionSetTagManagement distributionSetTagManagement,
+            final DistributionSetInvalidationManagement distributionSetInvalidationManagement,
             final DistributionSetTypeManagement distributionSetTypeManagement,
             final TargetManagement targetManagement, final TargetFilterQueryManagement targetFilterQueryManagement,
             final TargetTypeManagement targetTypeManagement, final TargetTagManagement targetTagManagement,
@@ -308,27 +300,38 @@ public class TestdataFactory {
      * @return {@link DistributionSet} entity.
      */
     public DistributionSet createDistributionSet(final String prefix, final String version, final boolean isRequiredMigrationStep) {
-        final SoftwareModule appMod = softwareModuleManagement.create(entityFactory.softwareModule().create()
-                .type(findOrCreateSoftwareModuleType(SM_TYPE_APP, Integer.MAX_VALUE)).name(prefix + SM_TYPE_APP)
-                .version(version + "." + new SecureRandom().nextInt(100)).description(randomDescriptionLong())
-                .vendor(prefix + " vendor Limited, California"));
+        final SoftwareModule appMod = softwareModuleManagement.create(
+                SoftwareModuleManagement.Create.builder()
+                        .type(findOrCreateSoftwareModuleType(SM_TYPE_APP, Integer.MAX_VALUE).getKey())
+                        .name(prefix + SM_TYPE_APP)
+                        .version(version + "." + new SecureRandom().nextInt(100))
+                        .description(randomDescriptionLong())
+                        .vendor(prefix + " vendor Limited, California")
+                        .build());
         final SoftwareModule runtimeMod = softwareModuleManagement
-                .create(entityFactory.softwareModule().create().type(findOrCreateSoftwareModuleType(SM_TYPE_RT))
-                        .name(prefix + "app runtime").version(version + "." + new SecureRandom().nextInt(100))
-                        .description(randomDescriptionLong()).vendor(prefix + " vendor GmbH, Stuttgart, Germany"));
+                .create(SoftwareModuleManagement.Create.builder()
+                        .type(findOrCreateSoftwareModuleType(SM_TYPE_RT).getKey())
+                        .name(prefix + "app runtime")
+                        .version(version + "." + new SecureRandom().nextInt(100))
+                        .description(randomDescriptionLong()).vendor(prefix + " vendor GmbH, Stuttgart, Germany")
+                        .build());
         final SoftwareModule osMod = softwareModuleManagement
-                .create(entityFactory.softwareModule().create().type(findOrCreateSoftwareModuleType(SM_TYPE_OS))
-                        .name(prefix + " Firmware").version(version + "." + new SecureRandom().nextInt(100))
-                        .description(randomDescriptionLong()).vendor(prefix + " vendor Limited Inc, California"));
+                .create(SoftwareModuleManagement.Create.builder()
+                        .type(findOrCreateSoftwareModuleType(SM_TYPE_OS).getKey())
+                        .name(prefix + " Firmware")
+                        .version(version + "." + new SecureRandom().nextInt(100))
+                        .description(randomDescriptionLong()).vendor(prefix + " vendor Limited Inc, California")
+                        .build());
 
         return distributionSetManagement.create(
-                entityFactory.distributionSet().create()
-                        .type(findOrCreateDefaultTestDsType())
+                DistributionSetManagement.Create.builder()
+                        .type(findOrCreateDefaultTestDsType().getKey())
                         .name(ObjectUtils.isEmpty(prefix) ? "DS" : prefix)
                         .version(version)
                         .description(randomDescriptionShort())
                         .modules(Arrays.asList(osMod.getId(), runtimeMod.getId(), appMod.getId()))
-                        .requiredMigrationStep(isRequiredMigrationStep));
+                        .requiredMigrationStep(isRequiredMigrationStep)
+                        .build());
     }
 
     /**
@@ -359,10 +362,13 @@ public class TestdataFactory {
     public DistributionSet createDistributionSet(
             final String prefix, final String version, final boolean isRequiredMigrationStep, final Collection<SoftwareModule> modules) {
         return distributionSetManagement.create(
-                entityFactory.distributionSet().create().name(prefix != null && !prefix.isEmpty() ? prefix : "DS")
-                        .version(version).description(randomDescriptionShort()).type(findOrCreateDefaultTestDsType())
+                DistributionSetManagement.Create.builder()
+                        .type(findOrCreateDefaultTestDsType().getKey())
+                        .name(prefix != null && !prefix.isEmpty() ? prefix : "DS")
+                        .version(version).description(randomDescriptionShort())
                         .modules(modules.stream().map(SoftwareModule::getId).toList())
-                        .requiredMigrationStep(isRequiredMigrationStep));
+                        .requiredMigrationStep(isRequiredMigrationStep)
+                        .build());
     }
 
     /**
@@ -401,12 +407,13 @@ public class TestdataFactory {
     public List<DistributionSet> createDistributionSetsWithoutModules(final int number) {
         final List<DistributionSet> sets = new ArrayList<>(number);
         for (int i = 0; i < number; i++) {
-            sets.add(distributionSetManagement
-                    .create(entityFactory.distributionSet().create()
+            sets.add(distributionSetManagement.create(
+                    DistributionSetManagement.Create.builder()
+                            .type(findOrCreateDefaultTestDsType().getKey())
                             .name("DS" + i)
                             .version(DEFAULT_VERSION + "." + i)
                             .description(randomDescriptionShort())
-                            .type(findOrCreateDefaultTestDsType())));
+                            .build()));
         }
         return sets;
     }
@@ -437,11 +444,13 @@ public class TestdataFactory {
      * @return {@link DistributionSet} entity
      */
     public DistributionSet createDistributionSetWithNoSoftwareModules(final String name, final String version) {
-        return distributionSetManagement.create(entityFactory.distributionSet().create()
-                .name(name)
-                .version(version)
-                .description(DEFAULT_DESCRIPTION)
-                .type(findOrCreateDefaultTestDsType()));
+        return distributionSetManagement.create(
+                DistributionSetManagement.Create.builder()
+                        .type(findOrCreateDefaultTestDsType().getKey())
+                        .name(name)
+                        .version(version)
+                        .description(DEFAULT_DESCRIPTION)
+                        .build());
     }
 
     /**
@@ -548,13 +557,15 @@ public class TestdataFactory {
      * @return persisted {@link SoftwareModule}.
      */
     public SoftwareModule createSoftwareModule(final String typeKey, final String prefix, final boolean encrypted) {
-        return softwareModuleManagement.create(entityFactory.softwareModule().create()
-                .type(findOrCreateSoftwareModuleType(typeKey))
-                .name(prefix + typeKey)
-                .version(prefix + DEFAULT_VERSION)
-                .description(randomDescriptionShort())
-                .vendor(DEFAULT_VENDOR)
-                .encrypted(encrypted));
+        return softwareModuleManagement.create(
+                SoftwareModuleManagement.Create.builder()
+                        .type(findOrCreateDefaultTestDsType().getKey())
+                        .name(prefix + typeKey)
+                        .version(prefix + DEFAULT_VERSION)
+                        .description(randomDescriptionShort())
+                        .vendor(DEFAULT_VENDOR)
+                        .encrypted(encrypted)
+                        .build());
     }
 
     /**
@@ -616,10 +627,10 @@ public class TestdataFactory {
     public DistributionSet createUpdatedDistributionSet() {
         DistributionSet set = createDistributionSet("");
         set = distributionSetManagement.update(
-                entityFactory.distributionSet().update(set.getId()).description("Updated " + DEFAULT_DESCRIPTION));
+                DistributionSetManagement.Update.builder().id(set.getId()).description("Updated " + DEFAULT_DESCRIPTION).build());
 
         set.getModules().forEach(module -> softwareModuleManagement.update(
-                entityFactory.softwareModule().update(module.getId()).description("Updated " + DEFAULT_DESCRIPTION)));
+                SoftwareModuleManagement.Update.builder().id(module.getId()).description("Updated " + DEFAULT_DESCRIPTION).build()));
 
         // load also lazy stuff
         return distributionSetManagement.getWithDetails(set.getId()).get();
@@ -650,8 +661,9 @@ public class TestdataFactory {
     public DistributionSetType findOrCreateDistributionSetType(final String dsTypeKey, final String dsTypeName) {
         return distributionSetTypeManagement.findByKey(dsTypeKey)
                 .map(DistributionSetType.class::cast)
-                .orElseGet(() -> distributionSetTypeManagement.create(entityFactory.distributionSetType().create()
-                        .key(dsTypeKey).name(dsTypeName).description(randomDescriptionShort()).colour("black")));
+                .orElseGet(() -> distributionSetTypeManagement.create(
+                        DistributionSetTypeManagement.Create.builder()
+                                .key(dsTypeKey).name(dsTypeName).description(randomDescriptionShort()).colour("black").build()));
     }
 
     /**
@@ -669,13 +681,14 @@ public class TestdataFactory {
         return distributionSetTypeManagement.findByKey(dsTypeKey)
                 .map(DistributionSetType.class::cast)
                 .orElseGet(() -> distributionSetTypeManagement.create(
-                        entityFactory.distributionSetType().create()
+                        DistributionSetTypeManagement.Create.builder()
                                 .key(dsTypeKey)
                                 .name(dsTypeName)
                                 .description(randomDescriptionShort())
                                 .colour("black")
                                 .optional(optional.stream().map(SoftwareModuleType::getId).toList())
-                                .mandatory(mandatory.stream().map(SoftwareModuleType::getId).toList())));
+                                .mandatory(mandatory.stream().map(SoftwareModuleType::getId).toList())
+                                .build()));
     }
 
     /**
@@ -699,11 +712,13 @@ public class TestdataFactory {
     public SoftwareModuleType findOrCreateSoftwareModuleType(final String key, final int maxAssignments) {
         return softwareModuleTypeManagement.findByKey(key)
                 .map(SoftwareModuleType.class::cast)
-                .orElseGet(() -> softwareModuleTypeManagement.create(entityFactory.softwareModuleType().create()
-                        .key(key)
-                        .name(key)
-                        .description(randomDescriptionShort()).colour("#ffffff")
-                        .maxAssignments(maxAssignments)));
+                .orElseGet(() -> softwareModuleTypeManagement.create(
+                        SoftwareModuleTypeManagement.Create.builder()
+                                .key(key)
+                                .name(key)
+                                .description(randomDescriptionShort()).colour("#ffffff")
+                                .maxAssignments(maxAssignments)
+                                .build()));
     }
 
     /**
@@ -717,12 +732,14 @@ public class TestdataFactory {
      */
     public DistributionSet createDistributionSet(
             final String name, final String version, final DistributionSetType type, final Collection<SoftwareModule> modules) {
-        return distributionSetManagement.create(entityFactory.distributionSet().create()
-                .type(type)
-                .name(name)
-                .version(version)
-                .description(randomDescriptionShort())
-                .modules(modules.stream().map(SoftwareModule::getId).toList()));
+        return distributionSetManagement.create(
+                DistributionSetManagement.Create.builder()
+                        .type(type.getKey())
+                        .name(name)
+                        .version(version)
+                        .description(randomDescriptionShort())
+                        .modules(modules.stream().map(SoftwareModule::getId).toList())
+                        .build());
     }
 
     /**
@@ -738,14 +755,14 @@ public class TestdataFactory {
     public DistributionSet generateDistributionSet(
             final String name, final String version, final DistributionSetType type, final Collection<SoftwareModule> modules,
             final boolean requiredMigrationStep) {
-        return entityFactory.distributionSet().create()
-                .type(type)
+        return distributionSetManagement.create(DistributionSetManagement.Create.builder()
+                .type(type.getKey())
                 .name(name)
                 .version(version)
                 .description(randomDescriptionShort())
                 .modules(modules.stream().map(SoftwareModule::getId).toList())
                 .requiredMigrationStep(requiredMigrationStep)
-                .build();
+                .build());
     }
 
     /**
@@ -905,9 +922,10 @@ public class TestdataFactory {
      * @return the persisted {@link DistributionSetTag}s
      */
     public List<DistributionSetTag> createDistributionSetTags(final int number) {
-        final List<TagCreate<? extends DistributionSetTag>> result = new ArrayList<>(number);
+        final List<DistributionSetTagManagement.Create> result = new ArrayList<>(number);
         for (int i = 0; i < number; i++) {
-            result.add(entityFactory.distributionSetTag().create().name("tag" + i).description("tagdesc" + i).colour(String.valueOf(i)));
+            result.add(
+                    DistributionSetTagManagement.Create.builder().name("tag" + i).description("tagdesc" + i).colour(String.valueOf(i)).build());
         }
         return distributionSetTagManagement.create(result).stream().map(DistributionSetTag.class::cast).toList();
     }
@@ -1215,9 +1233,11 @@ public class TestdataFactory {
      * @return created incomplete {@link DistributionSet}
      */
     public DistributionSet createIncompleteDistributionSet() {
-        return distributionSetManagement.create(entityFactory.distributionSet().create()
-                .name(UUID.randomUUID().toString()).version(DEFAULT_VERSION).description(randomDescriptionShort())
-                .type(findOrCreateDefaultTestDsType()).requiredMigrationStep(false));
+        return distributionSetManagement.create(
+                DistributionSetManagement.Create.builder()
+                        .name(UUID.randomUUID().toString()).version(DEFAULT_VERSION).description(randomDescriptionShort())
+                        .type(findOrCreateDefaultTestDsType().getKey()).requiredMigrationStep(false)
+                        .build());
     }
 
     private static String randomDescriptionShort() {

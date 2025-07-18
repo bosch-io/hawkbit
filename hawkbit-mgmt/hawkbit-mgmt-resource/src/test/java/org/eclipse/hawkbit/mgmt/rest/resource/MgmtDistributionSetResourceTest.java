@@ -41,8 +41,10 @@ import org.eclipse.hawkbit.exception.SpServerError;
 import org.eclipse.hawkbit.mgmt.json.model.distributionset.MgmtActionType;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants;
 import org.eclipse.hawkbit.mgmt.rest.resource.util.ResourceUtility;
+import org.eclipse.hawkbit.repository.DistributionSetManagement;
 import org.eclipse.hawkbit.repository.exception.AssignmentQuotaExceededException;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
+import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSet;
 import org.eclipse.hawkbit.repository.jpa.repository.ActionRepository;
 import org.eclipse.hawkbit.repository.jpa.specifications.ActionSpecifications;
 import org.eclipse.hawkbit.repository.model.Action;
@@ -371,7 +373,7 @@ class MgmtDistributionSetResourceTest extends AbstractManagementApiIntegrationTe
         distributionSetTypeManagement.delete(type.getId());
 
         // check if the ds type is marked as deleted
-        final Optional<DistributionSetType> opt = distributionSetTypeManagement.findByKey(type.getKey());
+        final Optional<? extends DistributionSetType> opt = distributionSetTypeManagement.findByKey(type.getKey());
         if (opt.isEmpty()) {
             throw new AssertionError("The Optional object of distribution set type should not be empty!");
         }
@@ -854,8 +856,8 @@ class MgmtDistributionSetResourceTest extends AbstractManagementApiIntegrationTe
         assertThat(distributionSetManagement.findByCompleted(true, PAGE)).isEmpty();
 
         DistributionSet set = testdataFactory.createDistributionSet("one");
-        set = distributionSetManagement.update(entityFactory.distributionSet().update(set.getId())
-                .version("anotherVersion").requiredMigrationStep(true));
+        set = distributionSetManagement.update(DistributionSetManagement.Update.builder().id(set.getId())
+                .version("anotherVersion").requiredMigrationStep(true).build());
 
         // load also lazy stuff
         set = distributionSetManagement.getWithDetails(set.getId()).get();
@@ -1135,7 +1137,7 @@ class MgmtDistributionSetResourceTest extends AbstractManagementApiIntegrationTe
                 .andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isBadRequest());
 
-        final DistributionSet missingName = entityFactory.distributionSet().create().build();
+        final DistributionSet missingName = new JpaDistributionSet();
         mvc.perform(post("/rest/v1/distributionsets").content(JsonBuilder.distributionSets(Collections.singletonList(missingName)))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print())
@@ -1349,7 +1351,7 @@ class MgmtDistributionSetResourceTest extends AbstractManagementApiIntegrationTe
         final int amount = 10;
         testdataFactory.createDistributionSets(amount);
         distributionSetManagement
-                .create(entityFactory.distributionSet().create().name("incomplete").version("2").type("os"));
+                .create(DistributionSetManagement.Create.builder().name("incomplete").version("2").type("os").build());
 
         final String rsqlFindLikeDs1OrDs2 = "complete==" + Boolean.TRUE;
 

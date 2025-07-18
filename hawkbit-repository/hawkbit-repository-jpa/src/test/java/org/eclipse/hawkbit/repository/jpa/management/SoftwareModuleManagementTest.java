@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.eclipse.hawkbit.repository.DistributionSetManagement;
+import org.eclipse.hawkbit.repository.SoftwareModuleManagement;
 import org.eclipse.hawkbit.repository.builder.SoftwareModuleMetadataCreate;
 import org.eclipse.hawkbit.repository.event.remote.entity.SoftwareModuleCreatedEvent;
 import org.eclipse.hawkbit.repository.exception.AssignmentQuotaExceededException;
@@ -89,10 +91,10 @@ class SoftwareModuleManagementTest extends AbstractJpaIntegrationTest {
 
         verifyThrownExceptionBy(
                 () -> softwareModuleManagement.create(Collections
-                        .singletonList(entityFactory.softwareModule().create().name("xxx").type(NOT_EXIST_ID))), "SoftwareModuleType");
+                        .singletonList(SoftwareModuleManagement.Create.builder().name("xxx").type(NOT_EXIST_ID).build())), "SoftwareModuleType");
         verifyThrownExceptionBy(
                 () -> softwareModuleManagement
-                        .create(entityFactory.softwareModule().create().name("xxx").type(NOT_EXIST_ID)), "SoftwareModuleType");
+                        .create(SoftwareModuleManagement.Create.builder().name("xxx").type(NOT_EXIST_ID).build()), "SoftwareModuleType");
 
         verifyThrownExceptionBy(
                 () -> softwareModuleManagement.updateMetadata(
@@ -122,7 +124,7 @@ class SoftwareModuleManagementTest extends AbstractJpaIntegrationTest {
         verifyThrownExceptionBy(() -> softwareModuleManagement.getMetadata(NOT_EXIST_IDL), "SoftwareModule");
         verifyThrownExceptionBy(() -> softwareModuleManagement.findByType(NOT_EXIST_IDL, PAGE), "SoftwareModule");
 
-        verifyThrownExceptionBy(() -> softwareModuleManagement.update(entityFactory.softwareModule().update(NOT_EXIST_IDL)), "SoftwareModule");
+        verifyThrownExceptionBy(() -> softwareModuleManagement.update(SoftwareModuleManagement.Update.builder().id(NOT_EXIST_IDL).build()), "SoftwareModule");
     }
 
     /**
@@ -133,7 +135,7 @@ class SoftwareModuleManagementTest extends AbstractJpaIntegrationTest {
         final SoftwareModule ah = testdataFactory.createSoftwareModuleOs();
 
         final SoftwareModule updated = softwareModuleManagement
-                .update(entityFactory.softwareModule().update(ah.getId()));
+                .update(SoftwareModuleManagement.Update.builder().id(ah.getId()).build());
 
         assertThat(updated.getOptLockRevision())
                 .as("Expected version number of updated entity to be equal to created version")
@@ -148,7 +150,7 @@ class SoftwareModuleManagementTest extends AbstractJpaIntegrationTest {
         final SoftwareModule ah = testdataFactory.createSoftwareModuleOs();
 
         final SoftwareModule updated = softwareModuleManagement
-                .update(entityFactory.softwareModule().update(ah.getId()).description("changed").vendor("changed"));
+                .update(SoftwareModuleManagement.Update.builder().id(ah.getId()).description("changed").vendor("changed").build());
 
         assertThat(updated.getOptLockRevision())
                 .as("Expected version number of updated entitity is")
@@ -174,17 +176,19 @@ class SoftwareModuleManagementTest extends AbstractJpaIntegrationTest {
     @Test
     void findSoftwareModuleByFilters() {
         final SoftwareModule ah = softwareModuleManagement
-                .create(entityFactory.softwareModule().create().type(appType).name("agent-hub").version("1.0.1"));
+                .create(SoftwareModuleManagement.Create.builder().type(appType.getKey()).name("agent-hub").version("1.0.1").build());
         final SoftwareModule jvm = softwareModuleManagement
-                .create(entityFactory.softwareModule().create().type(runtimeType).name("oracle-jre").version("1.7.2"));
+                .create(SoftwareModuleManagement.Create.builder().type(runtimeType.getKey()).name("oracle-jre").version("1.7.2").build());
         final SoftwareModule os = softwareModuleManagement
-                .create(entityFactory.softwareModule().create().type(osType).name("poky").version("3.0.2"));
+                .create(SoftwareModuleManagement.Create.builder().type(osType.getKey()).name("poky").version("3.0.2").build());
 
         final SoftwareModule ah2 = softwareModuleManagement
-                .create(entityFactory.softwareModule().create().type(appType).name("agent-hub").version("1.0.2"));
+                .create(SoftwareModuleManagement.Create.builder().type(appType.getKey()).name("agent-hub").version("1.0.2").build());
         JpaDistributionSet ds = (JpaDistributionSet) distributionSetManagement
-                .create(entityFactory.distributionSet().create().name("ds-1").version("1.0.1").type(standardDsType)
-                        .modules(Arrays.asList(os.getId(), jvm.getId(), ah2.getId())));
+                .create(DistributionSetManagement.Create.builder()
+                        .name("ds-1").version("1.0.1").type(standardDsType.getKey())
+                        .modules(Arrays.asList(os.getId(), jvm.getId(), ah2.getId()))
+                        .build());
 
         final JpaTarget target = (JpaTarget) testdataFactory.createTarget();
         ds = (JpaDistributionSet) assignSet(target, ds).getDistributionSet();
@@ -236,7 +240,7 @@ class SoftwareModuleManagementTest extends AbstractJpaIntegrationTest {
         softwareModuleManagement.delete(testdataFactory.createSoftwareModuleOs("deleted").getId());
         testdataFactory.createSoftwareModuleApp();
 
-        assertThat(softwareModuleManagement.findByType(osType.getId(), PAGE).getContent())
+        assertThat((List)softwareModuleManagement.findByType(osType.getId(), PAGE).getContent())
                 .as("Expected to find the following number of modules:").hasSize(2).as("with the following elements")
                 .contains(two, one);
     }
@@ -497,8 +501,8 @@ class SoftwareModuleManagementTest extends AbstractJpaIntegrationTest {
 
         // one soft deleted
         final SoftwareModule deleted = testdataFactory.createSoftwareModuleApp();
-        final DistributionSet set = distributionSetManagement.create(entityFactory.distributionSet().create()
-                .name("set").version("1").modules(Arrays.asList(one.getId(), deleted.getId())));
+        final DistributionSet set = distributionSetManagement.create(DistributionSetManagement.Create.builder()
+                .name("set").version("1").modules(Arrays.asList(one.getId(), deleted.getId())).build());
         softwareModuleManagement.delete(deleted.getId());
 
         assertThat(softwareModuleManagement.findByAssignedTo(set.getId(), PAGE).getContent())
@@ -865,8 +869,8 @@ class SoftwareModuleManagementTest extends AbstractJpaIntegrationTest {
         final long countSoftwareModule = softwareModuleRepository.count();
 
         // create SoftwareModule
-        SoftwareModule softwareModule = softwareModuleManagement.create(entityFactory.softwareModule().create()
-                .type(type).name(name).version(version).description("description of artifact " + name));
+        SoftwareModule softwareModule = softwareModuleManagement.create(SoftwareModuleManagement.Create.builder()
+                .type(type.getKey()).name(name).version(version).description("description of artifact " + name).build());
 
         final int artifactSize = 5 * 1024;
         for (int i = 0; i < numberArtifacts; i++) {

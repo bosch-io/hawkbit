@@ -12,7 +12,9 @@ package org.eclipse.hawkbit.repository.jpa.management;
 import static org.eclipse.hawkbit.repository.jpa.configuration.Constants.TX_RT_DELAY;
 import static org.eclipse.hawkbit.repository.jpa.configuration.Constants.TX_RT_MAX;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +26,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.Root;
+import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.hawkbit.repository.DistributionSetManagement;
 import org.eclipse.hawkbit.repository.Identifiable;
@@ -51,28 +54,41 @@ import org.springframework.validation.annotation.Validated;
 
 /**
  * JPA implementation of {@link DistributionSetManagement}.
+ *
+ * @param <T> the JPA entity type
+ * @param <C> the type of the create request
+ * @param <U> the type of the update request
+ * @param <R> the type of the entity JPA repository
+ * @param <A> RSQL query field enum
  */
 @Transactional(readOnly = true)
 @Validated
-abstract class AbstractJpaRepositoryManagement<T extends AbstractJpaBaseEntity, C extends RepositoryManagement.Builder<T>, U extends Identifiable<Long>,
-        R extends BaseEntityRepository<T>, A extends Enum<A> & RsqlQueryField>  // J is the JPA entity type, A is the RSQL query field enum
+abstract class AbstractJpaRepositoryManagement<T extends AbstractJpaBaseEntity, C, U extends Identifiable<Long>, R extends BaseEntityRepository<T>, A extends Enum<A> & RsqlQueryField>
         implements RepositoryManagement<T, C, U> {
 
     public static final String DELETED = "deleted";
 
     protected final R jpaRepository;
     protected final EntityManager entityManager;
+    private final Constructor<T> entityConstructor;
 
     protected AbstractJpaRepositoryManagement(final R jpaRepository, final EntityManager entityManager) {
         this.jpaRepository = jpaRepository;
         this.entityManager = entityManager;
+        try {
+            entityConstructor = jpaRepository.getDomainClass().getConstructor();
+            // test if method works, if fine - it shall never fail when called later
+            entityConstructor.newInstance();
+        } catch (final NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalStateException("JPA domain class " + jpaRepository.getDomainClass() + " shall have public no-args constructor", e);
+        }
     }
 
     @Override
     @Transactional
     @Retryable(retryFor = { ConcurrencyFailureException.class }, maxAttempts = TX_RT_MAX, backoff = @Backoff(delay = TX_RT_DELAY))
     public T create(final C create) {
-        return jpaRepository.save(AccessController.Operation.CREATE, create.build());
+        return jpaRepository.save(AccessController.Operation.CREATE, jpaEntity(create));
     }
 
     @Override
@@ -81,7 +97,43 @@ abstract class AbstractJpaRepositoryManagement<T extends AbstractJpaBaseEntity, 
     public List<T> create(final Collection<C> create) {
         return Collections.unmodifiableList(jpaRepository.saveAll(
                 AccessController.Operation.CREATE,
-                create.stream().map(Builder::build).toList()));
+                create.stream().map(this::jpaEntity).toList()));
+    }
+
+    @Override
+    public Optional<T> get(final long id) {
+        return jpaRepository.findById(id);
+    }
+
+    @Override
+    public List<T> get(final Collection<Long> ids) {
+        return Collections.unmodifiableList(findAllById(ids));
+    }
+
+    @Override
+    public boolean exists(final long id) {
+        return jpaRepository.existsById(id);
+    }
+
+    @Override
+    public long count() {
+        return jpaRepository.count(isNotDeleted().orElse(null));
+    }
+
+    @Override
+    public long countByRsql(String rsql) {
+        return jpaRepository.count(JpaManagementHelper.combineWithAnd(rsqlSpec(rsql)));
+    }
+
+    @Override
+    public Slice<T> findAll(final Pageable pageable) {
+        return JpaManagementHelper.findAllWithoutCountBySpec(
+                jpaRepository, isNotDeleted().map(List::of).orElseGet(Collections::emptyList), pageable);
+    }
+
+    @Override
+    public Page<T> findByRsql(final String rsql, final Pageable pageable) {
+        return JpaManagementHelper.findAllWithCountBySpec(jpaRepository, rsqlSpec(rsql), pageable);
     }
 
     @Override
@@ -89,12 +141,14 @@ abstract class AbstractJpaRepositoryManagement<T extends AbstractJpaBaseEntity, 
     @Retryable(retryFor = { ConcurrencyFailureException.class }, maxAttempts = TX_RT_MAX, backoff = @Backoff(delay = TX_RT_DELAY))
     @SuppressWarnings("java:S1066") // javaS1066 - better readable that way
     public T update(final U update) {
-        final T entity = jpaRepository.findById(update.getId()).orElseThrow(() -> new EntityNotFoundException(managementClass(), update.getId()));
+        final T entity = jpaRepository
+                .findById(update.getId())
+                .orElseThrow(() -> new EntityNotFoundException(managementClass(), update.getId()));
         return update(update, entity);
     }
 
-    protected T update(final U update, final T entity) {
-        if (Utils.update(update, entity)) {
+    protected T update(final Identifiable<Long> update, final T entity) {
+        if (Utils.copy(update, entity)) {
             return jpaRepository.save(entity);
         } else { // otherwise it is not changed, so return the same entity
             return entity;
@@ -113,6 +167,13 @@ abstract class AbstractJpaRepositoryManagement<T extends AbstractJpaBaseEntity, 
     @Retryable(retryFor = { ConcurrencyFailureException.class }, maxAttempts = TX_RT_MAX, backoff = @Backoff(delay = TX_RT_DELAY))
     public void delete(final Collection<Long> ids) {
         delete0(ids);
+    }
+
+    @NotNull
+    private List<Specification<T>> rsqlSpec(final String rsql) {
+        return isNotDeleted()
+                .map(isNotDeleted -> List.of(RsqlUtility.getInstance().<A, T> buildRsqlSpecification(rsql, fieldsClass()), isNotDeleted))
+                .orElseGet(() -> List.of(RsqlUtility.getInstance().buildRsqlSpecification(rsql, fieldsClass())));
     }
 
     // return which are for soft deletion
@@ -159,45 +220,6 @@ abstract class AbstractJpaRepositoryManagement<T extends AbstractJpaBaseEntity, 
             // handle the empty list
             jpaRepository.deleteAllById(toHardDelete);
         }
-    }
-
-    @Override
-    public Optional<T> get(final long id) {
-        return jpaRepository.findById(id);
-    }
-
-    @Override
-    public List<T> get(final Collection<Long> ids) {
-        return Collections.unmodifiableList(findAllById(ids));
-    }
-
-    @Override
-    public boolean exists(final long id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count(isNotDeleted().orElse(null));
-    }
-
-    @Override
-    public Slice<T> findAll(final Pageable pageable) {
-        return JpaManagementHelper.findAllWithoutCountBySpec(
-                jpaRepository,
-                isNotDeleted().map(List::of).orElseGet(Collections::emptyList),
-                pageable);
-    }
-
-    @Override
-    public Page<T> findByRsql(final String rsql, final Pageable pageable) {
-        return JpaManagementHelper.findAllWithCountBySpec(
-                jpaRepository,
-                isNotDeleted()
-                        .map(isNotDeleted ->
-                                List.of(RsqlUtility.getInstance().<A, T> buildRsqlSpecification(rsql, fieldsClass()), isNotDeleted))
-                        .orElseGet(() -> List.of(RsqlUtility.getInstance().buildRsqlSpecification(rsql, fieldsClass()))),
-                pageable);
     }
 
     private List<T> findAllById(final Collection<Long> ids) {
@@ -254,5 +276,16 @@ abstract class AbstractJpaRepositoryManagement<T extends AbstractJpaBaseEntity, 
         return supportSoftDelete()
                 ? Optional.of((root, query, cb) -> cb.equal(root.get(DELETED), false))
                 : Optional.empty();
+    }
+
+    private T jpaEntity(final Object create) {
+        final T jpaEntity;
+        try {
+            jpaEntity = entityConstructor.newInstance();
+        } catch (final InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalStateException("Must NEVER happen!", e);
+        }
+        Utils.copy(create, jpaEntity);
+        return jpaEntity;
     }
 }

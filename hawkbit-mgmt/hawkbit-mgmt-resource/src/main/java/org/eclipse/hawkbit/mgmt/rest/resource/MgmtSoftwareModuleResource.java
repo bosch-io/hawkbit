@@ -39,10 +39,6 @@ import org.eclipse.hawkbit.repository.EntityFactory;
 import org.eclipse.hawkbit.repository.SoftwareModuleManagement;
 import org.eclipse.hawkbit.repository.SoftwareModuleTypeManagement;
 import org.eclipse.hawkbit.repository.SystemManagement;
-import org.eclipse.hawkbit.repository.builder.SoftwareModuleCreate;
-import org.eclipse.hawkbit.repository.builder.SoftwareModuleTypeCreate;
-import org.eclipse.hawkbit.repository.builder.SoftwareModuleTypeUpdate;
-import org.eclipse.hawkbit.repository.builder.SoftwareModuleUpdate;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
 import org.eclipse.hawkbit.repository.model.Artifact;
 import org.eclipse.hawkbit.repository.model.ArtifactUpload;
@@ -66,8 +62,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class MgmtSoftwareModuleResource implements MgmtSoftwareModuleRestApi {
 
     private final ArtifactManagement artifactManagement;
-    private final SoftwareModuleManagement<SoftwareModule, SoftwareModuleCreate<SoftwareModule>, SoftwareModuleUpdate> softwareModuleManagement;
-    private final SoftwareModuleTypeManagement<SoftwareModuleType, SoftwareModuleTypeCreate<SoftwareModuleType>, SoftwareModuleTypeUpdate> softwareModuleTypeManagement;
+    private final SoftwareModuleManagement<? extends SoftwareModule> softwareModuleManagement;
+    private final SoftwareModuleTypeManagement<? extends SoftwareModuleType> softwareModuleTypeManagement;
     private final ArtifactUrlHandler artifactUrlHandler;
     private final SystemManagement systemManagement;
     private final EntityFactory entityFactory;
@@ -163,7 +159,7 @@ public class MgmtSoftwareModuleResource implements MgmtSoftwareModuleRestApi {
     public ResponseEntity<PagedList<MgmtSoftwareModule>> getSoftwareModules(
             final String rsqlParam, final int pagingOffsetParam, final int pagingLimitParam, final String sortParam) {
         final Pageable pageable = PagingUtility.toPageable(pagingOffsetParam, pagingLimitParam, sanitizeSoftwareModuleSortParam(sortParam));
-        final Slice<SoftwareModule> findModulesAll;
+        final Slice<? extends SoftwareModule> findModulesAll;
         final long countModulesAll;
         if (rsqlParam != null) {
             findModulesAll = softwareModuleManagement.findByRsql(rsqlParam, pageable);
@@ -192,7 +188,7 @@ public class MgmtSoftwareModuleResource implements MgmtSoftwareModuleRestApi {
         log.debug("creating {} softwareModules", softwareModules.size());
 
         for (final MgmtSoftwareModuleRequestBodyPost sm : softwareModules) {
-            final Optional<SoftwareModuleType> opt = softwareModuleTypeManagement.findByKey(sm.getType());
+            final Optional<? extends SoftwareModuleType> opt = softwareModuleTypeManagement.findByKey(sm.getType());
             opt.ifPresent(smType -> {
                 if (smType.isDeleted()) {
                     final String text = "Cannot create Software Module from type with key {0}. Software Module Type already deleted!";
@@ -201,8 +197,8 @@ public class MgmtSoftwareModuleResource implements MgmtSoftwareModuleRestApi {
                 }
             });
         }
-        final Collection<SoftwareModule> createdSoftwareModules = softwareModuleManagement
-                .create(MgmtSoftwareModuleMapper.smFromRequest(entityFactory, softwareModules));
+        final Collection<? extends SoftwareModule> createdSoftwareModules = softwareModuleManagement
+                .create(MgmtSoftwareModuleMapper.smFromRequest(softwareModules));
         log.debug("{} softwareModules created, return status {}", softwareModules.size(), HttpStatus.CREATED);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(MgmtSoftwareModuleMapper.toResponse(createdSoftwareModules));
@@ -212,10 +208,12 @@ public class MgmtSoftwareModuleResource implements MgmtSoftwareModuleRestApi {
     public ResponseEntity<MgmtSoftwareModule> updateSoftwareModule(
             final Long softwareModuleId, final MgmtSoftwareModuleRequestBodyPut restSoftwareModule) {
         final SoftwareModule module = softwareModuleManagement
-                .update(entityFactory.softwareModule().update(softwareModuleId)
+                .update(SoftwareModuleManagement.Update.builder()
+                        .id(softwareModuleId)
                         .description(restSoftwareModule.getDescription())
                         .vendor(restSoftwareModule.getVendor())
-                        .locked(restSoftwareModule.getLocked()));
+                        .locked(restSoftwareModule.getLocked())
+                        .build());
 
         final MgmtSoftwareModule response = MgmtSoftwareModuleMapper.toResponse(module);
         MgmtSoftwareModuleMapper.addLinks(module, response);

@@ -25,6 +25,7 @@ import jakarta.validation.ConstraintViolationException;
 
 import org.assertj.core.api.Assertions;
 import org.eclipse.hawkbit.exception.AbstractServerRtException;
+import org.eclipse.hawkbit.repository.DistributionSetManagement;
 import org.eclipse.hawkbit.repository.TargetFilterQueryManagement;
 import org.eclipse.hawkbit.repository.builder.AutoAssignDistributionSetUpdate;
 import org.eclipse.hawkbit.repository.builder.TargetFilterQueryCreate;
@@ -588,8 +589,8 @@ class TargetFilterQueryManagementTest extends AbstractJpaIntegrationTest {
 
     private void verifyAutoAssignmentWithIncompleteDs(final TargetFilterQuery targetFilterQuery) {
         final DistributionSet incompleteDistributionSet = distributionSetManagement
-                .create(entityFactory.distributionSet().create().name("incomplete").version("1")
-                        .type(testdataFactory.findOrCreateDefaultTestDsType()));
+                .create(DistributionSetManagement.Create.builder().name("incomplete").version("1")
+                        .type(testdataFactory.findOrCreateDefaultTestDsType().getKey()).build());
 
         final AutoAssignDistributionSetUpdate autoAssignDistributionSetUpdate = entityFactory.targetFilterQuery()
                 .updateAutoAssign(targetFilterQuery.getId()).ds(incompleteDistributionSet.getId());

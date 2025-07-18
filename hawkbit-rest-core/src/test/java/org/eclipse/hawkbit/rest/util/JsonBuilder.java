@@ -15,9 +15,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.hawkbit.repository.SoftwareModuleManagement;
+import org.eclipse.hawkbit.repository.SoftwareModuleTypeManagement;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.RolloutGroup;
@@ -39,6 +43,8 @@ import org.springframework.util.CollectionUtils;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
 public class JsonBuilder {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static String ids(final Collection<Long> ids) throws JSONException {
         final JSONArray list = new JSONArray();
@@ -100,6 +106,10 @@ public class JsonBuilder {
         return builder.toString();
     }
 
+    public static String softwareModuleCreates(final List<SoftwareModuleManagement.Create> creates) throws JsonProcessingException {
+        return MAPPER.writeValueAsString(creates);
+    }
+
     public static String softwareModuleTypes(final List<SoftwareModuleType> types) throws JSONException {
         final StringBuilder builder = new StringBuilder();
 
@@ -118,6 +128,28 @@ public class JsonBuilder {
         builder.append("]");
 
         return builder.toString();
+    }
+
+    public static String softwareModuleTypeCreates(final List<SoftwareModuleTypeManagement.Create> creates)
+            throws JsonProcessingException, JSONException {
+        final StringBuilder builder = new StringBuilder();
+
+        builder.append("[");
+        int i = 0;
+        for (final SoftwareModuleTypeManagement.Create module : creates) {
+            builder.append(new JSONObject().put("name", module.getName()).put("description", module.getDescription())
+                    .put("colour", module.getColour()).put("id", Long.MAX_VALUE).put("key", module.getKey())
+                    .put("maxAssignments", module.getMaxAssignments()).put("createdAt", "0").put("updatedAt", "0")
+                    .put("createdBy", "fghdfkjghdfkjh").put("updatedBy", "fghdfkjghdfkjh").toString());
+
+            if (++i < creates.size()) {
+                builder.append(",");
+            }
+        }
+        builder.append("]");
+
+        return builder.toString();
+//        return MAPPER.writeValueAsString(creates);
     }
 
     public static String distributionSetTypes(final List<DistributionSetType> types) throws JSONException {

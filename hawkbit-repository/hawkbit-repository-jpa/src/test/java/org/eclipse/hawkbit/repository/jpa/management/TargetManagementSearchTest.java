@@ -16,8 +16,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.hawkbit.repository.DistributionSetManagement;
 import org.eclipse.hawkbit.repository.FilterParams;
-import org.eclipse.hawkbit.repository.builder.DistributionSetCreate;
 import org.eclipse.hawkbit.repository.jpa.AbstractJpaIntegrationTest;
 import org.eclipse.hawkbit.repository.model.Action.Status;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
@@ -661,8 +661,6 @@ class TargetManagementSearchTest extends AbstractJpaIntegrationTest {
     }
 
     private DistributionSet createDistSetWithType(final DistributionSetType type) {
-        final DistributionSetCreate dsCreate = entityFactory.distributionSet().create().name("test-ds").version("1.0")
-                .type(type);
-        return distributionSetManagement.create(dsCreate);
+        return distributionSetManagement.create(DistributionSetManagement.Create.builder().name("test-ds").version("1.0").build());
     }
 }

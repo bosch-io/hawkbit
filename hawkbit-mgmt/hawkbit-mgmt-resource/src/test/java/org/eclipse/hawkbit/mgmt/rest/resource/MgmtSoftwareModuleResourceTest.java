@@ -45,6 +45,7 @@ import org.eclipse.hawkbit.mgmt.rest.api.MgmtRepresentationMode;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants;
 import org.eclipse.hawkbit.mgmt.rest.resource.util.ResourceUtility;
 import org.eclipse.hawkbit.repository.Constants;
+import org.eclipse.hawkbit.repository.SoftwareModuleManagement;
 import org.eclipse.hawkbit.repository.exception.AssignmentQuotaExceededException;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
 import org.eclipse.hawkbit.repository.exception.FileSizeQuotaExceededException;
@@ -113,7 +114,7 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
         softwareModuleTypeManagement.delete(sm.getType().getId());
 
         //check if it is marked as deleted
-        final Optional<SoftwareModuleType> opt = softwareModuleTypeManagement.findByKey(SM_TYPE);
+        final Optional<? extends SoftwareModuleType> opt = softwareModuleTypeManagement.findByKey(SM_TYPE);
         if (opt.isEmpty()) {
             throw new AssertionError("The Optional object of software module type should not be empty!");
         }
@@ -230,13 +231,13 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
         final String updateVendor = "newVendor1";
         final String updateDescription = "newDescription1";
 
-        final SoftwareModule sm = softwareModuleManagement.create(entityFactory.softwareModule()
-                .create()
-                .type(osType)
+        final SoftwareModule sm = softwareModuleManagement.create(SoftwareModuleManagement.Create.builder()
+                .type(osType.getKey())
                 .name(knownSWName)
                 .version(knownSWVersion)
                 .description(knownSWDescription)
-                .vendor(knownSWVendor));
+                .vendor(knownSWVendor)
+                .build());
 
         assertThat(sm.getName()).as("Wrong name of the software module").isEqualTo(knownSWName);
 
@@ -279,7 +280,7 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
         final String knownSWVersion = "version1";
 
         final SoftwareModule sm = softwareModuleManagement.create(
-                entityFactory.softwareModule().create().type(osType).name(knownSWName).version(knownSWVersion));
+                SoftwareModuleManagement.Create.builder().type(osType.getKey()).name(knownSWName).version(knownSWVersion).build());
 
         assertThat(sm.isDeleted()).as("Created software module should not be deleted").isFalse();
 
@@ -311,7 +312,7 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
     @WithUser(principal = "smUpdateTester", allSpPermissions = true)
     void lockSoftwareModule() throws Exception {
         final SoftwareModule sm = softwareModuleManagement.create(
-                entityFactory.softwareModule().create().type(osType).name("name1").version("version1"));
+                SoftwareModuleManagement.Create.builder().type(osType.getKey()).name("name1").version("version1").build());
         assertThat(sm.isLocked()).as("Created software module should not be locked").isFalse();
         // ensures that we are not to fast so that last modified is not set correctly
         await().until(() -> sm.getLastModifiedAt() > 0L && sm.getLastModifiedBy() != null);
@@ -342,7 +343,7 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
     @WithUser(principal = "smUpdateTester", allSpPermissions = true)
     void unlockSoftwareModule() throws Exception {
         final SoftwareModule sm = softwareModuleManagement.create(
-                entityFactory.softwareModule().create().type(osType).name("name1").version("version1"));
+                SoftwareModuleManagement.Create.builder().type(osType.getKey()).name("name1").version("version1").build());
         softwareModuleManagement.lock(sm.getId());
         assertThat(softwareModuleManagement.get(sm.getId())
                 .orElseThrow(() -> new EntityNotFoundException(SoftwareModule.class, sm.getId())).isLocked())
@@ -1024,9 +1025,9 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
                 .andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isBadRequest());
 
-        final SoftwareModule toLongName = entityFactory.softwareModule().create().type(osType)
+        final SoftwareModuleManagement.Create toLongName = SoftwareModuleManagement.Create.builder().type(osType.getKey())
                 .name(randomString(80)).build();
-        mvc.perform(post("/rest/v1/softwaremodules").content(JsonBuilder.softwareModules(Collections.singletonList(toLongName)))
+        mvc.perform(post("/rest/v1/softwaremodules").content(JsonBuilder.softwareModuleCreates(Collections.singletonList(toLongName)))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isBadRequest());
@@ -1037,11 +1038,12 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
                 .andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isUnsupportedMediaType());
 
-        final SoftwareModule swm = entityFactory.softwareModule().create().name("encryptedModule").type(osType)
+        final SoftwareModuleManagement.Create swm = SoftwareModuleManagement.Create.builder()
+                .name("encryptedModule").type(osType.getKey())
                 .version("version").vendor("vendor").description("description").encrypted(true).build();
         // artifact decryption is not supported
         mvc.perform(
-                        post("/rest/v1/softwaremodules").content(JsonBuilder.softwareModules(Collections.singletonList(swm)))
+                        post("/rest/v1/softwaremodules").content(JsonBuilder.softwareModuleCreates(Collections.singletonList(swm)))
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isBadRequest());
@@ -1270,30 +1272,28 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
     @Test
     @WithUser(principal = "uploadTester", allSpPermissions = true)
     void createSoftwareModules() throws Exception {
-        final SoftwareModule os = entityFactory.softwareModule()
-                .create()
+        final SoftwareModuleManagement.Create os = SoftwareModuleManagement.Create.builder()
                 .name("name1")
-                .type(osType)
+                .type(osType.getKey())
                 .version("version1")
                 .vendor("vendor1")
                 .description("description1")
                 .build();
-        final SoftwareModule ah = entityFactory.softwareModule()
-                .create()
+        final SoftwareModuleManagement.Create ah = SoftwareModuleManagement.Create.builder()
                 .name("name3")
-                .type(appType)
+                .type(appType.getKey())
                 .version("version3")
                 .vendor("vendor3")
                 .description("description3")
                 .build();
 
-        final List<SoftwareModule> modules = Arrays.asList(os, ah);
+        final List<SoftwareModuleManagement.Create> modules = Arrays.asList(os, ah);
 
         final long current = System.currentTimeMillis();
 
         final MvcResult mvcResult = mvc.perform(
                         post("/rest/v1/softwaremodules").accept(MediaType.APPLICATION_JSON_VALUE)
-                                .content(JsonBuilder.softwareModules(modules))
+                                .content(JsonBuilder.softwareModuleCreates(modules))
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultPrinter.print())
                 .andExpect(status().isCreated())
@@ -1574,8 +1574,9 @@ class MgmtSoftwareModuleResourceTest extends AbstractManagementApiIntegrationTes
         char character = 'a';
         for (int index = 0; index < amount; index++) {
             final String str = String.valueOf(character);
-            softwareModuleManagement.create(entityFactory.softwareModule().create().type(osType).name(str)
-                    .description(str).vendor(str).version(str));
+            softwareModuleManagement.create(
+                    SoftwareModuleManagement.Create.builder()
+                            .type(osType.getKey()).name(str).description(str).vendor(str).version(str).build());
             character++;
         }
     }

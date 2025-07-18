@@ -57,12 +57,6 @@ import org.eclipse.hawkbit.repository.SystemManagement;
 import org.eclipse.hawkbit.repository.TargetFilterQueryManagement;
 import org.eclipse.hawkbit.repository.TargetManagement;
 import org.eclipse.hawkbit.repository.TenantConfigurationManagement;
-import org.eclipse.hawkbit.repository.builder.DistributionSetCreate;
-import org.eclipse.hawkbit.repository.builder.DistributionSetTypeCreate;
-import org.eclipse.hawkbit.repository.builder.DistributionSetTypeUpdate;
-import org.eclipse.hawkbit.repository.builder.DistributionSetUpdate;
-import org.eclipse.hawkbit.repository.builder.SoftwareModuleCreate;
-import org.eclipse.hawkbit.repository.builder.SoftwareModuleUpdate;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
 import org.eclipse.hawkbit.repository.model.DeploymentRequest;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
@@ -70,6 +64,7 @@ import org.eclipse.hawkbit.repository.model.DistributionSetAssignmentResult;
 import org.eclipse.hawkbit.repository.model.DistributionSetInvalidation;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.repository.model.SoftwareModule;
+import org.eclipse.hawkbit.repository.model.SoftwareModuleType;
 import org.eclipse.hawkbit.repository.model.Target;
 import org.eclipse.hawkbit.repository.model.TargetFilterQuery;
 import org.eclipse.hawkbit.security.SystemSecurityContext;
@@ -88,25 +83,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MgmtDistributionSetResource implements MgmtDistributionSetRestApi {
 
-    private final SoftwareModuleManagement<SoftwareModule, SoftwareModuleCreate<SoftwareModule>, SoftwareModuleUpdate> softwareModuleManagement;
+    private final SoftwareModuleManagement<? extends SoftwareModule> softwareModuleManagement;
     private final TargetManagement targetManagement;
     private final TargetFilterQueryManagement targetFilterQueryManagement;
     private final DeploymentManagement deployManagement;
     private final SystemManagement systemManagement;
     private final EntityFactory entityFactory;
-    private final DistributionSetManagement<DistributionSet, DistributionSetCreate<DistributionSet>, DistributionSetUpdate> distributionSetManagement;
-    private final DistributionSetTypeManagement<DistributionSetType, DistributionSetTypeCreate<DistributionSetType>, DistributionSetTypeUpdate> distributionSetTypeManagement;
+    private final DistributionSetManagement<? extends DistributionSet> distributionSetManagement;
+    private final DistributionSetTypeManagement<? extends DistributionSetType> distributionSetTypeManagement;
     private final SystemSecurityContext systemSecurityContext;
     private final DistributionSetInvalidationManagement distributionSetInvalidationManagement;
     private final TenantConfigHelper tenantConfigHelper;
 
     @SuppressWarnings("java:S107")
     MgmtDistributionSetResource(
-            final SoftwareModuleManagement softwareModuleManagement,
+            final SoftwareModuleManagement<? extends SoftwareModule> softwareModuleManagement,
             final TargetManagement targetManagement, final TargetFilterQueryManagement targetFilterQueryManagement,
             final DeploymentManagement deployManagement, final SystemManagement systemManagement,
-            final EntityFactory entityFactory, final DistributionSetManagement distributionSetManagement,
-            final DistributionSetTypeManagement distributionSetTypeManagement, final SystemSecurityContext systemSecurityContext,
+            final EntityFactory entityFactory, final DistributionSetManagement<? extends DistributionSet> distributionSetManagement,
+            final DistributionSetTypeManagement<? extends DistributionSetType> distributionSetTypeManagement, final SystemSecurityContext systemSecurityContext,
             final DistributionSetInvalidationManagement distributionSetInvalidationManagement,
             final TenantConfigurationManagement tenantConfigurationManagement) {
         this.softwareModuleManagement = softwareModuleManagement;
@@ -126,7 +121,7 @@ public class MgmtDistributionSetResource implements MgmtDistributionSetRestApi {
     public ResponseEntity<PagedList<MgmtDistributionSet>> getDistributionSets(
             final String rsqlParam, final int pagingOffsetParam, final int pagingLimitParam, final String sortParam) {
         final Pageable pageable = PagingUtility.toPageable(pagingOffsetParam, pagingLimitParam, sanitizeDistributionSetSortParam(sortParam));
-        final Slice<DistributionSet> findDsPage;
+        final Slice<? extends DistributionSet> findDsPage;
         final long countModulesAll;
         if (rsqlParam != null) {
             findDsPage = distributionSetManagement.findByRsql(rsqlParam, pageable);
@@ -159,7 +154,7 @@ public class MgmtDistributionSetResource implements MgmtDistributionSetRestApi {
 
         //check if there is already deleted DS Type
         for (MgmtDistributionSetRequestBodyPost ds : sets) {
-            final Optional<DistributionSetType> opt = distributionSetTypeManagement.findByKey(ds.getType());
+            final Optional<? extends DistributionSetType> opt = distributionSetTypeManagement.findByKey(ds.getType());
             opt.ifPresent(dsType -> {
                 if (dsType.isDeleted()) {
                     final String text = "Cannot create Distribution Set from type with key {0}. Distribution Set Type already deleted!";
@@ -169,7 +164,7 @@ public class MgmtDistributionSetResource implements MgmtDistributionSetRestApi {
             });
         }
 
-        final Collection<DistributionSet> createdDSets = distributionSetManagement
+        final Collection<? extends DistributionSet> createdDSets = distributionSetManagement
                 .create(MgmtDistributionSetMapper.dsFromRequest(sets, entityFactory));
 
         log.debug("{} distribution sets created, return status {}", sets.size(), HttpStatus.CREATED);
@@ -188,10 +183,11 @@ public class MgmtDistributionSetResource implements MgmtDistributionSetRestApi {
     public ResponseEntity<MgmtDistributionSet> updateDistributionSet(
             final Long distributionSetId,
             final MgmtDistributionSetRequestBodyPut toUpdate) {
-        final DistributionSet updated = distributionSetManagement.update(entityFactory.distributionSet()
-                .update(distributionSetId).name(toUpdate.getName()).description(toUpdate.getDescription())
+        final DistributionSet updated = distributionSetManagement.update(DistributionSetManagement.Update.builder()
+                .id(distributionSetId).name(toUpdate.getName()).description(toUpdate.getDescription())
                 .version(toUpdate.getVersion()).locked(toUpdate.getLocked())
-                .requiredMigrationStep(toUpdate.getRequiredMigrationStep()));
+                .requiredMigrationStep(toUpdate.getRequiredMigrationStep())
+                .build());
 
         final MgmtDistributionSet response = MgmtDistributionSetMapper.toResponse(updated);
         MgmtDistributionSetMapper.addLinks(updated, response);
@@ -322,9 +318,8 @@ public class MgmtDistributionSetResource implements MgmtDistributionSetRestApi {
             final Long distributionSetId,
             final int pagingOffsetParam, final int pagingLimitParam, final String sortParam) {
         final Pageable pageable = PagingUtility.toPageable(pagingOffsetParam, pagingLimitParam, sanitizeDistributionSetSortParam(sortParam));
-        final Page<SoftwareModule> softwareModules = softwareModuleManagement.findByAssignedTo(distributionSetId, pageable);
-        return ResponseEntity.ok(new PagedList<>(MgmtSoftwareModuleMapper.toResponse(
-                softwareModules.getContent()), softwareModules.getTotalElements()));
+        final Page<? extends SoftwareModule> softwareModules = softwareModuleManagement.findByAssignedTo(distributionSetId, pageable);
+        return ResponseEntity.ok(new PagedList<>(MgmtSoftwareModuleMapper.toResponse(softwareModules.getContent()), softwareModules.getTotalElements()));
     }
 
     @Override

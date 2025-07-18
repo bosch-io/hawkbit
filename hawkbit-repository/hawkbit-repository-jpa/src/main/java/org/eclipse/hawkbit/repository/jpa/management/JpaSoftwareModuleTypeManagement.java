@@ -16,8 +16,6 @@ import jakarta.persistence.EntityManager;
 
 import org.eclipse.hawkbit.repository.SoftwareModuleTypeFields;
 import org.eclipse.hawkbit.repository.SoftwareModuleTypeManagement;
-import org.eclipse.hawkbit.repository.builder.GenericSoftwareModuleTypeUpdate;
-import org.eclipse.hawkbit.repository.jpa.builder.JpaSoftwareModuleTypeCreate;
 import org.eclipse.hawkbit.repository.jpa.model.JpaSoftwareModuleType;
 import org.eclipse.hawkbit.repository.jpa.repository.DistributionSetTypeRepository;
 import org.eclipse.hawkbit.repository.jpa.repository.SoftwareModuleRepository;
@@ -28,8 +26,8 @@ import org.springframework.stereotype.Service;
 @Service
 @ConditionalOnBooleanProperty(prefix = "hawkbit.jpa", name = { "enabled", "software-module-type=management" }, matchIfMissing = true)
 public class JpaSoftwareModuleTypeManagement
-        extends AbstractJpaRepositoryManagement<JpaSoftwareModuleType, JpaSoftwareModuleTypeCreate, GenericSoftwareModuleTypeUpdate, SoftwareModuleTypeRepository, SoftwareModuleTypeFields>
-        implements SoftwareModuleTypeManagement<JpaSoftwareModuleType, JpaSoftwareModuleTypeCreate, GenericSoftwareModuleTypeUpdate> {
+        extends AbstractJpaRepositoryManagement<JpaSoftwareModuleType, SoftwareModuleTypeManagement.Create, SoftwareModuleTypeManagement.Update, SoftwareModuleTypeRepository, SoftwareModuleTypeFields>
+        implements SoftwareModuleTypeManagement<JpaSoftwareModuleType> {
 
     private final DistributionSetTypeRepository distributionSetTypeRepository;
     private final SoftwareModuleRepository softwareModuleRepository;

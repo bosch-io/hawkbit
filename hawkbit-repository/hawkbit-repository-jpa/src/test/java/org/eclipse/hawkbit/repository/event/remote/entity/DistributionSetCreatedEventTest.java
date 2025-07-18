@@ -9,6 +9,7 @@
  */
 package org.eclipse.hawkbit.repository.event.remote.entity;
 
+import org.eclipse.hawkbit.repository.DistributionSetManagement.Create;
 import org.eclipse.hawkbit.repository.model.DistributionSet;
 import org.junit.jupiter.api.Test;
 
@@ -31,6 +32,6 @@ class DistributionSetCreatedEventTest extends AbstractRemoteEntityEventTest<Dist
     @Override
     protected DistributionSet createEntity() {
         return distributionSetManagement.create(
-                entityFactory.distributionSet().create().name("incomplete").version("2").description("incomplete").type("os"));
+                Create.builder().name("incomplete").version("2").description("incomplete").type("os").build());
     }
 }

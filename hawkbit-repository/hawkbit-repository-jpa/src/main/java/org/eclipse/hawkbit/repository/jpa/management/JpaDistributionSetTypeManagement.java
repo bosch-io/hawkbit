@@ -26,12 +26,10 @@ import jakarta.persistence.EntityManager;
 import org.eclipse.hawkbit.repository.DistributionSetTypeFields;
 import org.eclipse.hawkbit.repository.DistributionSetTypeManagement;
 import org.eclipse.hawkbit.repository.QuotaManagement;
-import org.eclipse.hawkbit.repository.builder.GenericDistributionSetTypeUpdate;
 import org.eclipse.hawkbit.repository.exception.AssignmentQuotaExceededException;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
 import org.eclipse.hawkbit.repository.exception.EntityReadOnlyException;
 import org.eclipse.hawkbit.repository.jpa.acm.AccessController;
-import org.eclipse.hawkbit.repository.jpa.builder.JpaDistributionSetTypeCreate;
 import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSetType;
 import org.eclipse.hawkbit.repository.jpa.model.JpaSoftwareModuleType;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTargetType;
@@ -54,8 +52,8 @@ import org.springframework.util.CollectionUtils;
 @Service
 @ConditionalOnBooleanProperty(prefix = "hawkbit.jpa", name = { "enabled", "distribution-set-type-management" }, matchIfMissing = true)
 public class JpaDistributionSetTypeManagement
-        extends AbstractJpaRepositoryManagement<JpaDistributionSetType, JpaDistributionSetTypeCreate, GenericDistributionSetTypeUpdate, DistributionSetTypeRepository, DistributionSetTypeFields>
-        implements DistributionSetTypeManagement<JpaDistributionSetType, JpaDistributionSetTypeCreate, GenericDistributionSetTypeUpdate> {
+        extends AbstractJpaRepositoryManagement<JpaDistributionSetType, DistributionSetTypeManagement.Create, DistributionSetTypeManagement.Update, DistributionSetTypeRepository, DistributionSetTypeFields>
+        implements DistributionSetTypeManagement<JpaDistributionSetType> {
 
     private final SoftwareModuleTypeRepository softwareModuleTypeRepository;
     private final DistributionSetRepository distributionSetRepository;
@@ -76,7 +74,7 @@ public class JpaDistributionSetTypeManagement
     }
 
     @Override
-    public JpaDistributionSetType update(final GenericDistributionSetTypeUpdate update) {
+    public JpaDistributionSetType update(final Update update) {
         final JpaDistributionSetType type = findDistributionSetTypeAndThrowExceptionIfNotFound(update.getId());
         if (hasModuleChanges(update)) {
             checkDistributionSetTypeNotAssigned(update.getId());
@@ -89,8 +87,8 @@ public class JpaDistributionSetTypeManagement
                     .concat(currentMandatorySmTypeIds.stream(), currentOptionalSmTypeIds.stream())
                     .collect(Collectors.toSet());
 
-            final Collection<Long> updatedMandatorySmTypeIds = update.getMandatory().orElse(currentMandatorySmTypeIds);
-            final Collection<Long> updatedOptionalSmTypeIds = update.getOptional().orElse(currentOptionalSmTypeIds);
+            final Collection<Long> updatedMandatorySmTypeIds = Optional.ofNullable(update.getMandatory()).orElse(currentMandatorySmTypeIds);
+            final Collection<Long> updatedOptionalSmTypeIds = Optional.ofNullable(update.getOptional()).orElse(currentOptionalSmTypeIds);
             final Collection<Long> updatedSmTypeIds = Stream
                     .concat(updatedMandatorySmTypeIds.stream(), updatedOptionalSmTypeIds.stream())
                     .collect(Collectors.toSet());
@@ -171,8 +169,8 @@ public class JpaDistributionSetTypeManagement
         }
     }
 
-    private static boolean hasModuleChanges(final GenericDistributionSetTypeUpdate update) {
-        return update.getOptional().isPresent() || update.getMandatory().isPresent();
+    private static boolean hasModuleChanges(final Update update) {
+        return update.getOptional() != null || update.getMandatory() != null;
     }
 
     private void addModuleTypes(

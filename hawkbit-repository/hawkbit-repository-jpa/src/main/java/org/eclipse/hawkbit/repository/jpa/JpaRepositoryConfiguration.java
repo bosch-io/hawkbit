@@ -20,6 +20,7 @@ import jakarta.validation.Validation;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import org.eclipse.hawkbit.ContextAware;
+import org.eclipse.hawkbit.repository.SoftwareModuleManagement;
 import org.eclipse.hawkbit.repository.artifact.encryption.ArtifactEncryption;
 import org.eclipse.hawkbit.repository.artifact.encryption.ArtifactEncryptionSecretsStore;
 import org.eclipse.hawkbit.repository.artifact.encryption.ArtifactEncryptionService;
@@ -45,10 +46,7 @@ import org.eclipse.hawkbit.repository.TargetManagement;
 import org.eclipse.hawkbit.repository.TargetTypeManagement;
 import org.eclipse.hawkbit.repository.TenantConfigurationManagement;
 import org.eclipse.hawkbit.repository.autoassign.AutoAssignExecutor;
-import org.eclipse.hawkbit.repository.builder.DistributionSetBuilder;
-import org.eclipse.hawkbit.repository.builder.DistributionSetTypeBuilder;
 import org.eclipse.hawkbit.repository.builder.RolloutBuilder;
-import org.eclipse.hawkbit.repository.builder.SoftwareModuleBuilder;
 import org.eclipse.hawkbit.repository.builder.SoftwareModuleMetadataBuilder;
 import org.eclipse.hawkbit.repository.builder.TargetBuilder;
 import org.eclipse.hawkbit.repository.builder.TargetFilterQueryBuilder;
@@ -64,10 +62,7 @@ import org.eclipse.hawkbit.repository.jpa.autoassign.AutoAssignScheduler;
 import org.eclipse.hawkbit.repository.jpa.autocleanup.AutoActionCleanup;
 import org.eclipse.hawkbit.repository.jpa.autocleanup.AutoCleanupScheduler;
 import org.eclipse.hawkbit.repository.jpa.autocleanup.CleanupTask;
-import org.eclipse.hawkbit.repository.jpa.builder.JpaDistributionSetBuilder;
-import org.eclipse.hawkbit.repository.jpa.builder.JpaDistributionSetTypeBuilder;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaRolloutBuilder;
-import org.eclipse.hawkbit.repository.jpa.builder.JpaSoftwareModuleBuilder;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaSoftwareModuleMetadataBuilder;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaTargetBuilder;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaTargetFilterQueryBuilder;
@@ -77,9 +72,7 @@ import org.eclipse.hawkbit.repository.jpa.cluster.DistributedLockRepository;
 import org.eclipse.hawkbit.repository.jpa.event.JpaEventEntityManager;
 import org.eclipse.hawkbit.repository.jpa.executor.AfterTransactionCommitDefaultServiceExecutor;
 import org.eclipse.hawkbit.repository.jpa.executor.AfterTransactionCommitExecutor;
-import org.eclipse.hawkbit.repository.jpa.management.JpaDistributionSetTypeManagement;
 import org.eclipse.hawkbit.repository.jpa.management.JpaSoftwareModuleManagement;
-import org.eclipse.hawkbit.repository.jpa.management.JpaSoftwareModuleTypeManagement;
 import org.eclipse.hawkbit.repository.jpa.model.JpaAction;
 import org.eclipse.hawkbit.repository.jpa.model.JpaArtifact;
 import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSet;
@@ -314,18 +307,6 @@ public class JpaRepositoryConfiguration {
         return e -> e instanceof TargetPollEvent && !repositoryProperties.isPublishTargetPollEvent();
     }
 
-    /**
-     * @param distributionSetTypeManagement to loading the {@link DistributionSetType}
-     * @param softwareManagement for loading {@link DistributionSet#getModules()}
-     * @return DistributionSetBuilder bean
-     */
-    @Bean
-    DistributionSetBuilder distributionSetBuilder(
-            final JpaDistributionSetTypeManagement distributionSetTypeManagement,
-            final JpaSoftwareModuleManagement softwareManagement) {
-        return new JpaDistributionSetBuilder(distributionSetTypeManagement, softwareManagement);
-    }
-
     @Bean
     TargetBuilder targetBuilder(final TargetTypeManagement targetTypeManagement) {
         return new JpaTargetBuilder(targetTypeManagement);
@@ -341,28 +322,9 @@ public class JpaRepositoryConfiguration {
     }
 
     @Bean
-    SoftwareModuleMetadataBuilder softwareModuleMetadataBuilder(final JpaSoftwareModuleManagement softwareModuleManagement) {
+    SoftwareModuleMetadataBuilder softwareModuleMetadataBuilder(
+            final JpaSoftwareModuleManagement softwareModuleManagement) {
         return new JpaSoftwareModuleMetadataBuilder(softwareModuleManagement);
-    }
-
-    /**
-     * @param softwareModuleTypeManagement for loading {@link DistributionSetType#getMandatoryModuleTypes()}
-     *         and {@link DistributionSetType#getOptionalModuleTypes()}
-     * @return DistributionSetTypeBuilder bean
-     */
-    @Bean
-    DistributionSetTypeBuilder distributionSetTypeBuilder(
-            final SoftwareModuleTypeManagement<? extends SoftwareModuleType, ?, ?> softwareModuleTypeManagement) {
-        return new JpaDistributionSetTypeBuilder(softwareModuleTypeManagement);
-    }
-
-    /**
-     * @param softwareModuleTypeManagement for loading {@link SoftwareModule#getType()}
-     * @return SoftwareModuleBuilder bean
-     */
-    @Bean
-    SoftwareModuleBuilder softwareModuleBuilder(final JpaSoftwareModuleTypeManagement softwareModuleTypeManagement) {
-        return new JpaSoftwareModuleBuilder(softwareModuleTypeManagement);
     }
 
     /**
@@ -509,11 +471,11 @@ public class JpaRepositoryConfiguration {
     EntityFactory entityFactory(
             final TargetBuilder targetBuilder, final TargetTypeBuilder targetTypeBuilder,
             final TargetFilterQueryBuilder targetFilterQueryBuilder,
-            final SoftwareModuleBuilder softwareModuleBuilder, final SoftwareModuleMetadataBuilder softwareModuleMetadataBuilder,
-            final DistributionSetBuilder distributionSetBuilder, final DistributionSetTypeBuilder distributionSetTypeBuilder,
+            final SoftwareModuleMetadataBuilder softwareModuleMetadataBuilder,
             final RolloutBuilder rolloutBuilder) {
-        return new JpaEntityFactory(targetBuilder, targetTypeBuilder, targetFilterQueryBuilder, softwareModuleBuilder,
-                softwareModuleMetadataBuilder, distributionSetBuilder, distributionSetTypeBuilder, rolloutBuilder);
+        return new JpaEntityFactory(
+                targetBuilder, targetTypeBuilder, targetFilterQueryBuilder,
+                softwareModuleMetadataBuilder, rolloutBuilder);
     }
 
     /**

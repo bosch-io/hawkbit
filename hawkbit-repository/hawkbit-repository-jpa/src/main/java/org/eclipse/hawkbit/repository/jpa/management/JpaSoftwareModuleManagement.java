@@ -22,22 +22,22 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityManager;
+import jakarta.validation.ValidationException;
 
 import org.eclipse.hawkbit.repository.ArtifactManagement;
 import org.eclipse.hawkbit.repository.QuotaManagement;
 import org.eclipse.hawkbit.repository.RepositoryConstants;
 import org.eclipse.hawkbit.repository.SoftwareModuleFields;
 import org.eclipse.hawkbit.repository.SoftwareModuleManagement;
+import org.eclipse.hawkbit.repository.SoftwareModuleTypeManagement;
 import org.eclipse.hawkbit.repository.artifact.encryption.ArtifactEncryptionService;
 import org.eclipse.hawkbit.repository.builder.GenericSoftwareModuleMetadataUpdate;
-import org.eclipse.hawkbit.repository.builder.GenericSoftwareModuleUpdate;
 import org.eclipse.hawkbit.repository.builder.SoftwareModuleMetadataCreate;
 import org.eclipse.hawkbit.repository.builder.SoftwareModuleMetadataUpdate;
 import org.eclipse.hawkbit.repository.exception.EntityAlreadyExistsException;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
 import org.eclipse.hawkbit.repository.jpa.JpaManagementHelper;
 import org.eclipse.hawkbit.repository.jpa.acm.AccessController;
-import org.eclipse.hawkbit.repository.jpa.builder.JpaSoftwareModuleCreate;
 import org.eclipse.hawkbit.repository.jpa.builder.JpaSoftwareModuleMetadataCreate;
 import org.eclipse.hawkbit.repository.jpa.model.AbstractJpaBaseEntity_;
 import org.eclipse.hawkbit.repository.jpa.model.JpaSoftwareModule;
@@ -72,11 +72,12 @@ import org.springframework.util.ObjectUtils;
 @Service
 @ConditionalOnBooleanProperty(prefix = "hawkbit.jpa", name = { "enabled", "software-module-management" }, matchIfMissing = true)
 public class JpaSoftwareModuleManagement
-        extends AbstractJpaRepositoryManagement<JpaSoftwareModule, JpaSoftwareModuleCreate, GenericSoftwareModuleUpdate, SoftwareModuleRepository, SoftwareModuleFields>
-        implements SoftwareModuleManagement<JpaSoftwareModule, JpaSoftwareModuleCreate, GenericSoftwareModuleUpdate> {
+        extends AbstractJpaRepositoryManagement<JpaSoftwareModule, SoftwareModuleManagement.Create, SoftwareModuleManagement.Update, SoftwareModuleRepository, SoftwareModuleFields>
+        implements SoftwareModuleManagement<JpaSoftwareModule> {
 
     protected static final String SOFTWARE_MODULE_METADATA = "SoftwareModuleMetadata";
 
+    private final SoftwareModuleTypeManagement softwareModuleTypeManagement;
     private final DistributionSetRepository distributionSetRepository;
     private final SoftwareModuleMetadataRepository softwareModuleMetadataRepository;
     private final SoftwareModuleTypeRepository softwareModuleTypeRepository;
@@ -86,11 +87,13 @@ public class JpaSoftwareModuleManagement
     JpaSoftwareModuleManagement(
             final SoftwareModuleRepository softwareModuleRepository,
             final EntityManager entityManager,
+            final SoftwareModuleTypeManagement softwareModuleTypeManagement,
             final DistributionSetRepository distributionSetRepository,
             final SoftwareModuleMetadataRepository softwareModuleMetadataRepository,
             final SoftwareModuleTypeRepository softwareModuleTypeRepository,
             final ArtifactManagement artifactManagement, final QuotaManagement quotaManagement) {
         super(softwareModuleRepository, entityManager);
+        this.softwareModuleTypeManagement = softwareModuleTypeManagement;
         this.distributionSetRepository = distributionSetRepository;
         this.softwareModuleMetadataRepository = softwareModuleMetadataRepository;
         this.softwareModuleTypeRepository = softwareModuleTypeRepository;
@@ -99,7 +102,7 @@ public class JpaSoftwareModuleManagement
     }
 
     @Override
-    public List<JpaSoftwareModule> create(final Collection<JpaSoftwareModuleCreate> create) {
+    public List<JpaSoftwareModule> create(final Collection<Create> create) {
         final List<JpaSoftwareModule> createdModules = super.create(create);
 
         if (createdModules.stream().anyMatch(SoftwareModule::isEncrypted)) {
@@ -115,7 +118,7 @@ public class JpaSoftwareModuleManagement
     }
 
     @Override
-    public JpaSoftwareModule create(final JpaSoftwareModuleCreate create) {
+    public JpaSoftwareModule create(final Create create) {
         final JpaSoftwareModule createdModule = super.create(create);
 
         if (createdModule.isEncrypted()) {
@@ -128,14 +131,14 @@ public class JpaSoftwareModuleManagement
     }
 
     @Override
-    public JpaSoftwareModule update(final GenericSoftwareModuleUpdate update) {
+    public JpaSoftwareModule update(final Update update) {
         final JpaSoftwareModule module = jpaRepository.findById(update.getId())
                 .orElseThrow(() -> new EntityNotFoundException(SoftwareModule.class, update.getId()));
 
         // lock/unlock ONLY if locked flag is present!
-        if (Boolean.TRUE.equals(update.locked())) {
+        if (Boolean.TRUE.equals(update.getLocked())) {
             module.lock();
-        } else if (Boolean.FALSE.equals(update.locked())) {
+        } else if (Boolean.FALSE.equals(update.getLocked())) {
             module.unlock();
         }
 

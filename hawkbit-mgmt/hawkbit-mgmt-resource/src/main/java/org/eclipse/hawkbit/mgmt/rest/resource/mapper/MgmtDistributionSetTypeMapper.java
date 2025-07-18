@@ -24,8 +24,7 @@ import org.eclipse.hawkbit.mgmt.json.model.distributionsettype.MgmtDistributionS
 import org.eclipse.hawkbit.mgmt.json.model.softwaremoduletype.MgmtSoftwareModuleTypeAssignment;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtDistributionSetTypeRestApi;
 import org.eclipse.hawkbit.mgmt.rest.api.MgmtRestConstants;
-import org.eclipse.hawkbit.repository.EntityFactory;
-import org.eclipse.hawkbit.repository.builder.DistributionSetTypeCreate;
+import org.eclipse.hawkbit.repository.DistributionSetTypeManagement;
 import org.eclipse.hawkbit.repository.model.DistributionSetType;
 import org.eclipse.hawkbit.rest.json.model.ResponseList;
 
@@ -35,15 +34,15 @@ import org.eclipse.hawkbit.rest.json.model.ResponseList;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class MgmtDistributionSetTypeMapper {
 
-    public static List<DistributionSetTypeCreate<DistributionSetType>> smFromRequest(final EntityFactory entityFactory, final Collection<MgmtDistributionSetTypeRequestBodyPost> smTypesRest) {
+    public static List<DistributionSetTypeManagement.Create> smFromRequest(final Collection<MgmtDistributionSetTypeRequestBodyPost> smTypesRest) {
         if (smTypesRest == null) {
             return Collections.emptyList();
         }
 
-        return smTypesRest.stream().map(smRest -> fromRequest(entityFactory, smRest)).toList();
+        return smTypesRest.stream().map(MgmtDistributionSetTypeMapper::fromRequest).toList();
     }
 
-    public static List<MgmtDistributionSetType> toListResponse(final Collection<DistributionSetType> types) {
+    public static List<MgmtDistributionSetType> toListResponse(final Collection<? extends DistributionSetType> types) {
         if (types == null) {
             return Collections.emptyList();
         }
@@ -71,11 +70,12 @@ public final class MgmtDistributionSetTypeMapper {
                 .withRel(MgmtRestConstants.DISTRIBUTIONSETTYPE_V1_OPTIONAL_MODULES).expand());
     }
 
-    private static DistributionSetTypeCreate<DistributionSetType> fromRequest(final EntityFactory entityFactory,
-            final MgmtDistributionSetTypeRequestBodyPost smsRest) {
-        return entityFactory.distributionSetType().create().key(smsRest.getKey()).name(smsRest.getName())
+    private static DistributionSetTypeManagement.Create fromRequest(final MgmtDistributionSetTypeRequestBodyPost smsRest) {
+        return DistributionSetTypeManagement.Create.builder()
+                .key(smsRest.getKey()).name(smsRest.getName())
                 .description(smsRest.getDescription()).colour(smsRest.getColour())
-                .mandatory(getMandatoryModules(smsRest)).optional(getOptionalModules(smsRest));
+                .mandatory(getMandatoryModules(smsRest)).optional(getOptionalModules(smsRest))
+                .build();
     }
 
     private static Collection<Long> getMandatoryModules(final MgmtDistributionSetTypeRequestBodyPost smsRest) {
