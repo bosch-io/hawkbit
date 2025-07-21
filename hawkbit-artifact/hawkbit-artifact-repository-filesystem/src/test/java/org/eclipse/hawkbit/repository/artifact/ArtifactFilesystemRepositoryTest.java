@@ -129,7 +129,7 @@ class ArtifactFilesystemRepositoryTest {
 
     private AbstractDbArtifact storeRandomArtifact(final byte[] fileContent) throws IOException {
         try (final ByteArrayInputStream inputStream = new ByteArrayInputStream(fileContent)) {
-            return artifactFilesystemRepository.store(TENANT, inputStream, "filename.tmp", "application/txt", null);
+            return artifactFilesystemRepository.store(TENANT, inputStream, "filename.tmp", "application/txt", null, (long) fileContent.length);
         }
     }
 }

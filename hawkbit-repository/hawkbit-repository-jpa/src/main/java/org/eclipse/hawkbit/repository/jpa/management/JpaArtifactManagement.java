@@ -260,7 +260,7 @@ public class JpaArtifactManagement implements ArtifactManagement {
         try (final InputStream wrappedStream = wrapInQuotaStream(
                 isSmEncrypted ? wrapInEncryptionStream(smId, stream) : stream)) {
             return artifactRepository.store(tenant, wrappedStream, fileName, contentType,
-                    new DbArtifactHash(providedSha1, providedMd5, providedSha256));
+                    new DbArtifactHash(providedSha1, providedMd5, providedSha256), artifactUpload.getFilesize());
         } catch (final ArtifactStoreException | IOException e) {
             throw new ArtifactUploadFailedException(e);
         } catch (final HashNotMatchException e) {

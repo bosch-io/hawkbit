@@ -39,7 +39,7 @@ public interface ArtifactRepository {
      */
     AbstractDbArtifact store(
             @NotEmpty String tenant, @NotNull InputStream content, @NotEmpty String filename,
-            String contentType, DbArtifactHash hash);
+            String contentType, DbArtifactHash hash, Long originalSize);
 
     /**
      * Deletes an artifact by its SHA1 hash.

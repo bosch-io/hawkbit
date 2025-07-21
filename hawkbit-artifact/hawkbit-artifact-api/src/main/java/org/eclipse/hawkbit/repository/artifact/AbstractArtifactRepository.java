@@ -42,7 +42,7 @@ public abstract class AbstractArtifactRepository implements ArtifactRepository {
     @Override
     public AbstractDbArtifact store(
             final String tenant, final InputStream content, final String filename, final String contentType,
-            final DbArtifactHash providedHashes) {
+            final DbArtifactHash providedHashes, final Long originalSize) {
         final MessageDigest mdSHA1;
         final MessageDigest mdMD5;
         final MessageDigest mdSHA256;
@@ -71,7 +71,7 @@ public abstract class AbstractArtifactRepository implements ArtifactRepository {
                 return addMissingHashes(getArtifactBySha1(tenant, sha1Hash16), sha1Hash16, md5Hash16, sha256Hash16);
             }
 
-            return store(sanitizeTenant(tenant), new DbArtifactHash(sha1Hash16, md5Hash16, sha256Hash16), contentType, tempFile);
+            return store(sanitizeTenant(tenant), new DbArtifactHash(sha1Hash16, md5Hash16, sha256Hash16), contentType, tempFile, originalSize);
         } catch (final IOException e) {
             throw new ArtifactStoreException(e.getMessage(), e);
         } finally {
@@ -104,7 +104,7 @@ public abstract class AbstractArtifactRepository implements ArtifactRepository {
     }
 
     protected abstract AbstractDbArtifact store(final String tenant, final DbArtifactHash base16Hashes,
-            final String contentType, final String tempFile) throws IOException;
+            final String contentType, final String tempFile, final Long originalSize) throws IOException;
 
     // java:S1066 - more readable with separate "if" statements
     // java:S4042 - delete reason is not needed
