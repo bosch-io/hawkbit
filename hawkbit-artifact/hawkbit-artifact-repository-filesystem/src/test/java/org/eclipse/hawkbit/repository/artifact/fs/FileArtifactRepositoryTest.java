@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2025 Bosch Digital GmbH, Germany. All rights reserved.
  */
-package org.eclipse.hawkbit.repository.artifact.filesystem;
+package org.eclipse.hawkbit.repository.artifact.fs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -17,7 +17,7 @@ import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
 import org.eclipse.hawkbit.repository.artifact.AbstractArtifactRepository;
 import org.eclipse.hawkbit.repository.artifact.exception.ArtifactBinaryNotFoundException;
-import org.eclipse.hawkbit.repository.artifact.model.AbstractDbArtifact;
+import org.eclipse.hawkbit.repository.artifact.model.StoredArtifactInfo;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -27,19 +27,19 @@ import org.junit.jupiter.api.Test;
  * Story: Test storing artifact binaries in the file-system
  */
 @Slf4j
-class ArtifactFilesystemRepositoryTest {
+class FileArtifactRepositoryTest {
 
     private static final String TENANT = "test_tenant";
 
-    private static ArtifactFilesystemProperties artifactResourceProperties;
-    private static ArtifactFilesystemRepository artifactFilesystemRepository;
+    private static FileArtifactProperties artifactResourceProperties;
+    private static FileArtifactRepository artifactFilesystemRepository;
 
     @BeforeAll
     static void setup() {
-        artifactResourceProperties = new ArtifactFilesystemProperties();
+        artifactResourceProperties = new FileArtifactProperties();
         artifactResourceProperties.setPath(AbstractArtifactRepository.createTempFile(true).toString());
 
-        artifactFilesystemRepository = new ArtifactFilesystemRepository(artifactResourceProperties);
+        artifactFilesystemRepository = new FileArtifactRepository(artifactResourceProperties);
     }
 
     @AfterAll
@@ -59,10 +59,10 @@ class ArtifactFilesystemRepositoryTest {
     @Test
     void storeSuccessfully() throws IOException {
         final byte[] fileContent = randomBytes();
-        final AbstractDbArtifact artifact = storeRandomArtifact(fileContent);
+        final StoredArtifactInfo artifact = storeRandomArtifact(fileContent);
 
         final byte[] readContent = new byte[fileContent.length];
-        IOUtils.read(artifact.getFileInputStream(), readContent);
+        IOUtils.read(artifactFilesystemRepository.getBySha1(TENANT, artifact.getHashes().sha1()), readContent);
         assertThat(readContent).isEqualTo(fileContent);
     }
 
@@ -72,7 +72,7 @@ class ArtifactFilesystemRepositoryTest {
     @Test
     void getStoredArtifactBasedOnSHA1Hash() throws IOException {
         final byte[] fileContent = randomBytes();
-        final AbstractDbArtifact artifact = storeRandomArtifact(fileContent);
+        final StoredArtifactInfo artifact = storeRandomArtifact(fileContent);
 
         assertThat(artifactFilesystemRepository.getBySha1(TENANT, artifact.getHashes().sha1())).isNotNull();
     }
@@ -82,7 +82,7 @@ class ArtifactFilesystemRepositoryTest {
      */
     @Test
     void deleteStoredArtifactBySHA1Hash() throws IOException {
-        final AbstractDbArtifact artifact = storeRandomArtifact(randomBytes());
+        final StoredArtifactInfo artifact = storeRandomArtifact(randomBytes());
         artifactFilesystemRepository.deleteBySha1(TENANT, artifact.getHashes().sha1());
 
         final String sha1Hash = artifact.getHashes().sha1();
@@ -95,7 +95,7 @@ class ArtifactFilesystemRepositoryTest {
      */
     @Test
     void deleteStoredArtifactOfTenant() throws IOException {
-        final AbstractDbArtifact artifact = storeRandomArtifact(randomBytes());
+        final StoredArtifactInfo artifact = storeRandomArtifact(randomBytes());
         artifactFilesystemRepository.deleteByTenant(TENANT);
 
         final String sha1Hash = artifact.getHashes().sha1();
@@ -114,7 +114,7 @@ class ArtifactFilesystemRepositoryTest {
             Assertions.fail("did not expect an exception while deleting a file which does not exists");
         }
 
-        final AbstractDbArtifact artifact = storeRandomArtifact(randomBytes());
+        final StoredArtifactInfo artifact = storeRandomArtifact(randomBytes());
         try {
             artifactFilesystemRepository.deleteBySha1("tenantWhichDoesNotExist", artifact.getHashes().sha1());
         } catch (final Exception e) {
@@ -128,7 +128,7 @@ class ArtifactFilesystemRepositoryTest {
         return randomBytes;
     }
 
-    private AbstractDbArtifact storeRandomArtifact(final byte[] fileContent) throws IOException {
+    private StoredArtifactInfo storeRandomArtifact(final byte[] fileContent) throws IOException {
         try (final ByteArrayInputStream inputStream = new ByteArrayInputStream(fileContent)) {
             return artifactFilesystemRepository.store(TENANT, inputStream, "filename.tmp", "application/txt", null);
         }

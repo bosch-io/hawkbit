@@ -18,8 +18,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.eclipse.hawkbit.ContextAware;
 import org.eclipse.hawkbit.im.authentication.Hierarchy;
-import org.eclipse.hawkbit.repository.artifact.filesystem.ArtifactFilesystemProperties;
-import org.eclipse.hawkbit.repository.artifact.filesystem.ArtifactFilesystemRepository;
+import org.eclipse.hawkbit.repository.artifact.fs.FileArtifactProperties;
+import org.eclipse.hawkbit.repository.artifact.fs.FileArtifactRepository;
 import org.eclipse.hawkbit.repository.artifact.ArtifactRepository;
 import org.eclipse.hawkbit.repository.artifact.urlhandler.ArtifactUrlHandlerProperties;
 import org.eclipse.hawkbit.repository.artifact.urlhandler.PropertyBasedArtifactUrlHandler;
@@ -71,7 +71,7 @@ import org.springframework.security.concurrent.DelegatingSecurityContextSchedule
  */
 @Configuration
 @EnableConfigurationProperties({
-        DdiSecurityProperties.class, ArtifactUrlHandlerProperties.class, ArtifactFilesystemProperties.class,
+        DdiSecurityProperties.class, ArtifactUrlHandlerProperties.class, FileArtifactProperties.class,
         HawkbitSecurityProperties.class, ControllerPollProperties.class, TenantConfigurationProperties.class })
 @Profile("test")
 @EnableAutoConfiguration
@@ -123,8 +123,8 @@ public class TestConfiguration implements AsyncConfigurer {
     }
 
     @Bean
-    ArtifactRepository artifactRepository(final ArtifactFilesystemProperties artifactFilesystemProperties) {
-        return new ArtifactFilesystemRepository(artifactFilesystemProperties);
+    ArtifactRepository artifactRepository(final FileArtifactProperties artifactFilesystemProperties) {
+        return new FileArtifactRepository(artifactFilesystemProperties);
     }
 
     /** @return the {@link org.eclipse.hawkbit.repository.test.util.SecurityContextSwitch} to be injected. */

@@ -184,8 +184,8 @@ public final class DataConversionHelper {
                 .getUrls(new URLPlaceholder(
                                 tenantMetadata.getTenant(), tenantMetadata.getId(), target.getControllerId(), target.getId(),
                                 new SoftwareData(
-                                        artifact.getSoftwareModule().getId(), artifact.getFilename(), artifact.getId(),
-                                        artifact.getSha1Hash())),
+                                        artifact.getSoftwareModule().getId(), artifact.getFilename(),
+                                        artifact.getId(), artifact.getSha1Hash())),
                         ApiType.DDI, request.getURI())
                 .forEach(entry -> file.add(Link.of(entry.ref()).withRel(entry.rel()).expand()));
 

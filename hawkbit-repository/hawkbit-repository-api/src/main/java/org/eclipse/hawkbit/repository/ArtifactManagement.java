@@ -15,8 +15,9 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.hawkbit.im.authentication.SpPermission;
+import org.eclipse.hawkbit.repository.artifact.ArtifactStream;
 import org.eclipse.hawkbit.repository.artifact.exception.ArtifactUploadFailedException;
-import org.eclipse.hawkbit.repository.artifact.model.DbArtifact;
+import org.eclipse.hawkbit.repository.artifact.model.StoredArtifactInfo;
 import org.eclipse.hawkbit.im.authentication.SpringEvalExpressions;
 import org.eclipse.hawkbit.repository.exception.EntityAlreadyExistsException;
 import org.eclipse.hawkbit.repository.exception.EntityNotFoundException;
@@ -54,15 +55,15 @@ public interface ArtifactManagement extends PermissionSupport {
     Artifact create(@NotNull @Valid ArtifactUpload artifactUpload);
 
     /**
-     * Loads {@link DbArtifact} from store for given {@link Artifact}.
+     * Loads {@link StoredArtifactInfo} from store for given {@link Artifact}.
      *
      * @param sha1Hash to search for
      * @param softwareModuleId software module id.
      * @param isEncrypted flag to indicate if artifact is encrypted.
-     * @return loaded {@link DbArtifact}
+     * @return loaded {@link StoredArtifactInfo}
      */
     @PreAuthorize("hasAuthority('" + SpPermission.DOWNLOAD_REPOSITORY_ARTIFACT + "')" + " or " + SpringEvalExpressions.IS_CONTROLLER)
-    DbArtifact loadArtifactBinary(@NotEmpty String sha1Hash, long softwareModuleId, final boolean isEncrypted);
+    ArtifactStream getArtifactStream(@NotEmpty String sha1Hash, long softwareModuleId, final boolean isEncrypted);
 
     /**
      * Deletes {@link Artifact} based on given id.

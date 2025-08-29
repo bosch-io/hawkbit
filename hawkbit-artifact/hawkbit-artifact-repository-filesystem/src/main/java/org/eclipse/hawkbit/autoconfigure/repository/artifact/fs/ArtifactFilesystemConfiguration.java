@@ -7,10 +7,10 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.eclipse.hawkbit.autoconfigure.repository.artifact.filesystem;
+package org.eclipse.hawkbit.autoconfigure.repository.artifact.fs;
 
-import org.eclipse.hawkbit.repository.artifact.filesystem.ArtifactFilesystemProperties;
-import org.eclipse.hawkbit.repository.artifact.filesystem.ArtifactFilesystemRepository;
+import org.eclipse.hawkbit.repository.artifact.fs.FileArtifactProperties;
+import org.eclipse.hawkbit.repository.artifact.fs.FileArtifactRepository;
 import org.eclipse.hawkbit.repository.artifact.ArtifactRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -18,10 +18,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuration for the {@link ArtifactFilesystemRepository}.
+ * Configuration for the {@link FileArtifactRepository}.
  */
 @Configuration
-@EnableConfigurationProperties(ArtifactFilesystemProperties.class)
+@EnableConfigurationProperties(FileArtifactProperties.class)
 public class ArtifactFilesystemConfiguration {
 
     /**
@@ -30,7 +30,7 @@ public class ArtifactFilesystemConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public ArtifactRepository artifactRepository(final ArtifactFilesystemProperties artifactFilesystemProperties) {
-        return new ArtifactFilesystemRepository(artifactFilesystemProperties);
+    public ArtifactRepository artifactRepository(final FileArtifactProperties artifactFilesystemProperties) {
+        return new FileArtifactRepository(artifactFilesystemProperties);
     }
 }

@@ -7,7 +7,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.eclipse.hawkbit.repository.artifact.filesystem;
+package org.eclipse.hawkbit.repository.artifact.fs;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -17,7 +17,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @Data
 @ConfigurationProperties("org.eclipse.hawkbit.repository.file")
-public class ArtifactFilesystemProperties {
+public class FileArtifactProperties {
 
     /**
      * The base-path of the directory to store the artifacts.

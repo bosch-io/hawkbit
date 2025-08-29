@@ -4,6 +4,6 @@
 package org.eclipse.hawkbit.repository.artifact.model;
 
 /**
- * Database representation of artifact hash.
+ * Representation of artifact hashes.
  */
-public record DbArtifactHash(String sha1, String md5, String sha256) {}
+public record ArtifactHashes(String sha1, String md5, String sha256) {}

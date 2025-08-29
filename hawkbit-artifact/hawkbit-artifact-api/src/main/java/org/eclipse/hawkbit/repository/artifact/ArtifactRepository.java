@@ -11,8 +11,8 @@ import jakarta.validation.constraints.NotNull;
 import org.eclipse.hawkbit.repository.artifact.exception.ArtifactBinaryNotFoundException;
 import org.eclipse.hawkbit.repository.artifact.exception.ArtifactStoreException;
 import org.eclipse.hawkbit.repository.artifact.exception.HashNotMatchException;
-import org.eclipse.hawkbit.repository.artifact.model.AbstractDbArtifact;
-import org.eclipse.hawkbit.repository.artifact.model.DbArtifactHash;
+import org.eclipse.hawkbit.repository.artifact.model.StoredArtifactInfo;
+import org.eclipse.hawkbit.repository.artifact.model.ArtifactHashes;
 
 /**
  * ArtifactRepository service interface.
@@ -32,19 +32,20 @@ public interface ArtifactRepository {
      * @throws ArtifactStoreException in case storing of the artifact was not successful
      * @throws HashNotMatchException in case {@code hash} is provided and not matching to the calculated hashes during storing
      */
-    AbstractDbArtifact store(
+    StoredArtifactInfo store(
             @NotEmpty String tenant, @NotNull InputStream content, @NotEmpty String filename,
-            String contentType, DbArtifactHash hash);
+            String contentType, ArtifactHashes hash);
 
     /**
-     * Retrieves a {@link AbstractDbArtifact} from the store by its SHA1 hash. Throws {@link ArtifactBinaryNotFoundException} if not found.
+     * Retrieves a {@link StoredArtifactInfo} from the store by its SHA1 hash. Throws {@link ArtifactBinaryNotFoundException} if not found.
+     * The caller is responsible to close the InputStream.
      *
      * @param tenant the tenant to store the artifact
      * @param sha1Hash the sha1-hash of the file to lookup.
      * @return The artifact file object or {@code null} if no file exists.
      * @throws UnsupportedOperationException if implementation does not support the operation
      */
-    AbstractDbArtifact getBySha1(@NotEmpty String tenant, @NotEmpty String sha1Hash);
+    InputStream getBySha1(@NotEmpty String tenant, @NotEmpty String sha1Hash);
 
     /**
      * Checks if an artifact exists for a given tenant by its sha1 hash

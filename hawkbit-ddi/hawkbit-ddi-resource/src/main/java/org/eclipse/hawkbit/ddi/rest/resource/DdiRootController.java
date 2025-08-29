@@ -50,7 +50,7 @@ import org.eclipse.hawkbit.repository.ControllerManagement;
 import org.eclipse.hawkbit.repository.RepositoryConstants;
 import org.eclipse.hawkbit.repository.SystemManagement;
 import org.eclipse.hawkbit.repository.UpdateMode;
-import org.eclipse.hawkbit.repository.artifact.model.DbArtifact;
+import org.eclipse.hawkbit.repository.artifact.ArtifactStream;
 import org.eclipse.hawkbit.repository.artifact.urlhandler.ArtifactUrlHandler;
 import org.eclipse.hawkbit.repository.event.remote.DownloadProgressEvent;
 import org.eclipse.hawkbit.repository.exception.CancelActionNotAllowedException;
@@ -175,7 +175,7 @@ public class DdiRootController implements DdiRootControllerRestApi {
         } else {
             // Artifact presence is ensured in 'checkModule'
             final Artifact artifact = module.getArtifactByFilename(fileName).orElseThrow(NoSuchElementException::new);
-            final DbArtifact file = artifactManagement.loadArtifactBinary(artifact.getSha1Hash(), module.getId(), module.isEncrypted());
+            final ArtifactStream file = artifactManagement.getArtifactStream(artifact.getSha1Hash(), module.getId(), module.isEncrypted());
 
             final String ifMatch = RequestResponseContextHolder.getHttpServletRequest().getHeader(HttpHeaders.IF_MATCH);
             if (ifMatch != null && !HttpUtil.matchesHttpHeader(ifMatch, artifact.getSha1Hash())) {

@@ -7,10 +7,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.eclipse.hawkbit.repository.artifact.filesystem;
+package org.eclipse.hawkbit.repository.artifact.fs;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,8 +24,8 @@ import org.eclipse.hawkbit.repository.artifact.AbstractArtifactRepository;
 import org.eclipse.hawkbit.repository.artifact.ArtifactRepository;
 import org.eclipse.hawkbit.repository.artifact.exception.ArtifactBinaryNotFoundException;
 import org.eclipse.hawkbit.repository.artifact.exception.ArtifactStoreException;
-import org.eclipse.hawkbit.repository.artifact.model.AbstractDbArtifact;
-import org.eclipse.hawkbit.repository.artifact.model.DbArtifactHash;
+import org.eclipse.hawkbit.repository.artifact.model.StoredArtifactInfo;
+import org.eclipse.hawkbit.repository.artifact.model.ArtifactHashes;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -29,17 +33,17 @@ import org.springframework.validation.annotation.Validated;
  * artifact binary. Duplicate files with the same SHA1 hash will only be stored once.
  * <p/>
  * All files are stored flat in one base directory configured in the
- * {@link ArtifactFilesystemProperties#getPath()}.
+ * {@link FileArtifactProperties#getPath()}.
  * <p/>
  * Due to the limit of many file-systems of files within one directory, the files are stored in different subdirectories based on the last four
  * digits of the SHA1-hash {@code (/basepath/[two digit sha1]/[two digit sha1])}.
  */
 @Validated
-public class ArtifactFilesystemRepository extends AbstractArtifactRepository {
+public class FileArtifactRepository extends AbstractArtifactRepository {
 
-    private final ArtifactFilesystemProperties artifactResourceProperties;
+    private final FileArtifactProperties artifactResourceProperties;
 
-    public ArtifactFilesystemRepository(final ArtifactFilesystemProperties artifactResourceProperties) {
+    public FileArtifactRepository(final FileArtifactProperties artifactResourceProperties) {
         this.artifactResourceProperties = artifactResourceProperties;
     }
 
@@ -49,13 +53,16 @@ public class ArtifactFilesystemRepository extends AbstractArtifactRepository {
     }
 
     @Override
-    public AbstractDbArtifact getBySha1(final String tenant, final String sha1) {
+    public InputStream getBySha1(final String tenant, final String sha1) {
         final File file = getFile(tenant, sha1);
         if (!file.exists()) {
             throw new ArtifactBinaryNotFoundException(sha1);
         }
-
-        return new ArtifactFilesystem(file, sha1, new DbArtifactHash(sha1, null, null), file.length(), null);
+        try {
+            return new BufferedInputStream(new FileInputStream(file));
+        } catch (final FileNotFoundException e) {
+            throw new ArtifactBinaryNotFoundException(sha1);
+        }
     }
 
     @Override
@@ -69,7 +76,7 @@ public class ArtifactFilesystemRepository extends AbstractArtifactRepository {
     }
 
     @Override
-    protected AbstractDbArtifact store(final String tenant, final DbArtifactHash base16Hashes, final String contentType, final String tempFile)
+    protected StoredArtifactInfo store(final String tenant, final ArtifactHashes base16Hashes, final String contentType, final String tempFile)
             throws IOException {
         final File file = new File(tempFile);
         final File fileSHA1Naming = getFile(tenant, base16Hashes.sha1());
@@ -79,7 +86,7 @@ public class ArtifactFilesystemRepository extends AbstractArtifactRepository {
             Files.move(file.toPath(), fileSHA1Naming.toPath());
         }
 
-        return new ArtifactFilesystem(fileSHA1Naming, base16Hashes.sha1(), base16Hashes, fileSHA1Naming.length(), contentType);
+        return new StoredArtifactInfo(contentType, fileSHA1Naming.length(), base16Hashes);
     }
 
     private File getFile(final String tenant, final String sha1) {
