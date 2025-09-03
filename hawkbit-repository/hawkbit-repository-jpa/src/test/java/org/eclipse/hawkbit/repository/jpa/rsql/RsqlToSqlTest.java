@@ -17,10 +17,12 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+import org.eclipse.hawkbit.repository.DistributionSetFields;
 import org.eclipse.hawkbit.repository.RsqlQueryField;
 import org.eclipse.hawkbit.repository.SoftwareModuleFields;
 import org.eclipse.hawkbit.repository.TargetFields;
 import org.eclipse.hawkbit.repository.jpa.JpaRepositoryConfiguration;
+import org.eclipse.hawkbit.repository.jpa.model.JpaDistributionSet;
 import org.eclipse.hawkbit.repository.jpa.model.JpaSoftwareModule;
 import org.eclipse.hawkbit.repository.jpa.model.JpaTarget;
 import org.eclipse.hawkbit.repository.jpa.ql.utils.HawkbitQlToSql;
@@ -44,6 +46,13 @@ class RsqlToSqlTest {
 
     private static final boolean FULL = Boolean.getBoolean("full");
     private HawkbitQlToSql rsqlToSQL;
+
+    @Test
+    void printDS() {;
+        printFrom(JpaDistributionSet.class, DistributionSetFields.class, "type==x");
+        printFrom(JpaDistributionSet.class, DistributionSetFields.class, "type.key==x");
+        printFrom(JpaDistributionSet.class, DistributionSetFields.class, "type.name==x");
+    }
 
     @Test
     void printPG() {

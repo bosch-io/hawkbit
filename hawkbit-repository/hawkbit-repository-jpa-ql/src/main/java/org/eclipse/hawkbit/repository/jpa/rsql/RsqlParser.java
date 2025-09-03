@@ -24,6 +24,7 @@ import static org.eclipse.hawkbit.repository.jpa.ql.Node.Comparison.Operator.NOT
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -41,6 +42,7 @@ import cz.jirutka.rsql.parser.ast.RSQLVisitor;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.hawkbit.repository.DistributionSetFields;
 import org.eclipse.hawkbit.repository.FieldValueConverter;
 import org.eclipse.hawkbit.repository.RsqlQueryField;
 import org.eclipse.hawkbit.repository.exception.RSQLParameterSyntaxException;
@@ -121,6 +123,9 @@ public class RsqlParser {
                 } else if (enumValue.getSubEntityAttributes().size() == 1) {
                     // single sub attribute - so, treat it as a default
                     attribute = enumValue.getJpaEntityFieldName() + SUB_ATTRIBUTE_SEPARATOR + enumValue.getSubEntityAttributes().get(0);
+                } else if (Objects.equals(rsqlQueryFieldType, DistributionSetFields.class) && "type".equalsIgnoreCase(enumValue.getJpaEntityFieldName())) {
+                    // backward compatibility - type for DistributionSetFields means type.key
+                    attribute = enumValue.getJpaEntityFieldName() + SUB_ATTRIBUTE_SEPARATOR + "key";
                 } else {
                     throw new RSQLParameterUnsupportedFieldException(
                             String.format(
